@@ -1,7 +1,7 @@
 import React from "react";
 import { View, Text, StyleSheet, Image, TouchableOpacity } from "react-native";
 
-export default function WelcomeScreen({ navigation }) {
+const WelcomeScreen = ({ navigation }) => {
   return (
     <View style={styles.container}>
       <Image source={require("../assets/Ayman_Logo.png")} style={styles.logo} />
@@ -78,3 +78,5 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
   },
 });
+
+export default WelcomeScreen;
