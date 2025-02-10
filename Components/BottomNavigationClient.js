@@ -1,37 +1,62 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, TouchableOpacity, Text, StyleSheet, Image } from 'react-native';
 import { Ionicons, Foundation } from '@expo/vector-icons';
+import { useRoute } from '@react-navigation/native';
 
 const BottomNavigationClient = ({ navigation }) => {
+  const route = useRoute();
+  const [activeRoute, setActiveRoute] = useState(route.name);
+
   const menuItems = [
     { name: "Home", icon: "home-outline", route: "ClientDashboard" },
-    { name: "CarePlan", icon: "clipboard-notes", route: "CarePlan" },
     {
-      name: "Medication",
+      name: "CarePlan",
       icon: require("../assets/CarePlanIcon.png"),
-      route: "Medication",
+      route: "CarePlan",
     },
+    { name: "Medication", icon: "clipboard-notes", route: "Medication" },
     { name: "Profile", icon: "person-outline", route: "Profile" },
   ];
+
+  const handleNavigation = (item) => {
+    navigation.navigate(item.route);
+    setActiveRoute(item.route);
+  };
 
   return (
     <View style={styles.container}>
       {menuItems.map((item, index) => (
         <TouchableOpacity
           key={index}
-          style={styles.menuItem}
-          onPress={() => navigation.navigate(item.route)}
+          style={[
+            styles.menuItem,
+            activeRoute === item.route && styles.activeMenuItem
+          ]}
+          onPress={() => handleNavigation(item)}
         >
           {typeof item.icon === "string" ? (
             item.icon === "clipboard-notes" ? (
-              <Foundation name="clipboard-notes" size={24} color="#666" />
+              <Foundation 
+                name="clipboard-notes" 
+                size={24} 
+                color="#666"
+              />
             ) : (
-              <Ionicons name={item.icon} size={24} color="#666" />
+              <Ionicons 
+                name={item.icon} 
+                size={24} 
+                color="#666" 
+              />
             )
           ) : (
-            <Image source={item.icon} style={styles.icon} />
+            <Image 
+              source={item.icon} 
+              style={[
+                styles.icon,
+                activeRoute === item.route && styles.activeIcon
+              ]} 
+            />
           )}
-          <Text style={styles.menuText}>{item.name}</Text>
         </TouchableOpacity>
       ))}
     </View>
@@ -43,29 +68,33 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-around',
     alignItems: 'center',
-    backgroundColor: '#fff',
-    paddingVertical: 10,
+    backgroundColor: '#E6F2FF',
     borderTopWidth: 1,
-    borderTopColor: '#e0e0e0',
+    borderTopColor: '#A6D1FF', 
     position: 'absolute',
     bottom: 0,
     left: 0,
     right: 0,
     height: 60,
+    shadowColor: '#0071BC',
+    shadowOffset: { width: 0, height: -1 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    elevation: 6,
   },
   menuItem: {
     alignItems: 'center',
     justifyContent: 'center',
     flex: 1,
+    paddingVertical: 8,
+    borderRadius: 10, 
   },
-  menuText: {
-    fontSize: 12,
-    marginTop: 4,
-    color: '#666',
+  activeMenuItem: {
+    backgroundColor: 'rgba(0, 113, 188, 0.2)', 
   },
   icon: {
-    width: 24,
-    height: 24,
+    width: 32,
+    height: 32,
     resizeMode: 'contain',
   },
 });
