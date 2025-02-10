@@ -1,10 +1,11 @@
 import React, { useState } from "react";
-import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
+import { View, Text, StyleSheet, TouchableOpacity, StatusBar, useColorScheme } from "react-native";
 import SideNavigationClient from "../Components/SideNavigationClient";
 import { Ionicons } from "@expo/vector-icons";
 
 const ClientDashboard = ({ navigation }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const scheme = useColorScheme(); // Detect the current theme (light or dark)
 
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
@@ -12,6 +13,12 @@ const ClientDashboard = ({ navigation }) => {
 
   return (
     <View style={styles.container}>
+      {/* Adjust the status bar based on the theme */}
+      <StatusBar
+        barStyle={scheme === 'dark' ? 'light-content' : 'dark-content'} // Set bar style depending on theme
+        translucent={true}
+        backgroundColor={scheme === 'dark' ? 'black' : 'transparent'} // Set background color based on theme
+      />
       {/* Header with Hamburger Icon */}
       <View style={styles.header}>
         <TouchableOpacity onPress={toggleMenu}>
@@ -50,6 +57,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     padding: 15,
     backgroundColor: "#f8f9fa",
+    marginTop: 30,
   },
   headerText: {
     fontSize: 20,
