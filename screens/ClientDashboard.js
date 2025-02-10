@@ -1,11 +1,12 @@
 import React, { useState } from "react";
 import { View, Text, StyleSheet, TouchableOpacity, StatusBar, useColorScheme } from "react-native";
 import SideNavigationClient from "../Components/SideNavigationClient";
+import BottomNavigationClient from "../Components/BottomNavigationClient";
 import { Ionicons } from "@expo/vector-icons";
 
 const ClientDashboard = ({ navigation }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const scheme = useColorScheme(); // Detect the current theme (light or dark)
+  const scheme = useColorScheme();
 
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
@@ -13,12 +14,12 @@ const ClientDashboard = ({ navigation }) => {
 
   return (
     <View style={styles.container}>
-      {/* Adjust the status bar based on the theme */}
       <StatusBar
-        barStyle={scheme === 'dark' ? 'light-content' : 'dark-content'} // Set bar style depending on theme
+        barStyle={scheme === 'dark' ? 'light-content' : 'dark-content'}
         translucent={true}
-        backgroundColor={scheme === 'dark' ? 'black' : 'transparent'} // Set background color based on theme
+        backgroundColor={scheme === 'dark' ? 'black' : 'transparent'}
       />
+      
       {/* Header with Hamburger Icon */}
       <View style={styles.header}>
         <TouchableOpacity onPress={toggleMenu}>
@@ -43,6 +44,9 @@ const ClientDashboard = ({ navigation }) => {
       <View style={styles.content}>
         <Text style={styles.dashboardText}>Welcome to the Client Dashboard</Text>
       </View>
+
+      {/* Bottom Navigation */}
+      <BottomNavigationClient navigation={navigation} />
     </View>
   );
 };
@@ -68,6 +72,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
+    marginBottom: 60,
   },
   dashboardText: {
     fontSize: 20,
@@ -84,7 +89,7 @@ const styles = StyleSheet.create({
     zIndex: 1,
   },
   overlayBackground: {
-    flex: 1, // Allows tapping outside the menu to close it
+    flex: 1,
     backgroundColor: "rgba(0,0,0,0.4)",
   },
 });
