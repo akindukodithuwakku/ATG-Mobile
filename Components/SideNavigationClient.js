@@ -1,17 +1,32 @@
 import React from "react";
-import { Text, TouchableOpacity, StyleSheet, Image, Animated } from "react-native";
+import {
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  Image,
+  Animated,
+} from "react-native";
 import { Ionicons, Foundation } from "@expo/vector-icons";
 
-const SideNavigationClient = ({ navigation, onClose, activeRoute, setActiveRoute }) => {
+const SideNavigationClient = ({
+  navigation,
+  onClose,
+  activeRoute,
+  setActiveRoute,
+}) => {
   const [slideAnim] = React.useState(new Animated.Value(-300)); // Slide-in animation
 
   // Menu items with routes and icons
   const menuItems = [
     { name: "Home", icon: "home-outline", route: "ClientDashboard" },
-    { name: "CarePlan Management", icon: "clipboard-notes", route: "CarePlan" },
+    {
+      name: "CarePlan Management",
+      icon: require("../assets/CarePlanIcon.png"),
+      route: "CarePlan",
+    },
     {
       name: "Medication Management",
-      icon: require("../assets/CarePlanIcon.png"),
+      icon: "clipboard-notes",
       route: "Medication",
     },
     { name: "Profile", icon: "person-outline", route: "Profile" },
@@ -26,7 +41,9 @@ const SideNavigationClient = ({ navigation, onClose, activeRoute, setActiveRoute
   }, [slideAnim]);
 
   return (
-    <Animated.View style={[styles.container, { transform: [{ translateX: slideAnim }] }]}>
+    <Animated.View
+      style={[styles.container, { transform: [{ translateX: slideAnim }] }]}
+    >
       {/* Close Button */}
       <TouchableOpacity style={styles.closeButton} onPress={onClose}>
         <Ionicons name="close" size={30} color="white" />
@@ -51,14 +68,28 @@ const SideNavigationClient = ({ navigation, onClose, activeRoute, setActiveRoute
         >
           {typeof item.icon === "string" ? (
             item.icon === "clipboard-notes" ? (
-              <Foundation name="clipboard-notes" size={24} color="white" style={styles.icon} />
+              <Foundation
+                name="clipboard-notes"
+                size={24}
+                color="#363636"
+                marginLeft={5}
+              />
             ) : (
-              <Ionicons name={item.icon} size={24} color="white" style={styles.icon} />
+              <Ionicons
+                name={item.icon}
+                size={24}
+                color="#363636"
+              />
             )
           ) : (
             <Image source={item.icon} style={styles.icon} />
           )}
-          <Text style={[styles.menuText, activeRoute === item.name && styles.activeText]}>
+          <Text
+            style={[
+              styles.menuText,
+              activeRoute === item.name && styles.activeText,
+            ]}
+          >
             {item.name}
           </Text>
         </TouchableOpacity>
@@ -118,8 +149,8 @@ const styles = StyleSheet.create({
   },
   icon: {
     width: 24,
-    height: 24,
-    resizeMode: "contain",
+    height: 28,
+    // resizeMode: "contain",
   },
 });
 
