@@ -22,12 +22,12 @@ const SideNavigationClient = ({
     {
       name: "CarePlan Management",
       icon: require("../assets/CarePlanIcon.png"),
-      route: "CarePlan",
+      route: "CarePlanC",
     },
     {
       name: "Medication Management",
       icon: "clipboard-notes",
-      route: "Medication",
+      route: "MedicationC",
     },
     { name: "Profile", icon: "person-outline", route: "Profile" },
   ];
