@@ -29,6 +29,11 @@ const SideNavigationClient = ({
       icon: "clipboard-notes",
       route: "MedicationC",
     },
+    {
+      name: "Notifications",
+      icon: "notifications-outline",
+      route: "NotificationsC",
+    },
     { name: "Profile", icon: "person-outline", route: "Profile" },
   ];
 
