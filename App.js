@@ -14,6 +14,8 @@ import CarePlanMgtClient from './screens/CarePlanMgtClient';
 import MedicationMgtClient from './screens/MedicationMgtClient';
 import CarePlanMgtCN from './screens/CarePlanMgtCN';
 import MedicationMgtCN from './screens/MedicationMgtCN';
+import NotificationsClient from './screens/NotificationsClient';
+import NotificationsCN from './screens/NotificationsCN';
 import ClientDashboard from './screens/ClientDashboard';
 import CNDashboard from './screens/CNDashboard';
 
@@ -34,6 +36,8 @@ export default function App() {
         <Stack.Screen name="MedicationC" component={MedicationMgtClient} />
         <Stack.Screen name="CarePlanCN" component={CarePlanMgtCN} />
         <Stack.Screen name="MedicationCN" component={MedicationMgtCN} />
+        <Stack.Screen name="NotificationsC" component={NotificationsClient} />
+        <Stack.Screen name="NotificationsCN" component={NotificationsCN} />
         <Stack.Screen name="ClientDashboard" component={ClientDashboard} />
         <Stack.Screen name="CNDashboard" component={CNDashboard} />
       </Stack.Navigator>
