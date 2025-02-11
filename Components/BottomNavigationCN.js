@@ -3,18 +3,18 @@ import { View, TouchableOpacity, StyleSheet, Image } from 'react-native';
 import { Ionicons, Foundation } from '@expo/vector-icons';
 import { useRoute } from '@react-navigation/native';
 
-const BottomNavigationClient = ({ navigation }) => {
+const BottomNavigationCN = ({ navigation }) => {
   const route = useRoute();
   const [activeRoute, setActiveRoute] = useState(route.name);
 
   const menuItems = [
-    { name: "Home", icon: "home-outline", route: "ClientDashboard" },
+    { name: "Home", icon: "home-outline", route: "CNDashboard" },
     {
       name: "CarePlan",
       icon: require("../assets/CarePlanIcon.png"),
-      route: "CarePlanC",
+      route: "CarePlanCN",
     },
-    { name: "Medication", icon: "clipboard-notes", route: "MedicationC" },
+    { name: "Medication", icon: "clipboard-notes", route: "MedicationCN" },
     { name: "Profile", icon: "person-outline", route: "Profile" },
   ];
 
@@ -99,4 +99,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default BottomNavigationClient;
+export default BottomNavigationCN;
