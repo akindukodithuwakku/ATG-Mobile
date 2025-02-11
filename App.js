@@ -10,6 +10,7 @@ import SignupScreen from "./screens/SignupScreen";
 import ProfileScreen from './screens/ProfileScreen';
 // import ReadinessQuestionnaireScreen from './screens/ReadinessQuestionnaireScreen';
 // import AppointmentSchedulingScreen from './screens/AppointmentSchedulingScreen';
+import Appointments from './screens/Appointments';
 import CarePlanMgtClient from './screens/CarePlanMgtClient';
 import MedicationMgtClient from './screens/MedicationMgtClient';
 import CarePlanMgtCN from './screens/CarePlanMgtCN';
@@ -24,7 +25,7 @@ const Stack = createStackNavigator();
 export default function App() {
   return (
     <NavigationContainer>
-      <Stack.Navigator initialRouteName="Login" screenOptions={{headerShown: false}}>
+      <Stack.Navigator initialRouteName="Welcome" screenOptions={{headerShown: false}}>
         <Stack.Screen name="Welcome" component={WelcomeScreen} />
         <Stack.Screen name="Login" component={LoginScreen} />
         <Stack.Screen name="Signup" component={SignupScreen} />
@@ -32,6 +33,7 @@ export default function App() {
         <Stack.Screen name="Profile" component={ProfileScreen} />
         {/* <Stack.Screen name="ReadinessQuestionnaire" component={ReadinessQuestionnaireScreen} />
         <Stack.Screen name="AppointmentScheduling" component={AppointmentSchedulingScreen} /> */}
+        <Stack.Screen name="Appointments" component={Appointments} />
         <Stack.Screen name="CarePlanC" component={CarePlanMgtClient} />
         <Stack.Screen name="MedicationC" component={MedicationMgtClient} />
         <Stack.Screen name="CarePlanCN" component={CarePlanMgtCN} />
