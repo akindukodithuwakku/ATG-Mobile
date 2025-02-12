@@ -1,11 +1,10 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { View, TouchableOpacity, StyleSheet, Image } from 'react-native';
 import { Ionicons, Foundation } from '@expo/vector-icons';
 import { useRoute } from '@react-navigation/native';
 
 const BottomNavigationCN = ({ navigation }) => {
   const route = useRoute();
-  const [activeRoute, setActiveRoute] = useState(route.name);
 
   const menuItems = [
     { name: "Home", icon: "home-outline", route: "CNDashboard" },
@@ -18,9 +17,8 @@ const BottomNavigationCN = ({ navigation }) => {
     { name: "Profile", icon: "person-outline", route: "Profile" },
   ];
 
-  const handleNavigation = (item) => {
-    navigation.navigate(item.route);
-    setActiveRoute(item.route);
+  const handleNavigation = (route) => {
+    navigation.navigate(route);
   };
 
   return (
@@ -30,22 +28,22 @@ const BottomNavigationCN = ({ navigation }) => {
           key={index}
           style={[
             styles.menuItem,
-            activeRoute === item.route && styles.activeMenuItem
+            route.name === item.route && styles.activeMenuItem
           ]}
-          onPress={() => handleNavigation(item)}
+          onPress={() => handleNavigation(item.route)}
         >
           {typeof item.icon === "string" ? (
             item.icon === "clipboard-notes" ? (
               <Foundation 
                 name="clipboard-notes" 
                 size={24} 
-                color="#666"
+                color={route.name === item.route ? "#0071BC" : "#666"}
               />
             ) : (
               <Ionicons 
                 name={item.icon} 
                 size={24} 
-                color="#666" 
+                color={route.name === item.route ? "#0071BC" : "#666"}
               />
             )
           ) : (
@@ -53,7 +51,7 @@ const BottomNavigationCN = ({ navigation }) => {
               source={item.icon} 
               style={[
                 styles.icon,
-                activeRoute === item.route && styles.activeIcon
+                route.name === item.route && styles.activeIcon
               ]} 
             />
           )}
