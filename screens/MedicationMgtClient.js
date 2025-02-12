@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { View, Text, StyleSheet, TouchableOpacity, StatusBar, useColorScheme } from "react-native";
 import { useRoute } from "@react-navigation/native";
-import SideNavigationCN from "../Components/SideNavigationCN";
-import BottomNavigationCN from "../Components/BottomNavigationCN";
+import SideNavigationClient from "../Components/SideNavigationClient";
+import BottomNavigationClient from "../Components/BottomNavigationClient";
 import { Ionicons } from "@expo/vector-icons";
 
 const MedicationMgtClient = ({ navigation }) => {
@@ -54,7 +54,7 @@ const MedicationMgtClient = ({ navigation }) => {
       {/* Overlay for Side Navigation */}
       {isMenuOpen && (
         <View style={styles.overlay}>
-          <SideNavigationCN 
+          <SideNavigationClient 
             navigation={navigation} 
             onClose={toggleMenu} 
             activeRoute={activeRoute}
@@ -70,7 +70,7 @@ const MedicationMgtClient = ({ navigation }) => {
       </View>
 
       {/* Bottom Navigation */}
-      <BottomNavigationCN navigation={navigation} />
+      <BottomNavigationClient navigation={navigation} />
     </View>
   );
 };
