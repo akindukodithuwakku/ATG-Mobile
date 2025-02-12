@@ -1,31 +1,12 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { View, Text, StyleSheet, TouchableOpacity, StatusBar, useColorScheme } from "react-native";
-import { useRoute } from "@react-navigation/native";
 import SideNavigationClient from "../Components/SideNavigationClient";
 import BottomNavigationClient from "../Components/BottomNavigationClient";
 import { Ionicons } from "@expo/vector-icons";
 
 const ClientDashboard = ({ navigation }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [activeRoute, setActiveRoute] = useState("Home");
-  const route = useRoute();
   const scheme = useColorScheme();
-
-  // Effect to update activeRoute based on the current route name
-  useEffect(() => {
-    const routeToMenuItemMap = {
-      "ClientDashboard": "Home",
-      "CarePlanC": "CarePlan Management",
-      "MedicationC": "Medication Management",
-      "Profile": "Profile",
-      "NotificationsC": "Notifications",
-    };
-
-    const currentMenuItemName = routeToMenuItemMap[route.name];
-    if (currentMenuItemName) {
-      setActiveRoute(currentMenuItemName);
-    }
-  }, [route.name]);
 
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
@@ -57,8 +38,6 @@ const ClientDashboard = ({ navigation }) => {
           <SideNavigationClient 
             navigation={navigation} 
             onClose={toggleMenu} 
-            activeRoute={activeRoute}
-            setActiveRoute={setActiveRoute}
           />
           <TouchableOpacity style={styles.overlayBackground} onPress={toggleMenu} />
         </View>
