@@ -7,25 +7,22 @@ import {
   Animated,
 } from "react-native";
 import { Ionicons, Foundation } from "@expo/vector-icons";
+import { useRoute } from "@react-navigation/native";
 
-const SideNavigationCN = ({
-  navigation,
-  onClose,
-  activeRoute,
-  setActiveRoute,
-}) => {
+const SideNavigationCN = ({ navigation, onClose }) => {
+  const route = useRoute();
   const [slideAnim] = React.useState(new Animated.Value(-300)); // Slide-in animation
 
   // Menu items with routes and icons
   const menuItems = [
     { name: "Home", icon: "home-outline", route: "CNDashboard" },
     {
-      name: "CarePlan Management",
+      name: "CarePlan",
       icon: require("../assets/CarePlanIcon.png"),
       route: "CarePlanCN",
     },
     {
-      name: "Medication Management",
+      name: "Medication",
       icon: "clipboard-notes",
       route: "MedicationCN",
     },
@@ -48,7 +45,12 @@ const SideNavigationCN = ({
       toValue: 0,
       useNativeDriver: true,
     }).start();
-  }, [slideAnim]);
+  }, []);
+
+  const handleNavigation = (route) => {
+    navigation.navigate(route);
+    // onClose();
+  };
 
   return (
     <Animated.View
@@ -68,13 +70,9 @@ const SideNavigationCN = ({
           key={index}
           style={[
             styles.menuItem,
-            activeRoute === item.name && styles.activeMenuItem, // Highlight active item
+            route.name === item.route && styles.activeMenuItem, // Highlight active item
           ]}
-          onPress={() => {
-            setActiveRoute(item.name); // Set the active route
-            navigation.navigate(item.route);
-            onClose();
-          }}
+          onPress={() => handleNavigation(item.route)}
         >
           {typeof item.icon === "string" ? (
             item.icon === "clipboard-notes" ? (
@@ -85,11 +83,7 @@ const SideNavigationCN = ({
                 marginLeft={5}
               />
             ) : (
-              <Ionicons
-                name={item.icon}
-                size={24}
-                color="#363636"
-              />
+              <Ionicons name={item.icon} size={24} color="#363636" />
             )
           ) : (
             <Image source={item.icon} style={styles.icon} />
@@ -97,7 +91,7 @@ const SideNavigationCN = ({
           <Text
             style={[
               styles.menuText,
-              activeRoute === item.name && styles.activeText,
+              route.name === item.route && styles.activeText,
             ]}
           >
             {item.name}
