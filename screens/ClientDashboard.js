@@ -15,9 +15,10 @@ const ClientDashboard = ({ navigation }) => {
   useEffect(() => {
     const routeToMenuItemMap = {
       "ClientDashboard": "Home",
-      "CarePlan": "CarePlan Management",
-      "Medication": "Medication Management",
-      "Profile": "Profile"
+      "CarePlanC": "CarePlan Management",
+      "MedicationC": "Medication Management",
+      "Profile": "Profile",
+      "NotificationsC": "Notifications",
     };
 
     const currentMenuItemName = routeToMenuItemMap[route.name];
