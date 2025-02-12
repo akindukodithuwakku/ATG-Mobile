@@ -1,11 +1,10 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { View, TouchableOpacity, StyleSheet, Image } from 'react-native';
 import { Ionicons, Foundation } from '@expo/vector-icons';
 import { useRoute } from '@react-navigation/native';
 
 const BottomNavigationClient = ({ navigation }) => {
   const route = useRoute();
-  const [activeRoute, setActiveRoute] = useState(route.name);
 
   const menuItems = [
     { name: "Home", icon: "home-outline", route: "ClientDashboard" },
@@ -20,7 +19,6 @@ const BottomNavigationClient = ({ navigation }) => {
 
   const handleNavigation = (item) => {
     navigation.navigate(item.route);
-    setActiveRoute(item.route);
   };
 
   return (
@@ -30,7 +28,7 @@ const BottomNavigationClient = ({ navigation }) => {
           key={index}
           style={[
             styles.menuItem,
-            activeRoute === item.route && styles.activeMenuItem
+            route.name === item.route && styles.activeMenuItem
           ]}
           onPress={() => handleNavigation(item)}
         >
@@ -52,8 +50,8 @@ const BottomNavigationClient = ({ navigation }) => {
             <Image 
               source={item.icon} 
               style={[
-                styles.icon,
-                activeRoute === item.route && styles.activeIcon
+                styles.imgIcon,
+                route.name === item.route && styles.activeIcon
               ]} 
             />
           )}
@@ -92,7 +90,7 @@ const styles = StyleSheet.create({
   activeMenuItem: {
     backgroundColor: 'rgba(0, 113, 188, 0.2)', 
   },
-  icon: {
+  imgIcon: {
     width: 32,
     height: 32,
     resizeMode: 'contain',
