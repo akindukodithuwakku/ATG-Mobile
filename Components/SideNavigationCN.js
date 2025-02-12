@@ -86,7 +86,7 @@ const SideNavigationCN = ({ navigation, onClose }) => {
               <Ionicons name={item.icon} size={24} color="#363636" />
             )
           ) : (
-            <Image source={item.icon} style={styles.icon} />
+            <Image source={item.icon} style={styles.imgIcon} />
           )}
           <Text
             style={[
@@ -151,7 +151,7 @@ const styles = StyleSheet.create({
     marginLeft: 12,
     color: "#fff",
   },
-  icon: {
+  imgIcon: {
     width: 24,
     height: 28,
     // resizeMode: "contain",

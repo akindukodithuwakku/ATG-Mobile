@@ -37,20 +37,20 @@ const BottomNavigationCN = ({ navigation }) => {
               <Foundation 
                 name="clipboard-notes" 
                 size={24} 
-                color={route.name === item.route ? "#0071BC" : "#666"}
+                color="#666"
               />
             ) : (
               <Ionicons 
                 name={item.icon} 
                 size={24} 
-                color={route.name === item.route ? "#0071BC" : "#666"}
+                color="#666"
               />
             )
           ) : (
             <Image 
               source={item.icon} 
               style={[
-                styles.icon,
+                styles.imgIcon,
                 route.name === item.route && styles.activeIcon
               ]} 
             />
@@ -90,7 +90,7 @@ const styles = StyleSheet.create({
   activeMenuItem: {
     backgroundColor: 'rgba(0, 113, 188, 0.2)', 
   },
-  icon: {
+  imgIcon: {
     width: 32,
     height: 32,
     resizeMode: 'contain',
