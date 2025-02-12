@@ -7,25 +7,22 @@ import {
   Animated,
 } from "react-native";
 import { Ionicons, Foundation } from "@expo/vector-icons";
+import { useRoute } from "@react-navigation/native";
 
-const SideNavigationClient = ({
-  navigation,
-  onClose,
-  activeRoute,
-  setActiveRoute,
-}) => {
+const SideNavigationClient = ({ navigation, onClose }) => {
+  const route = useRoute();
   const [slideAnim] = React.useState(new Animated.Value(-300)); // Slide-in animation
 
   // Menu items with routes and icons
   const menuItems = [
     { name: "Home", icon: "home-outline", route: "ClientDashboard" },
     {
-      name: "CarePlan Management",
+      name: "CarePlan",
       icon: require("../assets/CarePlanIcon.png"),
       route: "CarePlanC",
     },
     {
-      name: "Medication Management",
+      name: "Medication",
       icon: "clipboard-notes",
       route: "MedicationC",
     },
@@ -43,7 +40,12 @@ const SideNavigationClient = ({
       toValue: 0,
       useNativeDriver: true,
     }).start();
-  }, [slideAnim]);
+  }, []);
+
+  const handleNavigation = (route) => {
+    navigation.navigate(route);
+    // onClose();
+  };
 
   return (
     <Animated.View
@@ -63,13 +65,9 @@ const SideNavigationClient = ({
           key={index}
           style={[
             styles.menuItem,
-            activeRoute === item.name && styles.activeMenuItem, // Highlight active item
+            route.name === item.route && styles.activeMenuItem, // Highlight active item
           ]}
-          onPress={() => {
-            setActiveRoute(item.name); // Set the active route
-            navigation.navigate(item.route);
-            onClose();
-          }}
+          onPress={() => handleNavigation(item.route)}
         >
           {typeof item.icon === "string" ? (
             item.icon === "clipboard-notes" ? (
@@ -80,11 +78,7 @@ const SideNavigationClient = ({
                 marginLeft={5}
               />
             ) : (
-              <Ionicons
-                name={item.icon}
-                size={24}
-                color="#363636"
-              />
+              <Ionicons name={item.icon} size={24} color="#363636" />
             )
           ) : (
             <Image source={item.icon} style={styles.icon} />
@@ -92,7 +86,7 @@ const SideNavigationClient = ({
           <Text
             style={[
               styles.menuText,
-              activeRoute === item.name && styles.activeText,
+              route.name === item.route && styles.activeText,
             ]}
           >
             {item.name}
