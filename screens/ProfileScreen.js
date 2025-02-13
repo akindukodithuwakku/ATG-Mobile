@@ -1,7 +1,7 @@
-import React from 'react';
+import React from "react";
 
 const ProfileScreen = ({ navigation }) => {
-  return null; 
+  return null;
 };
 
 export default ProfileScreen;

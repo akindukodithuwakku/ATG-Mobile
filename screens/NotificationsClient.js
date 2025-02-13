@@ -1,5 +1,12 @@
 import React, { useState } from "react";
-import { View, Text, StyleSheet, TouchableOpacity, StatusBar, useColorScheme } from "react-native";
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  StatusBar,
+  useColorScheme,
+} from "react-native";
 import SideNavigationClient from "../Components/SideNavigationClient";
 import BottomNavigationClient from "../Components/BottomNavigationClient";
 import { Ionicons } from "@expo/vector-icons";
@@ -15,11 +22,11 @@ const NotificationsClient = ({ navigation }) => {
   return (
     <View style={styles.container}>
       <StatusBar
-        barStyle={scheme === 'dark' ? 'light-content' : 'dark-content'}
+        barStyle={scheme === "dark" ? "light-content" : "dark-content"}
         translucent={true}
-        backgroundColor={scheme === 'dark' ? 'black' : 'transparent'}
+        backgroundColor={scheme === "dark" ? "black" : "transparent"}
       />
-      
+
       {/* Header with Hamburger Icon */}
       <View style={styles.header}>
         <TouchableOpacity onPress={toggleMenu}>
@@ -35,11 +42,11 @@ const NotificationsClient = ({ navigation }) => {
       {/* Overlay for Side Navigation */}
       {isMenuOpen && (
         <View style={styles.overlay}>
-          <SideNavigationClient 
-            navigation={navigation} 
-            onClose={toggleMenu} 
+          <SideNavigationClient navigation={navigation} onClose={toggleMenu} />
+          <TouchableOpacity
+            style={styles.overlayBackground}
+            onPress={toggleMenu}
           />
-          <TouchableOpacity style={styles.overlayBackground} onPress={toggleMenu} />
         </View>
       )}
 

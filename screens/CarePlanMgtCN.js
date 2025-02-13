@@ -1,5 +1,12 @@
 import React, { useState } from "react";
-import { View, Text, StyleSheet, TouchableOpacity, StatusBar, useColorScheme } from "react-native";
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  StatusBar,
+  useColorScheme,
+} from "react-native";
 import SideNavigationCN from "../Components/SideNavigationCN";
 import BottomNavigationCN from "../Components/BottomNavigationCN";
 import { Ionicons } from "@expo/vector-icons";
@@ -15,11 +22,11 @@ const CarePlanMgtCN = ({ navigation }) => {
   return (
     <View style={styles.container}>
       <StatusBar
-        barStyle={scheme === 'dark' ? 'light-content' : 'dark-content'}
+        barStyle={scheme === "dark" ? "light-content" : "dark-content"}
         translucent={true}
-        backgroundColor={scheme === 'dark' ? 'black' : 'transparent'}
+        backgroundColor={scheme === "dark" ? "black" : "transparent"}
       />
-      
+
       {/* Header with Hamburger Icon */}
       <View style={styles.header}>
         <TouchableOpacity onPress={toggleMenu}>
@@ -35,17 +42,19 @@ const CarePlanMgtCN = ({ navigation }) => {
       {/* Overlay for Side Navigation */}
       {isMenuOpen && (
         <View style={styles.overlay}>
-          <SideNavigationCN 
-            navigation={navigation} 
-            onClose={toggleMenu} 
+          <SideNavigationCN navigation={navigation} onClose={toggleMenu} />
+          <TouchableOpacity
+            style={styles.overlayBackground}
+            onPress={toggleMenu}
           />
-          <TouchableOpacity style={styles.overlayBackground} onPress={toggleMenu} />
         </View>
       )}
 
       {/* Dashboard Content */}
       <View style={styles.content}>
-        <Text style={styles.dashboardText}>Welcome to the CarePlan ManagementCN</Text>
+        <Text style={styles.dashboardText}>
+          Welcome to the CarePlan ManagementCN
+        </Text>
       </View>
 
       {/* Bottom Navigation */}

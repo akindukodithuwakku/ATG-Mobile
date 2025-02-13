@@ -7,25 +7,28 @@ import WelcomeScreen from "./screens/WelcomeScreen";
 import LoginScreen from "./screens/LoginScreen";
 import SignupScreen from "./screens/SignupScreen";
 // import ForgotPasswordScreen from './screens/ForgotPasswordScreen';
-import ProfileScreen from './screens/ProfileScreen';
+import ProfileScreen from "./screens/ProfileScreen";
 // import ReadinessQuestionnaireScreen from './screens/ReadinessQuestionnaireScreen';
 // import AppointmentSchedulingScreen from './screens/AppointmentSchedulingScreen';
-import Appointments from './screens/Appointments';
-import CarePlanMgtClient from './screens/CarePlanMgtClient';
-import MedicationMgtClient from './screens/MedicationMgtClient';
-import CarePlanMgtCN from './screens/CarePlanMgtCN';
-import MedicationMgtCN from './screens/MedicationMgtCN';
-import NotificationsClient from './screens/NotificationsClient';
-import NotificationsCN from './screens/NotificationsCN';
-import ClientDashboard from './screens/ClientDashboard';
-import CNDashboard from './screens/CNDashboard';
+import Appointments from "./screens/Appointments";
+import CarePlanMgtClient from "./screens/CarePlanMgtClient";
+import MedicationMgtClient from "./screens/MedicationMgtClient";
+import CarePlanMgtCN from "./screens/CarePlanMgtCN";
+import MedicationMgtCN from "./screens/MedicationMgtCN";
+import NotificationsClient from "./screens/NotificationsClient";
+import NotificationsCN from "./screens/NotificationsCN";
+import ClientDashboard from "./screens/ClientDashboard";
+import CNDashboard from "./screens/CNDashboard";
 
 const Stack = createStackNavigator();
 
 export default function App() {
   return (
     <NavigationContainer>
-      <Stack.Navigator initialRouteName="Welcome" screenOptions={{headerShown: false}}>
+      <Stack.Navigator
+        initialRouteName="Welcome"
+        screenOptions={{ headerShown: false }}
+      >
         <Stack.Screen name="Welcome" component={WelcomeScreen} />
         <Stack.Screen name="Login" component={LoginScreen} />
         <Stack.Screen name="Signup" component={SignupScreen} />
