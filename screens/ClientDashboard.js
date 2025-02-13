@@ -19,6 +19,10 @@ const ClientDashboard = ({ navigation }) => {
     setIsMenuOpen(!isMenuOpen);
   };
 
+  const navigateToNotifications = () => {
+    navigation.navigate("NotificationsC"); // Navigate to Notification screen
+  };
+
   return (
     <View style={styles.container}>
       <StatusBar
@@ -27,7 +31,7 @@ const ClientDashboard = ({ navigation }) => {
         backgroundColor={scheme === "dark" ? "black" : "transparent"}
       />
 
-      {/* Header with Hamburger Icon */}
+      {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={toggleMenu}>
           <Ionicons
@@ -37,6 +41,9 @@ const ClientDashboard = ({ navigation }) => {
           />
         </TouchableOpacity>
         <Text style={styles.headerText}>DASHBOARD</Text>
+        <TouchableOpacity onPress={navigateToNotifications}>
+          <Ionicons name="notifications-outline" size={30} color="black" />
+        </TouchableOpacity>
       </View>
 
       {/* Overlay for Side Navigation */}
@@ -74,11 +81,14 @@ const styles = StyleSheet.create({
     padding: 15,
     backgroundColor: "#f8f9fa",
     marginTop: 30,
+    justifyContent: "space-between",
   },
   headerText: {
     fontSize: 20,
     fontWeight: "bold",
     marginLeft: 15,
+    flex: 1,
+    textAlign: "center",
   },
   content: {
     flex: 1,

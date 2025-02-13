@@ -1,5 +1,12 @@
-import React, { useState} from "react";
-import { View, Text, StyleSheet, TouchableOpacity, StatusBar, useColorScheme } from "react-native";
+import React, { useState } from "react";
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  StatusBar,
+  useColorScheme,
+} from "react-native";
 import SideNavigationCN from "../Components/SideNavigationCN";
 import BottomNavigationCN from "../Components/BottomNavigationCN";
 import { Ionicons } from "@expo/vector-icons";
@@ -12,15 +19,19 @@ const CNDashboard = ({ navigation }) => {
     setIsMenuOpen(!isMenuOpen);
   };
 
+  const navigateToNotifications = () => {
+    navigation.navigate("NotificationsCN"); // Navigate to Notification screen
+  };
+
   return (
     <View style={styles.container}>
       <StatusBar
-        barStyle={scheme === 'dark' ? 'light-content' : 'dark-content'}
+        barStyle={scheme === "dark" ? "light-content" : "dark-content"}
         translucent={true}
-        backgroundColor={scheme === 'dark' ? 'black' : 'transparent'}
+        backgroundColor={scheme === "dark" ? "black" : "transparent"}
       />
-      
-      {/* Header with Hamburger Icon */}
+
+      {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={toggleMenu}>
           <Ionicons
@@ -30,22 +41,27 @@ const CNDashboard = ({ navigation }) => {
           />
         </TouchableOpacity>
         <Text style={styles.headerText}>DASHBOARD</Text>
+        <TouchableOpacity onPress={navigateToNotifications}>
+          <Ionicons name="notifications-outline" size={30} color="black" />
+        </TouchableOpacity>
       </View>
 
       {/* Overlay for Side Navigation */}
       {isMenuOpen && (
         <View style={styles.overlay}>
-          <SideNavigationCN 
-            navigation={navigation} 
-            onClose={toggleMenu} 
+          <SideNavigationCN navigation={navigation} onClose={toggleMenu} />
+          <TouchableOpacity
+            style={styles.overlayBackground}
+            onPress={toggleMenu}
           />
-          <TouchableOpacity style={styles.overlayBackground} onPress={toggleMenu} />
         </View>
       )}
 
       {/* Dashboard Content */}
       <View style={styles.content}>
-        <Text style={styles.dashboardText}>Welcome to the Care Navigator Dashboard</Text>
+        <Text style={styles.dashboardText}>
+          Welcome to the Care Navigator Dashboard
+        </Text>
       </View>
 
       {/* Bottom Navigation */}
@@ -65,11 +81,14 @@ const styles = StyleSheet.create({
     padding: 15,
     backgroundColor: "#f8f9fa",
     marginTop: 30,
+    justifyContent: "space-between",
   },
   headerText: {
     fontSize: 20,
     fontWeight: "bold",
     marginLeft: 15,
+    flex: 1,
+    textAlign: "center",
   },
   content: {
     flex: 1,
