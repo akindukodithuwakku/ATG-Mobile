@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import {
   View,
   Text,
-  StyleSheet, 
+  StyleSheet,
   Image,
   TouchableOpacity,
   StatusBar,
@@ -11,6 +11,7 @@ import {
 import SideNavigationCN from "../Components/SideNavigationCN";
 import BottomNavigationCN from "../Components/BottomNavigationCN";
 import { Ionicons } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
 
 const CNDashboard = ({ navigation }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -32,8 +33,12 @@ const CNDashboard = ({ navigation }) => {
         backgroundColor={scheme === "dark" ? "black" : "transparent"}
       />
 
-      {/* Header */}
-      <View style={styles.header}>
+      <LinearGradient
+        colors={["#09D1C7", "#35AFEA"]}
+        style={styles.header}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 0, y: 1 }}
+      >
         <TouchableOpacity style={styles.menuButton} onPress={toggleMenu}>
           <Ionicons
             name={isMenuOpen ? "close" : "menu"}
@@ -41,24 +46,34 @@ const CNDashboard = ({ navigation }) => {
             color="black"
           />
         </TouchableOpacity>
-        
+
         <View style={styles.logoContainer}>
-          <View style={styles.greenCircle} />
+          <LinearGradient
+            colors={["#09D1C7", "#0C6478"]}
+            style={styles.circleGradient}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+          />
           <Image
             source={require("../assets/Ayman_Logo.png")}
             style={styles.logo}
           />
         </View>
+
         <Text style={styles.headerText}>DASHBOARD</Text>
-        <TouchableOpacity style={styles.notificationButton} onPress={navigateToNotifications}>
+
+        <TouchableOpacity
+          style={styles.notificationButton}
+          onPress={navigateToNotifications}
+        >
           <Ionicons name="notifications-outline" size={30} color="black" />
         </TouchableOpacity>
-      </View>
+      </LinearGradient>
 
       {/* Overlay for Side Navigation */}
       {isMenuOpen && (
         <View style={styles.overlay}>
-          <SideNavigationCN navigation={navigation} onClose={toggleMenu} />
+          <SideNavigationCN navigation={navigation} onClose={toggleMenu}/>
           <TouchableOpacity
             style={styles.overlayBackground}
             onPress={toggleMenu}
@@ -88,7 +103,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     padding: 15,
-    backgroundColor: "#f8f9fa",
     marginTop: 30,
     justifyContent: "space-between",
   },
@@ -96,37 +110,35 @@ const styles = StyleSheet.create({
     width: 40,
   },
   logoContainer: {
-    position: 'relative',
+    position: "relative",
     width: 50,
     height: 50,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
-  greenCircle: {
-    position: 'absolute',
+  circleGradient: {
+    position: "absolute",
     width: 55,
     height: 55,
     borderRadius: 50,
-    backgroundColor: '#4CAF50',
-    zIndex: 1,
   },
   logo: {
     width: 45,
     height: 45,
     resizeMode: "contain",
-    zIndex: 2,
+    zIndex: 1,
   },
   headerText: {
     fontSize: 25,
     fontWeight: "bold",
-    marginLeft: 15,
     flex: 1,
     textAlign: "center",
     marginHorizontal: 10,
+    color: "white",
   },
   notificationButton: {
     width: 40,
-    alignItems: 'flex-end',
+    alignItems: "flex-end",
   },
   content: {
     flex: 1,
