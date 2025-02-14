@@ -2,7 +2,8 @@ import React, { useState } from "react";
 import {
   View,
   Text,
-  StyleSheet,
+  StyleSheet, 
+  Image,
   TouchableOpacity,
   StatusBar,
   useColorScheme,
@@ -20,7 +21,7 @@ const CNDashboard = ({ navigation }) => {
   };
 
   const navigateToNotifications = () => {
-    navigation.navigate("NotificationsCN"); // Navigate to Notification screen
+    navigation.navigate("NotificationsCN");
   };
 
   return (
@@ -33,15 +34,23 @@ const CNDashboard = ({ navigation }) => {
 
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={toggleMenu}>
+        <TouchableOpacity style={styles.menuButton} onPress={toggleMenu}>
           <Ionicons
             name={isMenuOpen ? "close" : "menu"}
             size={30}
             color="black"
           />
         </TouchableOpacity>
+        
+        <View style={styles.logoContainer}>
+          <View style={styles.greenCircle} />
+          <Image
+            source={require("../assets/Ayman_Logo.png")}
+            style={styles.logo}
+          />
+        </View>
         <Text style={styles.headerText}>DASHBOARD</Text>
-        <TouchableOpacity onPress={navigateToNotifications}>
+        <TouchableOpacity style={styles.notificationButton} onPress={navigateToNotifications}>
           <Ionicons name="notifications-outline" size={30} color="black" />
         </TouchableOpacity>
       </View>
@@ -83,12 +92,41 @@ const styles = StyleSheet.create({
     marginTop: 30,
     justifyContent: "space-between",
   },
+  menuButton: {
+    width: 40,
+  },
+  logoContainer: {
+    position: 'relative',
+    width: 50,
+    height: 50,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  greenCircle: {
+    position: 'absolute',
+    width: 55,
+    height: 55,
+    borderRadius: 50,
+    backgroundColor: '#4CAF50',
+    zIndex: 1,
+  },
+  logo: {
+    width: 45,
+    height: 45,
+    resizeMode: "contain",
+    zIndex: 2,
+  },
   headerText: {
-    fontSize: 20,
+    fontSize: 25,
     fontWeight: "bold",
     marginLeft: 15,
     flex: 1,
     textAlign: "center",
+    marginHorizontal: 10,
+  },
+  notificationButton: {
+    width: 40,
+    alignItems: 'flex-end',
   },
   content: {
     flex: 1,
