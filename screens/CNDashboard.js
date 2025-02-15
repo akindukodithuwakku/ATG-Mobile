@@ -14,7 +14,7 @@ import BottomNavigationCN from "../Components/BottomNavigationCN";
 import { Ionicons, Foundation } from "@expo/vector-icons";
 import FontAwesome from "@expo/vector-icons/FontAwesome";
 import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
-import Feather from '@expo/vector-icons/Feather';
+import Feather from "@expo/vector-icons/Feather";
 import { LinearGradient } from "expo-linear-gradient";
 
 const CNDashboard = ({ navigation }) => {
@@ -24,7 +24,7 @@ const CNDashboard = ({ navigation }) => {
   const toggleMenu = useCallback(() => {
     setIsMenuOpen(!isMenuOpen);
   }, [isMenuOpen]);
-  
+
   const navigateToNotifications = useCallback(() => {
     navigation.navigate("NotificationsCN");
   }, [navigation]);
@@ -91,7 +91,7 @@ const CNDashboard = ({ navigation }) => {
       )}
 
       {/* Dashboard Content */}
-      <ScrollView 
+      <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
       >
@@ -178,12 +178,17 @@ const CNDashboard = ({ navigation }) => {
           {/* Chat Icon */}
           <TouchableOpacity style={styles.chatButton} onPress={navigateToChat}>
             <View style={styles.chatIconContainer}>
-              <Feather name="message-circle" size={62} color="#09D1C7" style={styles.mirroredIcon} />
+              <Feather
+                name="message-circle"
+                size={62}
+                color="#09D1C7"
+                style={styles.mirroredIcon}
+              />
               <Image
                 source={require("../assets/ChatAvatar.png")}
                 style={styles.chatAvatar}
               />
-            </View>        
+            </View>
           </TouchableOpacity>
         </View>
       </ScrollView>
@@ -288,9 +293,9 @@ const styles = StyleSheet.create({
     marginBottom: -10,
   },
   bottomRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     marginTop: 15,
   },
   documentsButton: {
@@ -309,23 +314,23 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
   },
   chatButton: {
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
     flex: 0.2,
   },
   chatIconContainer: {
-    position: 'relative',
+    position: "relative",
     width: 62,
     height: 62,
   },
   mirroredIcon: {
-    transform: [{scaleX: -1}],  // Flip the icon
-    position: 'absolute',
+    transform: [{ scaleX: -1 }], // Flip the icon
+    position: "absolute",
   },
   chatAvatar: {
     width: 45,
     height: 45,
-    position: 'absolute',
+    position: "absolute",
     top: 7,
     left: 7,
     borderRadius: 17.5,
