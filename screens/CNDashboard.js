@@ -11,6 +11,8 @@ import {
 import SideNavigationCN from "../Components/SideNavigationCN";
 import BottomNavigationCN from "../Components/BottomNavigationCN";
 import { Ionicons } from "@expo/vector-icons";
+import FontAwesome from '@expo/vector-icons/FontAwesome';
+import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
 import { LinearGradient } from "expo-linear-gradient";
 
 const CNDashboard = ({ navigation }) => {
@@ -83,9 +85,31 @@ const CNDashboard = ({ navigation }) => {
 
       {/* Dashboard Content */}
       <View style={styles.content}>
-        <Text style={styles.dashboardText}>
-          Welcome to the Care Navigator Dashboard
-        </Text>
+        {/* Main Navigation Cards */}
+        <View style={styles.cardContainer}>
+          <TouchableOpacity
+            style={styles.card}
+            onPress={() => navigation.navigate("CarePlanCN")}
+          >
+            <LinearGradient
+              colors={["#6a3093", "#a044ff"]}
+              style={styles.cardGradient}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+            >
+              <View style={styles.carePlanIcon}>
+                {/* Heart */}
+                <FontAwesome name="heartbeat" size={32} color="red" style={styles.heartIcon} />
+                {/* Hands */}
+                <FontAwesome5 name="hands" size={32} color="black" style={styles.handIcon} />
+              </View>
+              <Text style={styles.cardTitle}>Care Plan Management</Text>
+              <Text style={styles.cardSubtitle}>
+                Create and manage care plans.
+              </Text>
+            </LinearGradient>
+          </TouchableOpacity>
+        </View>
       </View>
 
       {/* Bottom Navigation */}
@@ -142,14 +166,49 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
+    padding: 20,
     marginBottom: 60,
   },
-  dashboardText: {
-    fontSize: 20,
+  cardContainer: {
+    flex: 1,
+    gap: 20,
+  },
+  card: {
+    borderRadius: 15,
+    overflow: "hidden",
+    elevation: 5,
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+  },
+  cardGradient: {
+    padding: 20,
+    alignItems: "center",
+  },
+  cardTitle: {
+    fontSize: 24,
     fontWeight: "bold",
+    color: "white",
     textAlign: "center",
+  },
+  cardSubtitle: {
+    fontSize: 18,
+    color: "black",
+    textAlign: "center",
+    marginTop: 5,
+  },
+  carePlanIcon: {
+    alignItems: "center",
+  },
+  handIcon: {
+    marginTop: -10,
+  },
+  heartIcon: {
+    marginBottom: -10,
   },
   overlay: {
     position: "absolute",
