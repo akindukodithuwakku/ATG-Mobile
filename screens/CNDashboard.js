@@ -10,7 +10,7 @@ import {
 } from "react-native";
 import SideNavigationCN from "../Components/SideNavigationCN";
 import BottomNavigationCN from "../Components/BottomNavigationCN";
-import { Ionicons } from "@expo/vector-icons";
+import { Ionicons, Foundation } from "@expo/vector-icons";
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
 import { LinearGradient } from "expo-linear-gradient";
@@ -106,6 +106,41 @@ const CNDashboard = ({ navigation }) => {
               <Text style={styles.cardTitle}>Care Plan Management</Text>
               <Text style={styles.cardSubtitle}>
                 Create and manage care plans.
+              </Text>
+            </LinearGradient>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.card}
+            onPress={() => navigation.navigate("MedicationCN")}
+          >
+            <LinearGradient
+              colors={["#FF512F", "#DD2476"]}
+              style={styles.cardGradient}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+            >
+              <Foundation name="clipboard-notes" size={32} color="black" />
+              <Text style={styles.cardTitle}>Medication Adherence</Text>
+              <Text style={styles.cardSubtitle}>
+                Follow up client tasks and medications.
+              </Text>
+            </LinearGradient>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.card}
+            onPress={() => navigation.navigate("Appointments")}
+          >
+            <LinearGradient
+              colors={["#1FA2FF", "#12D8FA"]}
+              style={styles.cardGradient}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+            >
+              <Ionicons name="calendar-outline" size={32} color="black" />
+              <Text style={styles.cardTitle}>Appointments</Text>
+              <Text style={styles.cardSubtitle}>
+                View the scheduled appointments.
               </Text>
             </LinearGradient>
           </TouchableOpacity>
