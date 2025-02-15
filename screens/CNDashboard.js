@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   StatusBar,
   useColorScheme,
+  ScrollView,
 } from "react-native";
 import SideNavigationCN from "../Components/SideNavigationCN";
 import BottomNavigationCN from "../Components/BottomNavigationCN";
@@ -89,7 +90,10 @@ const CNDashboard = ({ navigation }) => {
       )}
 
       {/* Dashboard Content */}
-      <View style={styles.content}>
+      <ScrollView 
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollContent}
+      >
         {/* Main Navigation Cards */}
         <View style={styles.cardContainer}>
           <TouchableOpacity
@@ -181,7 +185,7 @@ const CNDashboard = ({ navigation }) => {
             </View>        
           </TouchableOpacity>
         </View>
-      </View>
+      </ScrollView>
 
       {/* Bottom Navigation */}
       <BottomNavigationCN navigation={navigation} />
@@ -235,10 +239,12 @@ const styles = StyleSheet.create({
     width: 40,
     alignItems: "flex-end",
   },
-  content: {
+  scrollView: {
     flex: 1,
+  },
+  scrollContent: {
     padding: 20,
-    marginBottom: 60,
+    paddingBottom: 60,
   },
   cardContainer: {
     gap: 20,
