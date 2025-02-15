@@ -99,9 +99,9 @@ const CNDashboard = ({ navigation }) => {
             >
               <View style={styles.carePlanIcon}>
                 {/* Heart */}
-                <FontAwesome name="heartbeat" size={32} color="red" style={styles.heartIcon} />
+                <FontAwesome name="plus" size={24} color="black" style={styles.heartIcon} />
                 {/* Hands */}
-                <FontAwesome5 name="hands" size={32} color="black" style={styles.handIcon} />
+                <FontAwesome5 name="hands" size={24} color="black" style={styles.handIcon} />
               </View>
               <Text style={styles.cardTitle}>Care Plan Management</Text>
               <Text style={styles.cardSubtitle}>
@@ -205,7 +205,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   handIcon: {
-    marginTop: -10,
+    marginTop: -5,
   },
   heartIcon: {
     marginBottom: -10,
