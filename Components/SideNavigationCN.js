@@ -49,7 +49,7 @@ const SideNavigationCN = ({ navigation, onClose }) => {
 
   const handleNavigation = (route) => {
     navigation.navigate(route);
-    // onClose();
+    onClose();
   };
 
   return (

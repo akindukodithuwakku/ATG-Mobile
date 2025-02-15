@@ -44,7 +44,7 @@ const SideNavigationClient = ({ navigation, onClose }) => {
 
   const handleNavigation = (route) => {
     navigation.navigate(route);
-    // onClose();
+    onClose();
   };
 
   return (

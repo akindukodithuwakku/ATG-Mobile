@@ -41,6 +41,7 @@ const CNDashboard = ({ navigation }) => {
         backgroundColor={scheme === "dark" ? "black" : "transparent"}
       />
 
+      {/* Header */}
       <LinearGradient
         colors={["#09D1C7", "#35AFEA"]}
         style={styles.header}
