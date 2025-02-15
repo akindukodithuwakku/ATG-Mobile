@@ -19,10 +19,6 @@ const CNDashboard = ({ navigation }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const scheme = useColorScheme();
 
-  const navigateToDashboard = () => {
-    navigation.navigate("CNDashboard");
-  };
-
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
   };
@@ -60,17 +56,13 @@ const CNDashboard = ({ navigation }) => {
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
           />
-          <TouchableOpacity onPress={navigateToDashboard} style={styles.logoTouchable}>
-            <Image
-              source={require("../assets/Ayman_Logo.png")}
-              style={styles.logo}
-            />
-          </TouchableOpacity>
+          <Image
+            source={require("../assets/Ayman_Logo.png")}
+            style={styles.logo}
+          />
         </View>
 
-        <TouchableOpacity onPress={navigateToDashboard} style={styles.headerTextTouchable}>
-          <Text style={styles.headerText}>DASHBOARD</Text>
-        </TouchableOpacity>
+        <Text style={styles.headerText}>DASHBOARD</Text>
 
         <TouchableOpacity
           style={styles.notificationButton}
@@ -189,29 +181,18 @@ const styles = StyleSheet.create({
     height: 55,
     borderRadius: 50,
   },
-  logoTouchable: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
   logo: {
     width: 45,
     height: 45,
     resizeMode: "contain",
     zIndex: 1,
   },
-  headerTextTouchable: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    textAlign: 'center',
-    paddingHorizontal: 10,
-  },
   headerText: {
     fontSize: 25,
     fontWeight: "bold",
+    flex: 1,
+    textAlign: "center",
+    marginHorizontal: 10,
     color: "white",
   },
   notificationButton: {
