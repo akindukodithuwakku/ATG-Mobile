@@ -13,6 +13,7 @@ import BottomNavigationCN from "../Components/BottomNavigationCN";
 import { Ionicons, Foundation } from "@expo/vector-icons";
 import FontAwesome from "@expo/vector-icons/FontAwesome";
 import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
+import Feather from '@expo/vector-icons/Feather';
 import { LinearGradient } from "expo-linear-gradient";
 
 const CNDashboard = ({ navigation }) => {
@@ -25,6 +26,10 @@ const CNDashboard = ({ navigation }) => {
 
   const navigateToNotifications = () => {
     navigation.navigate("NotificationsCN");
+  };
+
+  const navigateToChat = () => {
+    navigation.navigate("Chat");
   };
 
   return (
@@ -155,14 +160,27 @@ const CNDashboard = ({ navigation }) => {
             </LinearGradient>
           </TouchableOpacity>
         </View>
-        {/* View Documents Button */}
-        <TouchableOpacity
-          style={styles.documentsButton}
-          onPress={() => navigation.navigate("DocumentCN")}
-        >
-          <Ionicons name="document-text-outline" size={24} color="white" />
-          <Text style={styles.documentsButtonText}>View Documents</Text>
-        </TouchableOpacity>
+        <View style={styles.bottomRow}>
+          {/* View Documents Button */}
+          <TouchableOpacity
+            style={styles.documentsButton}
+            onPress={() => navigation.navigate("DocumentCN")}
+          >
+            <Ionicons name="document-text-outline" size={24} color="white" />
+            <Text style={styles.documentsButtonText}>View Documents</Text>
+          </TouchableOpacity>
+
+          {/* Chat Icon */}
+          <TouchableOpacity style={styles.chatButton} onPress={navigateToChat}>
+            <View style={styles.chatIconContainer}>
+              <Feather name="message-circle" size={62} color="#09D1C7" style={styles.mirroredIcon} />
+              <Image
+                source={require("../assets/ChatAvatar.png")}
+                style={styles.chatAvatar}
+              />
+            </View>        
+          </TouchableOpacity>
+        </View>
       </View>
 
       {/* Bottom Navigation */}
@@ -223,7 +241,6 @@ const styles = StyleSheet.create({
     marginBottom: 60,
   },
   cardContainer: {
-    flex: 1,
     gap: 20,
   },
   card: {
@@ -236,7 +253,7 @@ const styles = StyleSheet.create({
       height: 2,
     },
     shadowOpacity: 0.25,
-    shadowRadius: 3.84,
+    shadowRadius: 3.85,
   },
   cardGradient: {
     padding: 20,
@@ -263,20 +280,48 @@ const styles = StyleSheet.create({
   heartIcon: {
     marginBottom: -10,
   },
+  bottomRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 15,
+  },
   documentsButton: {
     backgroundColor: "#666",
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    padding: 15,
+    padding: 10,
     borderRadius: 10,
-    marginTop: 10,
+    flex: 0.8, // Take up 80% of the row
   },
   documentsButtonText: {
     color: "white",
     fontSize: 16,
     marginLeft: 10,
     fontWeight: "bold",
+  },
+  chatButton: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    flex: 0.2,
+  },
+  chatIconContainer: {
+    position: 'relative',
+    width: 62,
+    height: 62,
+  },
+  mirroredIcon: {
+    transform: [{scaleX: -1}],  // Flip the icon
+    position: 'absolute',
+  },
+  chatAvatar: {
+    width: 45,
+    height: 45,
+    position: 'absolute',
+    top: 7,
+    left: 7,
+    borderRadius: 17.5,
   },
   overlay: {
     position: "absolute",
