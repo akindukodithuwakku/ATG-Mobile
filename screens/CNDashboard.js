@@ -11,8 +11,8 @@ import {
 import SideNavigationCN from "../Components/SideNavigationCN";
 import BottomNavigationCN from "../Components/BottomNavigationCN";
 import { Ionicons, Foundation } from "@expo/vector-icons";
-import FontAwesome from '@expo/vector-icons/FontAwesome';
-import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
+import FontAwesome from "@expo/vector-icons/FontAwesome";
+import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
 import { LinearGradient } from "expo-linear-gradient";
 
 const CNDashboard = ({ navigation }) => {
@@ -75,7 +75,7 @@ const CNDashboard = ({ navigation }) => {
       {/* Overlay for Side Navigation */}
       {isMenuOpen && (
         <View style={styles.overlay}>
-          <SideNavigationCN navigation={navigation} onClose={toggleMenu}/>
+          <SideNavigationCN navigation={navigation} onClose={toggleMenu} />
           <TouchableOpacity
             style={styles.overlayBackground}
             onPress={toggleMenu}
@@ -99,9 +99,19 @@ const CNDashboard = ({ navigation }) => {
             >
               <View style={styles.carePlanIcon}>
                 {/* Heart */}
-                <FontAwesome name="plus" size={24} color="black" style={styles.heartIcon} />
+                <FontAwesome
+                  name="plus"
+                  size={24}
+                  color="black"
+                  style={styles.heartIcon}
+                />
                 {/* Hands */}
-                <FontAwesome5 name="hands" size={24} color="black" style={styles.handIcon} />
+                <FontAwesome5
+                  name="hands"
+                  size={24}
+                  color="black"
+                  style={styles.handIcon}
+                />
               </View>
               <Text style={styles.cardTitle}>Care Plan Management</Text>
               <Text style={styles.cardSubtitle}>
@@ -145,6 +155,14 @@ const CNDashboard = ({ navigation }) => {
             </LinearGradient>
           </TouchableOpacity>
         </View>
+        {/* View Documents Button */}
+        <TouchableOpacity
+          style={styles.documentsButton}
+          onPress={() => navigation.navigate("DocumentCN")}
+        >
+          <Ionicons name="document-text-outline" size={24} color="white" />
+          <Text style={styles.documentsButtonText}>View Documents</Text>
+        </TouchableOpacity>
       </View>
 
       {/* Bottom Navigation */}
@@ -244,6 +262,21 @@ const styles = StyleSheet.create({
   },
   heartIcon: {
     marginBottom: -10,
+  },
+  documentsButton: {
+    backgroundColor: "#666",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 15,
+    borderRadius: 10,
+    marginTop: 10,
+  },
+  documentsButtonText: {
+    color: "white",
+    fontSize: 16,
+    marginLeft: 10,
+    fontWeight: "bold",
   },
   overlay: {
     position: "absolute",
