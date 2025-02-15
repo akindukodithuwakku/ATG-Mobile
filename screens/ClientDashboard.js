@@ -16,10 +16,74 @@ import FontAwesome from "@expo/vector-icons/FontAwesome";
 import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
 import Feather from "@expo/vector-icons/Feather";
 import { LinearGradient } from "expo-linear-gradient";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const ClientDashboard = ({ navigation }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [hasAppointment, setHasAppointment] = useState(false);
+  const [appointmentTime, setAppointmentTime] = useState(null);
+  const [countdown, setCountdown] = useState({
+    days: 0,
+    hours: 0,
+    minutes: 0,
+    seconds: 0
+  });
   const scheme = useColorScheme();
+
+  // Check for existing appointment on component mount
+  useEffect(() => {
+    const checkAppointment = async () => {
+      try {
+        const appointmentData = await AsyncStorage.getItem('appointmentData');
+        if (appointmentData) {
+          const parsedData = JSON.parse(appointmentData);
+          const appointmentDate = new Date(parsedData.appointmentTime);
+          
+          // Only show appointment if it's in the future
+          if (appointmentDate > new Date()) {
+            setHasAppointment(true);
+            setAppointmentTime(appointmentDate.getTime());
+          } else {
+            // Clear expired appointment
+            await AsyncStorage.removeItem('appointmentData');
+            setHasAppointment(false);
+          }
+        }
+      } catch (error) {
+        console.error("Error checking appointment:", error);
+      }
+    };
+    
+    checkAppointment();
+  }, []);
+
+  // Update countdown timer
+  useEffect(() => {
+    if (!hasAppointment || !appointmentTime) return;
+    
+    const intervalId = setInterval(() => {
+      const now = new Date().getTime();
+      const distance = appointmentTime - now;
+      
+      // If appointment time has passed, clear the appointment
+      if (distance < 0) {
+        clearInterval(intervalId);
+        setHasAppointment(false);
+        AsyncStorage.removeItem('appointmentData');
+        return;
+      }
+      
+      // Calculate time units
+      const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+      const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+      const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+      const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+      
+      setCountdown({ days, hours, minutes, seconds });
+    }, 1000);
+    
+    return () => clearInterval(intervalId);
+  }, [hasAppointment, appointmentTime]);
 
   const toggleMenu = useCallback(() => {
     setIsMenuOpen(!isMenuOpen);
@@ -36,6 +100,41 @@ const ClientDashboard = ({ navigation }) => {
   const navigateToReadiness = useCallback(() => {
     navigation.navigate("Readiness");
   }, [navigation]);
+
+  // Function to format countdown numbers with leading zeros
+  const formatNumber = (num) => {
+    return num < 10 ? `0${num}` : num;
+  };
+
+  // Render appointment countdown component
+  const renderAppointmentCountdown = () => {
+    return (
+      <View style={styles.countdownContainer}>
+        <Text style={styles.countdownTitle}>Appointment Countdown</Text>
+        <View style={styles.countdownRow}>
+          <View style={styles.countdownItem}>
+            <Text style={styles.countdownNumber}>{formatNumber(countdown.days)}</Text>
+            <Text style={styles.countdownLabel}>Days</Text>
+          </View>
+          <Text style={styles.countdownSeparator}>:</Text>
+          <View style={styles.countdownItem}>
+            <Text style={styles.countdownNumber}>{formatNumber(countdown.hours)}</Text>
+            <Text style={styles.countdownLabel}>Hours</Text>
+          </View>
+          <Text style={styles.countdownSeparator}>:</Text>
+          <View style={styles.countdownItem}>
+            <Text style={styles.countdownNumber}>{formatNumber(countdown.minutes)}</Text>
+            <Text style={styles.countdownLabel}>Minutes</Text>
+          </View>
+          <Text style={styles.countdownSeparator}>:</Text>
+          <View style={styles.countdownItem}>
+            <Text style={styles.countdownNumber}>{formatNumber(countdown.seconds)}</Text>
+            <Text style={styles.countdownLabel}>Seconds</Text>
+          </View>
+        </View>
+      </View>
+    );
+  };
 
   return (
     <View style={styles.container}>
@@ -99,12 +198,17 @@ const ClientDashboard = ({ navigation }) => {
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
       >
-        <TouchableOpacity
-          style={styles.consultationButton}
-          onPress={navigateToReadiness}
-        >
-          <Text style={styles.consultationButtonText}>Need a Consultation?</Text>
-        </TouchableOpacity>
+        {/* Conditional rendering: either appointment countdown or consultation button */}
+        {true ? (
+          renderAppointmentCountdown()
+        ) : (
+          <TouchableOpacity
+            style={styles.consultationButton}
+            onPress={navigateToReadiness}
+          >
+            <Text style={styles.consultationButtonText}>Need a Consultation?</Text>
+          </TouchableOpacity>
+        )}
         {/* Main Navigation Cards */}
         <View style={styles.cardContainer}>
           <TouchableOpacity
@@ -255,6 +359,44 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 18,
     fontWeight: 'bold',
+  },
+  countdownContainer: {
+    backgroundColor: "#E6F2FF",
+    borderRadius: 10,
+    padding: 10,
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: "#A6D1FF",
+  },
+  countdownTitle: {
+    fontSize: 18,
+    fontWeight: "600",
+    textAlign: "center",
+    marginBottom: 5,
+    color: "#0C6478",
+  },
+  countdownRow: {
+    flexDirection: "row",
+    justifyContent: "center",
+  },
+  countdownItem: {
+    alignItems: "center",
+  },
+  countdownNumber: {
+    fontSize: 28,
+    fontWeight: "bold",
+    color: "#333",
+  },
+  countdownLabel: {
+    fontSize: 12,
+    color: "#666",
+    marginTop: 2,
+  },
+  countdownSeparator: {
+    fontSize: 24,
+    marginHorizontal: 5,
+    color: "#333",
+    fontWeight: "bold",
   },
   cardContainer: {
     gap: 20,
