@@ -21,17 +21,17 @@ const CNDashboard = ({ navigation }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const scheme = useColorScheme();
 
-  const toggleMenu = () => {
+  const toggleMenu = useCallback(() => {
     setIsMenuOpen(!isMenuOpen);
-  };
-
-  const navigateToNotifications = () => {
+  }, [isMenuOpen]);
+  
+  const navigateToNotifications = useCallback(() => {
     navigation.navigate("NotificationsCN");
-  };
+  }, [navigation]);
 
-  const navigateToChat = () => {
+  const navigateToChat = useCallback(() => {
     navigation.navigate("Chat");
-  };
+  }, [navigation]);
 
   return (
     <View style={styles.container}>
