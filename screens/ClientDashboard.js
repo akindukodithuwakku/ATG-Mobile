@@ -1,4 +1,4 @@
-import React, { useState, useCallback  } from "react";
+import React, { useState, useCallback, useEffect  } from "react";
 import {
   View,
   Text,
@@ -31,6 +31,10 @@ const ClientDashboard = ({ navigation }) => {
 
   const navigateToChat = useCallback(() => {
     navigation.navigate("Chat");
+  }, [navigation]);
+
+  const navigateToReadiness = useCallback(() => {
+    navigation.navigate("Readiness");
   }, [navigation]);
 
   return (
@@ -95,14 +99,14 @@ const ClientDashboard = ({ navigation }) => {
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
       >
+        <TouchableOpacity
+          style={styles.consultationButton}
+          onPress={navigateToReadiness}
+        >
+          <Text style={styles.consultationButtonText}>Need a Consultation?</Text>
+        </TouchableOpacity>
         {/* Main Navigation Cards */}
         <View style={styles.cardContainer}>
-          <TouchableOpacity
-            style={styles.consultationButton}
-            onPress={() => navigation.navigate("Readiness")}
-          >
-            <Text style={styles.consultationButtonText}>Need a Consultation?</Text>
-          </TouchableOpacity>
           <TouchableOpacity
             style={styles.card}
             onPress={() => navigation.navigate("CarePlanC")}
@@ -239,6 +243,18 @@ const styles = StyleSheet.create({
   scrollContent: {
     padding: 20,
     paddingBottom: 60,
+  },
+  consultationButton: {
+    backgroundColor: "#4479D4",
+    paddingVertical: 15,
+    borderRadius: 10,
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  consultationButtonText: {
+    color: 'white',
+    fontSize: 18,
+    fontWeight: 'bold',
   },
   cardContainer: {
     gap: 20,
