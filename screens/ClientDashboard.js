@@ -11,6 +11,7 @@ import {
 } from "react-native";
 import SideNavigationClient from "../Components/SideNavigationClient";
 import BottomNavigationClient from "../Components/BottomNavigationClient";
+import ReadinessQuestionnaire from "./ReadinessQuestionnaire";
 import { Ionicons, Foundation } from "@expo/vector-icons";
 import FontAwesome from "@expo/vector-icons/FontAwesome";
 import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
@@ -20,6 +21,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const ClientDashboard = ({ navigation }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [showQuestionnaire, setShowQuestionnaire] = useState(false);
   const [hasAppointment, setHasAppointment] = useState(false);
   const [appointmentTime, setAppointmentTime] = useState(null);
   const [countdown, setCountdown] = useState({
@@ -98,8 +100,12 @@ const ClientDashboard = ({ navigation }) => {
   }, [navigation]);
 
   const navigateToReadiness = useCallback(() => {
-    navigation.navigate("Readiness");
-  }, [navigation]);
+    setShowQuestionnaire(true);
+  }, []);
+  
+  const handleCloseQuestionnaire = () => {
+    setShowQuestionnaire(false);
+  };
 
   // Function to format countdown numbers with leading zeros
   const formatNumber = (num) => {
@@ -199,7 +205,7 @@ const ClientDashboard = ({ navigation }) => {
         contentContainerStyle={styles.scrollContent}
       >
         {/* Conditional rendering: either appointment countdown or consultation button */}
-        {true ? (
+        {hasAppointment ? (
           renderAppointmentCountdown()
         ) : (
           <TouchableOpacity
@@ -291,6 +297,12 @@ const ClientDashboard = ({ navigation }) => {
 
       {/* Bottom Navigation */}
       <BottomNavigationClient navigation={navigation} />
+
+      <ReadinessQuestionnaire
+        visible={showQuestionnaire}
+        onClose={handleCloseQuestionnaire}
+        navigation={navigation}
+      />
     </View>
   );
 };
