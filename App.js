@@ -19,6 +19,7 @@ import NotificationsClient from "./screens/NotificationsClient";
 import NotificationsCN from "./screens/NotificationsCN";
 import ClientDashboard from "./screens/ClientDashboard";
 import CNDashboard from "./screens/CNDashboard";
+import Messaging from "./screens/Messaging";
 
 const Stack = createStackNavigator();
 
@@ -26,7 +27,7 @@ export default function App() {
   return (
     <NavigationContainer>
       <Stack.Navigator
-        initialRouteName="Welcome"
+        initialRouteName="Messaging"
         screenOptions={{ headerShown: false }}
       >
         <Stack.Screen name="Welcome" component={WelcomeScreen} />
@@ -45,6 +46,7 @@ export default function App() {
         <Stack.Screen name="NotificationsCN" component={NotificationsCN} />
         <Stack.Screen name="ClientDashboard" component={ClientDashboard} />
         <Stack.Screen name="CNDashboard" component={CNDashboard} />
+        <Stack.Screen name="Messaging" component={Messaging} />
       </Stack.Navigator>
     </NavigationContainer>
   );
