@@ -143,7 +143,7 @@ const ChatScreen = ({ navigation }) => {
       </KeyboardAvoidingView>
 
       {/* Bottom Navigation */}
-      <BottomNavigationCN navigation={navigation} />
+      {/* <BottomNavigationCN navigation={navigation} /> */}
     </SafeAreaView>
   );
 };
@@ -156,7 +156,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#fff",
-    marginBottom: 30,
+    marginBottom: 0,
   },
   header: {
     flexDirection: "row",
