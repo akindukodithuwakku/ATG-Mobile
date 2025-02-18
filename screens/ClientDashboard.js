@@ -96,9 +96,9 @@ const ClientDashboard = ({ navigation }) => {
     resetTimer();
   }, []);
   
-  const handleUserInteraction = () => {
-    resetTimer();
-  };
+const handleUserInteraction = useCallback(() => {
+  resetTimer();
+}, [resetTimer]);
 
   const toggleMenu = useCallback(() => {
     setIsMenuOpen(!isMenuOpen);
@@ -179,7 +179,13 @@ const ClientDashboard = ({ navigation }) => {
           start={{ x: 0, y: 0 }}
           end={{ x: 0, y: 1 }}
         >
-          <TouchableOpacity style={styles.menuButton} onPress={toggleMenu}>
+          <TouchableOpacity 
+  style={styles.menuButton} 
+  onPress={() => {
+    handleUserInteraction();
+    toggleMenu();
+  }}
+>
             <Ionicons
               name={isMenuOpen ? "close" : "menu"}
               size={30}
@@ -203,9 +209,12 @@ const ClientDashboard = ({ navigation }) => {
           <Text style={styles.headerText}>DASHBOARD</Text>
 
           <TouchableOpacity
-            style={styles.notificationButton}
-            onPress={navigateToNotifications}
-          >
+  style={styles.notificationButton}
+  onPress={() => {
+    handleUserInteraction();
+    navigateToNotifications();
+  }}
+>
             <Ionicons name="notifications-outline" size={30} color="black" />
           </TouchableOpacity>
         </LinearGradient>
@@ -234,9 +243,12 @@ const ClientDashboard = ({ navigation }) => {
             renderAppointmentCountdown()
           ) : (
             <TouchableOpacity
-              style={styles.consultationButton}
-              onPress={navigateToReadiness}
-            >
+  style={styles.consultationButton}
+  onPress={() => {
+    handleUserInteraction();
+    navigateToReadiness();
+  }}
+>
               <Text style={styles.consultationButtonText}>
                 Need a Consultation?
               </Text>
@@ -334,7 +346,7 @@ const ClientDashboard = ({ navigation }) => {
           navigation={navigation}
         />
       </View>
-    </TouchableOpacity>
+   </TouchableOpacity>
   );
 };
 

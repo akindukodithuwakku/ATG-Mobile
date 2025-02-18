@@ -6,10 +6,9 @@ import { createStackNavigator } from "@react-navigation/stack";
 import WelcomeScreen from "./screens/WelcomeScreen";
 import LoginScreen from "./screens/LoginScreen";
 import SignupScreen from "./screens/SignupScreen";
-// import ForgotPasswordScreen from './screens/ForgotPasswordScreen';
 import ProfileScreen from "./screens/ProfileScreen";
-// import ReadinessQuestionnaireScreen from './screens/ReadinessQuestionnaireScreen';
-// import AppointmentSchedulingScreen from './screens/AppointmentSchedulingScreen';
+import ReadinessQuestionnaire from './screens/ReadinessQuestionnaire';
+import AppointmentScheduling from './screens/AppointmentScheduling';
 import Appointments from "./screens/Appointments";
 import CarePlanMgtClient from "./screens/CarePlanMgtClient";
 import MedicationMgtClient from "./screens/MedicationMgtClient";
@@ -19,33 +18,43 @@ import NotificationsClient from "./screens/NotificationsClient";
 import NotificationsCN from "./screens/NotificationsCN";
 import ClientDashboard from "./screens/ClientDashboard";
 import CNDashboard from "./screens/CNDashboard";
+import { LogoutProvider, AutomaticLogoutScreen } from "./screens/AutoLogout";
 
 const Stack = createStackNavigator();
+
+const AppNavigator = () => {
+  return (
+    <Stack.Navigator
+      initialRouteName="ClientDashboard"
+      screenOptions={{ headerShown: false,
+        gestureEnabled: false }}
+    >
+      <Stack.Screen name="Welcome" component={WelcomeScreen} />
+      <Stack.Screen name="Login" component={LoginScreen} />
+      <Stack.Screen name="Signup" component={SignupScreen} />
+      <Stack.Screen name="Profile" component={ProfileScreen} />
+      <Stack.Screen name="Readiness" component={ReadinessQuestionnaire} />
+      <Stack.Screen name="AppointmentScheduling" component={AppointmentScheduling} />
+      <Stack.Screen name="Appointments" component={Appointments} />
+      <Stack.Screen name="CarePlanC" component={CarePlanMgtClient} />
+      <Stack.Screen name="MedicationC" component={MedicationMgtClient} />
+      <Stack.Screen name="CarePlanCN" component={CarePlanMgtCN} />
+      <Stack.Screen name="MedicationCN" component={MedicationMgtCN} />
+      <Stack.Screen name="NotificationsC" component={NotificationsClient} />
+      <Stack.Screen name="NotificationsCN" component={NotificationsCN} />
+      <Stack.Screen name="ClientDashboard" component={ClientDashboard} />
+      <Stack.Screen name="CNDashboard" component={CNDashboard} />
+      <Stack.Screen name="AutomaticLogout" component={AutomaticLogoutScreen} />
+    </Stack.Navigator>
+  );
+};
 
 export default function App() {
   return (
     <NavigationContainer>
-      <Stack.Navigator
-        initialRouteName="Welcome"
-        screenOptions={{ headerShown: false }}
-      >
-        <Stack.Screen name="Welcome" component={WelcomeScreen} />
-        <Stack.Screen name="Login" component={LoginScreen} />
-        <Stack.Screen name="Signup" component={SignupScreen} />
-        {/* <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} /> */}
-        <Stack.Screen name="Profile" component={ProfileScreen} />
-        {/* <Stack.Screen name="ReadinessQuestionnaire" component={ReadinessQuestionnaireScreen} />
-        <Stack.Screen name="AppointmentScheduling" component={AppointmentSchedulingScreen} /> */}
-        <Stack.Screen name="Appointments" component={Appointments} />
-        <Stack.Screen name="CarePlanC" component={CarePlanMgtClient} />
-        <Stack.Screen name="MedicationC" component={MedicationMgtClient} />
-        <Stack.Screen name="CarePlanCN" component={CarePlanMgtCN} />
-        <Stack.Screen name="MedicationCN" component={MedicationMgtCN} />
-        <Stack.Screen name="NotificationsC" component={NotificationsClient} />
-        <Stack.Screen name="NotificationsCN" component={NotificationsCN} />
-        <Stack.Screen name="ClientDashboard" component={ClientDashboard} />
-        <Stack.Screen name="CNDashboard" component={CNDashboard} />
-      </Stack.Navigator>
+      <LogoutProvider>
+        <AppNavigator />
+      </LogoutProvider>
     </NavigationContainer>
   );
 }

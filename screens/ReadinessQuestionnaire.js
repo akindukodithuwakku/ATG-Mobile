@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useCallback } from "react";
 import {
   View,
   Text,
@@ -10,8 +10,10 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useAutomaticLogout } from "./AutoLogout";
 
 const ReadinessQuestionnaire = ({ visible, onClose, navigation }) => {
+  const { resetTimer } = useAutomaticLogout();
   const questions = [
     "Experiencing any new or worsening symptoms?",
     "Faced any challenges in following your care plan or medications?",
@@ -31,11 +33,17 @@ const ReadinessQuestionnaire = ({ visible, onClose, navigation }) => {
 
   // Handle answer selection for a question
   const handleAnswer = (index, value) => {
+    resetTimer();
     const newAnswers = [...answers];
     newAnswers[index] = value;
     setAnswers(newAnswers);
     checkAllAnswered(newAnswers);
-  };
+  }; 
+
+  const handleClose = useCallback(() => {
+    if (resetTimer) resetTimer();
+    onClose();
+  }, [onClose, resetTimer]);
 
   // Handle submit button press
   const handleSubmit = async () => {
@@ -45,6 +53,7 @@ const ReadinessQuestionnaire = ({ visible, onClose, navigation }) => {
       
       // Close the questionnaire
       onClose();
+      resetTimer();
       
       // Navigate to appointment scheduling
       navigation.navigate("AppointmentScheduling");
@@ -58,12 +67,12 @@ const ReadinessQuestionnaire = ({ visible, onClose, navigation }) => {
       animationType="slide"
       transparent={true}
       visible={visible}
-      onRequestClose={onClose}
+      onRequestClose={handleClose}
     >
       <SafeAreaView style={styles.modalContainer}>
         <View style={styles.modalContent}>
           <View style={styles.header}>
-            <TouchableOpacity onPress={onClose} style={styles.closeButton}>
+            <TouchableOpacity onPress={handleClose} style={styles.closeButton}>
               <Ionicons name="close" size={24} color="black" />
             </TouchableOpacity>
             <Text style={styles.title}>Readiness Questionnaire</Text>

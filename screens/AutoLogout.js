@@ -69,13 +69,25 @@ export const useAutomaticLogout = () => {
   const context = useContext(LogoutContext);
   const navigation = useNavigation();
   
+  // Return early if context is not available
+  if (!context) {
+    console.warn("useAutomaticLogout must be used within a LogoutProvider");
+    return { resetTimer: () => {} }; // Return dummy function
+  }
+  
   useEffect(() => {
-    if (!context.isTimerActive) {
+    if (context.isTimerActive === false) {
+      // Force close any open modals before navigating
+      navigation.setOptions({
+        gestureEnabled: false
+      });
       navigation.navigate('AutomaticLogout');
     }
   }, [context.isTimerActive]);
-
-  return context;
+  
+  return {
+    resetTimer: context.resetTimer
+  };
 };
 
 // Automatic Logout Screen
