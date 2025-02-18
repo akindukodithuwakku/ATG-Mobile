@@ -7,6 +7,7 @@ import {
   StatusBar,
   Image,
   Platform,
+  Modal,
 } from "react-native";
 import SideNavigationClient from "../../Components/SideNavigationClient";
 import BottomNavigationClient from "../../Components/BottomNavigationClient";
@@ -15,41 +16,58 @@ import { LinearGradient } from "expo-linear-gradient";
 
 const ProfileScreen = ({ navigation }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
 
   const toggleMenu = useCallback(() => {
     setIsMenuOpen(!isMenuOpen);
   }, [isMenuOpen]);
 
+  const handleLogout = () => {
+    setShowLogoutModal(true);
+  };
+
+  const confirmLogout = () => {
+    setShowLogoutModal(false);
+    navigation.reset({
+      index: 0,
+      routes: [{ name: "Welcome" }],
+    });
+  };
+
   const menuItems = [
     {
       title: "Profile",
-      icon: <Feather name="user" size={24} color="#35AFEA" />,
+      icon: <Feather name="user" size={24} color="#0C6478" />,
       route: "UserProfile",
     },
     {
       title: "Privacy Policy",
-      icon: <MaterialIcons name="privacy-tip" size={24} color="#35AFEA" />,
+      icon: <MaterialIcons name="privacy-tip" size={24} color="#0C6478" />,
       route: "PrivacyPolicy",
     },
     {
       title: "Password Reset",
-      icon: <MaterialIcons name="lock-reset" size={24} color="#35AFEA" />,
+      icon: <MaterialIcons name="lock-reset" size={24} color="#0C6478" />,
       route: "PasswordReset",
     },
     {
       title: "Contact Us",
-      icon: <Feather name="phone" size={24} color="#35AFEA" />,
+      icon: <Feather name="phone" size={24} color="#0C6478" />,
       route: "ContactUs",
     },
     {
       title: "Logout",
       icon: <MaterialIcons name="logout" size={24} color="#ff4757" />,
-      route: "Logout",
+      isLogout: true,
     },
   ];
 
-  const navigateToScreen = (route) => {
-    navigation.navigate(route);
+  const handleMenuItemPress = (item) => {
+    if (item.isLogout) {
+      handleLogout();
+    } else {
+      navigation.navigate(item.route);
+    }
   };
 
   return (
@@ -61,19 +79,16 @@ const ProfileScreen = ({ navigation }) => {
       />
 
       <LinearGradient
-        colors={["#35AFEA", "#2196F3"]}
+        colors={["#09D1C7", "#35AFEA"]}
         style={styles.headerGradient}
       >
         {/* Header */}
         <View style={styles.header}>
-          <TouchableOpacity
-            style={styles.menuButton}
-            onPress={toggleMenu}
-          >
+          <TouchableOpacity style={styles.menuButton} onPress={toggleMenu}>
             <Ionicons
               name={isMenuOpen ? "close" : "menu"}
               size={30}
-              color="#fff"
+              color="black"
             />
           </TouchableOpacity>
           <Text style={styles.headerText}>My Profile</Text>
@@ -90,12 +105,10 @@ const ProfileScreen = ({ navigation }) => {
               style={styles.editButton}
               onPress={() => navigation.navigate("EditProfile")}
             >
-              <Feather name="edit-2" size={20} color="#35AFEA" />
+              <Feather name="edit" size={20} color="#0C6478" />
             </TouchableOpacity>
           </View>
-          <Text style={styles.profileName}>
-            Jane Doe
-          </Text>
+          <Text style={styles.profileName}>Jane Doe</Text>
         </View>
       </LinearGradient>
 
@@ -105,7 +118,7 @@ const ProfileScreen = ({ navigation }) => {
           <TouchableOpacity
             key={index}
             style={styles.menuItem}
-            onPress={() => navigateToScreen(item.route)}
+            onPress={() => handleMenuItemPress(item)}
             activeOpacity={0.7}
           >
             <View style={styles.menuItemLeft}>
@@ -129,6 +142,36 @@ const ProfileScreen = ({ navigation }) => {
           </TouchableOpacity>
         ))}
       </View>
+
+      {/* Logout Confirmation Modal */}
+      <Modal
+        animationType="fade"
+        transparent={true}
+        visible={showLogoutModal}
+        onRequestClose={() => setShowLogoutModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalText}>
+              Are you sure you want to log out?
+            </Text>
+            <View style={styles.modalButtons}>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.cancelButton]}
+                onPress={() => setShowLogoutModal(false)}
+              >
+                <Text style={styles.cancelButtonText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.logoutButton]}
+                onPress={confirmLogout}
+              >
+                <Text style={styles.logoutButtonText}>Yes, Logout</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
 
       {/* Side Navigation Overlay */}
       {isMenuOpen && (
@@ -154,12 +197,13 @@ const styles = StyleSheet.create({
     backgroundColor: "#f8f9fa",
   },
   headerGradient: {
-    paddingTop: Platform.OS === "ios" ? 50 : StatusBar.currentHeight + 10,
+    paddingTop: Platform.OS === "ios" ? 50 : StatusBar.currentHeight,
   },
   header: {
     flexDirection: "row",
     alignItems: "center",
     padding: 20,
+    paddingTop: 10,
   },
   menuButton: {
     padding: 5,
@@ -200,7 +244,7 @@ const styles = StyleSheet.create({
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
-    shadowRadius: 3.84,
+    shadowRadius: 3.85,
     elevation: 5,
   },
   profileName: {
@@ -248,16 +292,64 @@ const styles = StyleSheet.create({
     color: "#ff4757",
   },
   overlay: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
+    ...StyleSheet.absoluteFillObject,
     backgroundColor: "rgba(0,0,0,0.4)",
     zIndex: 1,
   },
   overlayBackground: {
     flex: 1,
+  },
+  // modal styles
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    backgroundColor: 'white',
+    borderRadius: 20,
+    padding: 25,
+    width: '80%',
+    alignItems: 'center',
+  },
+  modalText: {
+    fontSize: 18,
+    fontWeight: '500',
+    color: '#333',
+    marginBottom: 25,
+    textAlign: 'center',
+  },
+  modalButtons: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: '100%',
+  },
+  modalButton: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 25,
+    marginHorizontal: 8,
+  },
+  cancelButton: {
+    backgroundColor: 'white',
+    borderWidth: 1,
+    borderColor: '#35AFEA',
+  },
+  logoutButton: {
+    backgroundColor: '#35AFEA',
+  },
+  cancelButtonText: {
+    color: '#35AFEA',
+    textAlign: 'center',
+    fontSize: 16,
+    fontWeight: '500',
+  },
+  logoutButtonText: {
+    color: 'white',
+    textAlign: 'center',
+    fontSize: 16,
+    fontWeight: '500',
   },
 });
 
