@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect  } from "react";
+import React, { useState, useCallback, useEffect} from "react";
 import {
   View,
   Text,
@@ -12,6 +12,7 @@ import {
 import SideNavigationClient from "../Components/SideNavigationClient";
 import BottomNavigationClient from "../Components/BottomNavigationClient";
 import ReadinessQuestionnaire from "./ReadinessQuestionnaire";
+import { useAutomaticLogout } from "./AutoLogout";
 import { Ionicons, Foundation } from "@expo/vector-icons";
 import FontAwesome from "@expo/vector-icons/FontAwesome";
 import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
@@ -20,6 +21,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const ClientDashboard = ({ navigation }) => {
+  const { resetTimer } = useAutomaticLogout();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [showQuestionnaire, setShowQuestionnaire] = useState(false);
   const [hasAppointment, setHasAppointment] = useState(false);
@@ -28,7 +30,7 @@ const ClientDashboard = ({ navigation }) => {
     days: 0,
     hours: 0,
     minutes: 0,
-    seconds: 0
+    seconds: 0,
   });
   const scheme = useColorScheme();
 
@@ -36,18 +38,18 @@ const ClientDashboard = ({ navigation }) => {
   useEffect(() => {
     const checkAppointment = async () => {
       try {
-        const appointmentData = await AsyncStorage.getItem('appointmentData');
+        const appointmentData = await AsyncStorage.getItem("appointmentData");
         if (appointmentData) {
           const parsedData = JSON.parse(appointmentData);
           const appointmentDate = new Date(parsedData.appointmentTime);
-          
+
           // Only show appointment if it's in the future
           if (appointmentDate > new Date()) {
             setHasAppointment(true);
             setAppointmentTime(appointmentDate.getTime());
           } else {
             // Clear expired appointment
-            await AsyncStorage.removeItem('appointmentData');
+            await AsyncStorage.removeItem("appointmentData");
             setHasAppointment(false);
           }
         }
@@ -55,37 +57,48 @@ const ClientDashboard = ({ navigation }) => {
         console.error("Error checking appointment:", error);
       }
     };
-    
+
     checkAppointment();
   }, []);
 
   // Update countdown timer
   useEffect(() => {
     if (!hasAppointment || !appointmentTime) return;
-    
+
     const intervalId = setInterval(() => {
       const now = new Date().getTime();
       const distance = appointmentTime - now;
-      
+
       // If appointment time has passed, clear the appointment
       if (distance < 0) {
         clearInterval(intervalId);
         setHasAppointment(false);
-        AsyncStorage.removeItem('appointmentData');
+        AsyncStorage.removeItem("appointmentData");
         return;
       }
-      
+
       // Calculate time units
       const days = Math.floor(distance / (1000 * 60 * 60 * 24));
-      const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+      const hours = Math.floor(
+        (distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)
+      );
       const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
       const seconds = Math.floor((distance % (1000 * 60)) / 1000);
-      
+
       setCountdown({ days, hours, minutes, seconds });
     }, 1000);
-    
+
     return () => clearInterval(intervalId);
   }, [hasAppointment, appointmentTime]);
+
+  // Reset auto logout timer when dashboard mounts
+  useEffect(() => {
+    resetTimer();
+  }, []);
+  
+  const handleUserInteraction = () => {
+    resetTimer();
+  };
 
   const toggleMenu = useCallback(() => {
     setIsMenuOpen(!isMenuOpen);
@@ -102,7 +115,7 @@ const ClientDashboard = ({ navigation }) => {
   const navigateToReadiness = useCallback(() => {
     setShowQuestionnaire(true);
   }, []);
-  
+
   const handleCloseQuestionnaire = () => {
     setShowQuestionnaire(false);
   };
@@ -119,22 +132,30 @@ const ClientDashboard = ({ navigation }) => {
         <Text style={styles.countdownTitle}>Appointment Countdown</Text>
         <View style={styles.countdownRow}>
           <View style={styles.countdownItem}>
-            <Text style={styles.countdownNumber}>{formatNumber(countdown.days)}</Text>
+            <Text style={styles.countdownNumber}>
+              {formatNumber(countdown.days)}
+            </Text>
             <Text style={styles.countdownLabel}>Days</Text>
           </View>
           <Text style={styles.countdownSeparator}>:</Text>
           <View style={styles.countdownItem}>
-            <Text style={styles.countdownNumber}>{formatNumber(countdown.hours)}</Text>
+            <Text style={styles.countdownNumber}>
+              {formatNumber(countdown.hours)}
+            </Text>
             <Text style={styles.countdownLabel}>Hours</Text>
           </View>
           <Text style={styles.countdownSeparator}>:</Text>
           <View style={styles.countdownItem}>
-            <Text style={styles.countdownNumber}>{formatNumber(countdown.minutes)}</Text>
+            <Text style={styles.countdownNumber}>
+              {formatNumber(countdown.minutes)}
+            </Text>
             <Text style={styles.countdownLabel}>Minutes</Text>
           </View>
           <Text style={styles.countdownSeparator}>:</Text>
           <View style={styles.countdownItem}>
-            <Text style={styles.countdownNumber}>{formatNumber(countdown.seconds)}</Text>
+            <Text style={styles.countdownNumber}>
+              {formatNumber(countdown.seconds)}
+            </Text>
             <Text style={styles.countdownLabel}>Seconds</Text>
           </View>
         </View>
@@ -143,167 +164,177 @@ const ClientDashboard = ({ navigation }) => {
   };
 
   return (
-    <View style={styles.container}>
-      <StatusBar
-        barStyle={scheme === "dark" ? "light-content" : "dark-content"}
-        translucent={true}
-        backgroundColor={scheme === "dark" ? "black" : "transparent"}
-      />
+    <TouchableOpacity activeOpacity={1} onPress={handleUserInteraction} style={{ flex: 1 }}>
+      <View style={styles.container}>
+        <StatusBar
+          barStyle={scheme === "dark" ? "light-content" : "dark-content"}
+          translucent={true}
+          backgroundColor={scheme === "dark" ? "black" : "transparent"}
+        />
 
-      {/* Header */}
-      <LinearGradient
-        colors={["#09D1C7", "#35AFEA"]}
-        style={styles.header}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 0, y: 1 }}
-      >
-        <TouchableOpacity style={styles.menuButton} onPress={toggleMenu}>
-          <Ionicons
-            name={isMenuOpen ? "close" : "menu"}
-            size={30}
-            color="black"
-          />
-        </TouchableOpacity>
-
-        <View style={styles.logoContainer}>
-          <LinearGradient
-            colors={["#09D1C7", "#0C6478"]}
-            style={styles.circleGradient}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-          />
-          <Image
-            source={require("../assets/Ayman_Logo.png")}
-            style={styles.logo}
-          />
-        </View>
-
-        <Text style={styles.headerText}>DASHBOARD</Text>
-
-        <TouchableOpacity
-          style={styles.notificationButton}
-          onPress={navigateToNotifications}
+        {/* Header */}
+        <LinearGradient
+          colors={["#09D1C7", "#35AFEA"]}
+          style={styles.header}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 0, y: 1 }}
         >
-          <Ionicons name="notifications-outline" size={30} color="black" />
-        </TouchableOpacity>
-      </LinearGradient>
-
-      {/* Overlay for Side Navigation */}
-      {isMenuOpen && (
-        <View style={styles.overlay}>
-          <SideNavigationClient navigation={navigation} onClose={toggleMenu} />
-          <TouchableOpacity
-            style={styles.overlayBackground}
-            onPress={toggleMenu}
-          />
-        </View>
-      )}
-
-      {/* Dashboard Content */}
-      <ScrollView
-        style={styles.scrollView}
-        contentContainerStyle={styles.scrollContent}
-      >
-        {/* Conditional rendering: either appointment countdown or consultation button */}
-        {hasAppointment ? (
-          renderAppointmentCountdown()
-        ) : (
-          <TouchableOpacity
-            style={styles.consultationButton}
-            onPress={navigateToReadiness}
-          >
-            <Text style={styles.consultationButtonText}>Need a Consultation?</Text>
+          <TouchableOpacity style={styles.menuButton} onPress={toggleMenu}>
+            <Ionicons
+              name={isMenuOpen ? "close" : "menu"}
+              size={30}
+              color="black"
+            />
           </TouchableOpacity>
-        )}
-        {/* Main Navigation Cards */}
-        <View style={styles.cardContainer}>
-          <TouchableOpacity
-            style={styles.card}
-            onPress={() => navigation.navigate("CarePlanC")}
-          >
+
+          <View style={styles.logoContainer}>
             <LinearGradient
-              colors={["#6a3093", "#a044ff"]}
-              style={styles.cardGradient}
+              colors={["#09D1C7", "#0C6478"]}
+              style={styles.circleGradient}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
+            />
+            <Image
+              source={require("../assets/Ayman_Logo.png")}
+              style={styles.logo}
+            />
+          </View>
+
+          <Text style={styles.headerText}>DASHBOARD</Text>
+
+          <TouchableOpacity
+            style={styles.notificationButton}
+            onPress={navigateToNotifications}
+          >
+            <Ionicons name="notifications-outline" size={30} color="black" />
+          </TouchableOpacity>
+        </LinearGradient>
+
+        {/* Overlay for Side Navigation */}
+        {isMenuOpen && (
+          <View style={styles.overlay}>
+            <SideNavigationClient
+              navigation={navigation}
+              onClose={toggleMenu}
+            />
+            <TouchableOpacity
+              style={styles.overlayBackground}
+              onPress={toggleMenu}
+            />
+          </View>
+        )}
+
+        {/* Dashboard Content */}
+        <ScrollView
+          style={styles.scrollView}
+          contentContainerStyle={styles.scrollContent}
+        >
+          {/* Conditional rendering: either appointment countdown or consultation button */}
+          {hasAppointment ? (
+            renderAppointmentCountdown()
+          ) : (
+            <TouchableOpacity
+              style={styles.consultationButton}
+              onPress={navigateToReadiness}
             >
-              <View style={styles.carePlanIcon}>
-                {/* Heart */}
-                <FontAwesome
-                  name="plus"
-                  size={24}
-                  color="black"
-                  style={styles.heartIcon}
+              <Text style={styles.consultationButtonText}>
+                Need a Consultation?
+              </Text>
+            </TouchableOpacity>
+          )}
+          {/* Main Navigation Cards */}
+          <View style={styles.cardContainer}>
+            <TouchableOpacity
+              style={styles.card}
+              onPress={() => navigation.navigate("CarePlanC")}
+            >
+              <LinearGradient
+                colors={["#6a3093", "#a044ff"]}
+                style={styles.cardGradient}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+              >
+                <View style={styles.carePlanIcon}>
+                  {/* Heart */}
+                  <FontAwesome
+                    name="plus"
+                    size={24}
+                    color="black"
+                    style={styles.heartIcon}
+                  />
+                  {/* Hands */}
+                  <FontAwesome5
+                    name="hands"
+                    size={24}
+                    color="black"
+                    style={styles.handIcon}
+                  />
+                </View>
+                <Text style={styles.cardTitle}>Care Plan</Text>
+                <Text style={styles.cardSubtitle}>
+                  View and manage your personalized care plan.
+                </Text>
+              </LinearGradient>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.card}
+              onPress={() => navigation.navigate("MedicationC")}
+            >
+              <LinearGradient
+                colors={["#FF512F", "#DD2476"]}
+                style={styles.cardGradient}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+              >
+                <Foundation name="clipboard-notes" size={32} color="black" />
+                <Text style={styles.cardTitle}>Medication Management</Text>
+                <Text style={styles.cardSubtitle}>
+                  Track your medications and prescriptions.
+                </Text>
+              </LinearGradient>
+            </TouchableOpacity>
+          </View>
+          <View style={styles.bottomRow}>
+            {/* Documents Upload Button */}
+            <TouchableOpacity
+              style={styles.documentsButton}
+              onPress={() => navigation.navigate("DocumentC")}
+            >
+              <Ionicons name="document-text-outline" size={24} color="white" />
+              <Text style={styles.documentsButtonText}>Documents Upload</Text>
+            </TouchableOpacity>
+
+            {/* Chat Icon */}
+            <TouchableOpacity
+              style={styles.chatButton}
+              onPress={navigateToChat}
+            >
+              <View style={styles.chatIconContainer}>
+                <Feather
+                  name="message-circle"
+                  size={62}
+                  color="#09D1C7"
+                  style={styles.mirroredIcon}
                 />
-                {/* Hands */}
-                <FontAwesome5
-                  name="hands"
-                  size={24}
-                  color="black"
-                  style={styles.handIcon}
+                <Image
+                  source={require("../assets/ChatAvatar.png")}
+                  style={styles.chatAvatar}
                 />
               </View>
-              <Text style={styles.cardTitle}>Care Plan</Text>
-              <Text style={styles.cardSubtitle}>
-                View and manage your personalized care plan.
-              </Text>
-            </LinearGradient>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.card}
-            onPress={() => navigation.navigate("MedicationC")}
-          >
-            <LinearGradient
-              colors={["#FF512F", "#DD2476"]}
-              style={styles.cardGradient}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-            >
-              <Foundation name="clipboard-notes" size={32} color="black" />
-              <Text style={styles.cardTitle}>Medication Management</Text>
-              <Text style={styles.cardSubtitle}>
-                Track your medications and prescriptions.
-              </Text>
-            </LinearGradient>
-          </TouchableOpacity>
-        </View>
-        <View style={styles.bottomRow}>
-          {/* Documents Upload Button */}
-          <TouchableOpacity
-            style={styles.documentsButton}
-            onPress={() => navigation.navigate("DocumentC")}
-          >
-            <Ionicons name="document-text-outline" size={24} color="white" />
-            <Text style={styles.documentsButtonText}>Documents Upload</Text>
-          </TouchableOpacity>
+            </TouchableOpacity>
+          </View>
+        </ScrollView>
 
-          {/* Chat Icon */}
-          <TouchableOpacity style={styles.chatButton} onPress={navigateToChat}>
-            <View style={styles.chatIconContainer}>
-              <Feather
-                name="message-circle"
-                size={62}
-                color="#09D1C7"
-                style={styles.mirroredIcon}
-              />
-              <Image
-                source={require("../assets/ChatAvatar.png")}
-                style={styles.chatAvatar}
-              />
-            </View>
-          </TouchableOpacity>
-        </View>
-      </ScrollView>
+        {/* Bottom Navigation */}
+        <BottomNavigationClient navigation={navigation} />
 
-      {/* Bottom Navigation */}
-      <BottomNavigationClient navigation={navigation} />
-
-      <ReadinessQuestionnaire
-        visible={showQuestionnaire}
-        onClose={handleCloseQuestionnaire}
-        navigation={navigation}
-      />
-    </View>
+        <ReadinessQuestionnaire
+          visible={showQuestionnaire}
+          onClose={handleCloseQuestionnaire}
+          navigation={navigation}
+        />
+      </View>
+    </TouchableOpacity>
   );
 };
 
@@ -364,13 +395,13 @@ const styles = StyleSheet.create({
     backgroundColor: "#4479D4",
     paddingVertical: 15,
     borderRadius: 10,
-    alignItems: 'center',
+    alignItems: "center",
     marginBottom: 20,
   },
   consultationButtonText: {
-    color: 'white',
+    color: "white",
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   countdownContainer: {
     backgroundColor: "#E6F2FF",
