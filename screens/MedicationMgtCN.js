@@ -6,25 +6,42 @@ import {
   TouchableOpacity,
   StatusBar,
   useColorScheme,
+  TextInput,
+  FlatList,
 } from "react-native";
 import SideNavigationCN from "../Components/SideNavigationCN";
 import BottomNavigationCN from "../Components/BottomNavigationCN";
 import { Ionicons } from "@expo/vector-icons";
 
+// Sample data for medication details
+const medicationData = [
+  { id: '1', name: 'Aspirin', dosage: '100 mg', schedule: 'Once a day', refillDate: '2024-01-15' },
+  { id: '2', name: 'Metformin', dosage: '500 mg', schedule: 'Once a day', refillDate: '2024-01-20' },
+  { id: '3', name: 'Amoxicillin', dosage: '250 mg', schedule: 'Three times a day', refillDate: '2024-01-25' },
+];
+
 const MedicationMgtCN = ({ navigation }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [clientName, setClientName] = useState(""); // Dynamic client name
   const scheme = useColorScheme();
 
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
   };
 
+  // Filtered data based on search query
+  const filteredMedications = medicationData.filter((med) =>
+    med.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   return (
     <View style={styles.container}>
+      {/* Status Bar */}
       <StatusBar
         barStyle={scheme === "dark" ? "light-content" : "dark-content"}
         translucent={true}
-        backgroundColor={scheme === "dark" ? "black" : "transparent"}
+        backgroundColor={scheme === "dark" ? "#121212" : "#f8f9fa"}
       />
 
       {/* Header with Hamburger Icon */}
@@ -36,7 +53,7 @@ const MedicationMgtCN = ({ navigation }) => {
             color="black"
           />
         </TouchableOpacity>
-        <Text style={styles.headerText}>Medication ManagementCN</Text>
+        <Text style={styles.headerText}>View Medication Management</Text>
       </View>
 
       {/* Overlay for Side Navigation */}
@@ -50,12 +67,50 @@ const MedicationMgtCN = ({ navigation }) => {
         </View>
       )}
 
-      {/* Dashboard Content */}
-      <View style={styles.content}>
-        <Text style={styles.dashboardText}>
-          Welcome to the Medication ManagementCN
-        </Text>
+      {/* Search Bar */}
+      <View style={styles.searchContainer}>
+        <TextInput
+          style={styles.searchInput}
+          placeholder="Search Medication Name"
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+        />
       </View>
+
+      {/* Client Name Input */}
+      <View style={styles.clientInfo}>
+        <Text style={styles.label}>Client Name:</Text>
+        <TextInput
+          style={styles.clientNameInput}
+          placeholder="Enter Client Name"
+          value={clientName}
+          onChangeText={setClientName}
+        />
+      </View>
+
+      {/* Scrollable Table */}
+      <FlatList
+        data={filteredMedications}
+        keyExtractor={(item) => item.id}
+        ListHeaderComponent={
+          // Table Header
+          <View style={styles.tableHeader}>
+            <Text style={[styles.columnHeader, { flex: 2 }]}>Medication</Text>
+            <Text style={[styles.columnHeader, { flex: 1 }]}>Dosage</Text>
+            <Text style={[styles.columnHeader, { flex: 2 }]}>Schedule</Text>
+            <Text style={[styles.columnHeader, { flex: 1 }]}>Refill Date</Text>
+          </View>
+        }
+        renderItem={({ item }) => (
+          <View style={styles.medicationRow}>
+            <Text style={[styles.medicationText, { flex: 2 }]}>{item.name}</Text>
+            <Text style={[styles.medicationText, { flex: 1 }]}>{item.dosage}</Text>
+            <Text style={[styles.medicationText, { flex: 2 }]}>{item.schedule}</Text>
+            <Text style={[styles.medicationText, { flex: 1 }]}>{item.refillDate}</Text>
+          </View>
+        )}
+        contentContainerStyle={styles.tableContainer}
+      />
 
       {/* Bottom Navigation */}
       <BottomNavigationCN navigation={navigation} />
@@ -63,6 +118,7 @@ const MedicationMgtCN = ({ navigation }) => {
   );
 };
 
+// Styles
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -80,15 +136,59 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     marginLeft: 15,
   },
-  content: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    marginBottom: 60,
+  searchContainer: {
+    padding: 15,
   },
-  dashboardText: {
-    fontSize: 20,
+  searchInput: {
+    height: 40,
+    borderColor: "#ccc",
+    borderWidth: 1,
+    borderRadius: 5,
+    paddingLeft: 10,
+    backgroundColor: "#f8f9fa",
+  },
+  clientInfo: {
+    paddingHorizontal: 15,
+    marginBottom: 10,
+  },
+  label: {
+    fontSize: 16,
     fontWeight: "bold",
+    marginBottom: 5,
+  },
+  clientNameInput: {
+    height: 40,
+    borderColor: "#ccc",
+    borderWidth: 1,
+    borderRadius: 5,
+    paddingLeft: 10,
+    backgroundColor: "#f8f9fa",
+  },
+  tableContainer: {
+    flexGrow: 1,
+    paddingHorizontal: 15,
+  },
+  tableHeader: {
+    flexDirection: "row",
+    backgroundColor: "#00AEEF",
+    paddingVertical: 10,
+    paddingHorizontal: 5,
+  },
+  columnHeader: {
+    color: "#fff",
+    fontWeight: "bold",
+    textAlign: "center",
+  },
+  medicationRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    paddingVertical: 10,
+    paddingHorizontal: 5,
+    borderBottomWidth: 1,
+    borderBottomColor: "#ddd",
+  },
+  medicationText: {
+    fontSize: 14,
     textAlign: "center",
   },
   overlay: {
