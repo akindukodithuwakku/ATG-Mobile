@@ -5,15 +5,21 @@ import {
   StyleSheet,
   TouchableOpacity,
   StatusBar,
-  useColorScheme,
+  Platform,
 } from "react-native";
 import SideNavigationCN from "../Components/SideNavigationCN";
 import BottomNavigationCN from "../Components/BottomNavigationCN";
+import { WebView } from 'react-native-webview';
 import { Ionicons } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
 
 const Appointments = ({ navigation }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const scheme = useColorScheme();
+  
+  // Replace this with the care navigator's calendar URL
+  // const calendarUrl = 'https://calendar.google.com/calendar/embed?src=benjaminalec285%40gmail.com';
+  const calanderEmail = "benjaminalec285";
+  const calendarUrl = `https://calendar.google.com/calendar/embed?src=${calanderEmail}%40gmail.com`;
 
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
@@ -22,40 +28,47 @@ const Appointments = ({ navigation }) => {
   return (
     <View style={styles.container}>
       <StatusBar
-        barStyle={scheme === "dark" ? "light-content" : "dark-content"}
-        translucent={true}
-        backgroundColor={scheme === "dark" ? "black" : "transparent"}
+        barStyle="light-content"
+        backgroundColor="transparent"
+        translucent
       />
+      
+      <LinearGradient
+        colors={["#09D1C7", "#35AFEA"]}
+        style={styles.headerGradient}
+      >
+        <View style={styles.header}>
+          <TouchableOpacity style={styles.menuButton} onPress={toggleMenu}>
+            <Ionicons
+              name={isMenuOpen ? "close" : "menu"}
+              size={30}
+              color="black"
+            />
+          </TouchableOpacity>
+          <Text style={styles.headerText}>Appointments</Text>
+        </View>
+      </LinearGradient>
 
-      {/* Header with Hamburger Icon */}
-      <View style={styles.header}>
-        <TouchableOpacity onPress={toggleMenu}>
-          <Ionicons
-            name={isMenuOpen ? "close" : "menu"}
-            size={30}
-            color="black"
-          />
-        </TouchableOpacity>
-        <Text style={styles.headerText}>Appointments</Text>
-      </View>
-
-      {/* Overlay for Side Navigation */}
       {isMenuOpen && (
         <View style={styles.overlay}>
           <SideNavigationCN navigation={navigation} onClose={toggleMenu} />
           <TouchableOpacity
             style={styles.overlayBackground}
             onPress={toggleMenu}
+            activeOpacity={1}
           />
         </View>
       )}
 
-      {/* Dashboard Content */}
       <View style={styles.content}>
-        <Text style={styles.dashboardText}>Welcome to the Appointments</Text>
+        <WebView 
+          source={{ uri: calendarUrl }}
+          style={styles.calendar}
+          javaScriptEnabled={true}
+          domStorageEnabled={true}
+        />
       </View>
 
-      {/* Bottom Navigation */}
       <BottomNavigationCN navigation={navigation} />
     </View>
   );
@@ -66,28 +79,31 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#fff",
   },
+  headerGradient: {
+    paddingTop: Platform.OS === "ios" ? 50 : StatusBar.currentHeight,
+  },
   header: {
     flexDirection: "row",
     alignItems: "center",
-    padding: 15,
-    backgroundColor: "#f8f9fa",
-    marginTop: 30,
+    padding: 20,
+    paddingTop: 10,
+  },
+  menuButton: {
+    padding: 5,
+    borderRadius: 8,
   },
   headerText: {
-    fontSize: 20,
+    fontSize: 24,
     fontWeight: "bold",
+    color: "#fff",
     marginLeft: 15,
   },
   content: {
     flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
     marginBottom: 60,
   },
-  dashboardText: {
-    fontSize: 20,
-    fontWeight: "bold",
-    textAlign: "center",
+  calendar: {
+    flex: 1,
   },
   overlay: {
     position: "absolute",
