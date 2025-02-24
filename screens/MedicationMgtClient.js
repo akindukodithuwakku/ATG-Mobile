@@ -21,6 +21,7 @@ const MedicationMgtClient = ({ navigation }) => {
     { name: "", dosage: "", schedule: "", refillDate: "" },
   ]);
   const [isSuccess, setIsSuccess] = useState(false); // Track success state
+  const [errors, setErrors] = useState([]); // Track errors for each medication
   const scheme = useColorScheme();
   const menuAnimation = new Animated.Value(isMenuOpen ? 1 : 0);
 
@@ -38,21 +39,56 @@ const MedicationMgtClient = ({ navigation }) => {
       ...medications,
       { name: "", dosage: "", schedule: "", refillDate: "" },
     ]);
+    setErrors([...errors, {}]); // Add an empty error object for the new medication
   };
 
   const updateMedication = (index, key, value) => {
     const newMedications = [...medications];
     newMedications[index][key] = value;
     setMedications(newMedications);
+
+    // Clear error for this field if it's filled
+    if (value.trim()) {
+      const newErrors = [...errors];
+      newErrors[index] = { ...newErrors[index], [key]: "" };
+      setErrors(newErrors);
+    }
   };
 
   const handleFinish = () => {
-    setIsSuccess(true); // Show success page
+    let hasError = false;
+    const newErrors = medications.map((med, index) => {
+      const errorsForMed = {};
+      if (!med.name.trim()) {
+        errorsForMed.name = "Medication name is required.";
+        hasError = true;
+      }
+      if (!med.dosage.trim()) {
+        errorsForMed.dosage = "Dosage is required.";
+        hasError = true;
+      }
+      if (!med.schedule.trim()) {
+        errorsForMed.schedule = "Schedule is required.";
+        hasError = true;
+      }
+      if (!med.refillDate.trim()) {
+        errorsForMed.refillDate = "Refill date is required.";
+        hasError = true;
+      }
+      return errorsForMed;
+    });
+
+    setErrors(newErrors);
+
+    if (!hasError) {
+      setIsSuccess(true); // Show success page
+    }
   };
 
   const resetUpload = () => {
     setIsSuccess(false); // Reset success state
     setMedications([{ name: "", dosage: "", schedule: "", refillDate: "" }]); // Clear medications
+    setErrors([{}]); // Clear errors
   };
 
   const renderSuccessPage = () => {
@@ -91,10 +127,8 @@ const MedicationMgtClient = ({ navigation }) => {
           <TouchableOpacity style={styles.overlayBackground} onPress={toggleMenu} />
         </Animated.View>
       )}
-
       {/* Success Page */}
       {isSuccess && renderSuccessPage()}
-
       {/* Main Form Section */}
       {!isSuccess && (
         <ScrollView contentContainerStyle={styles.content}>
@@ -104,17 +138,27 @@ const MedicationMgtClient = ({ navigation }) => {
               {/* Medication Name Input Field */}
               <Text style={styles.label}>Medication Name</Text>
               <TextInput
-                style={styles.textInput}
+                style={[
+                  styles.textInput,
+                  errors[index]?.name && { borderColor: "red", borderWidth: 2 },
+                ]}
                 placeholder="Enter medication name"
                 value={med.name}
                 onChangeText={(value) => updateMedication(index, "name", value)}
               />
+              {errors[index]?.name && (
+                <Text style={styles.errorText}>{errors[index].name}</Text>
+              )}
+
               {/* Dosage Input (Hybrid Picker + Custom Input) */}
               <Text style={styles.label}>Dosage</Text>
               <Picker
                 selectedValue={med.dosage}
                 onValueChange={(value) => updateMedication(index, "dosage", value)}
-                style={styles.picker}
+                style={[
+                  styles.picker,
+                  errors[index]?.dosage && { borderColor: "red", borderWidth: 2 },
+                ]}
               >
                 <Picker.Item label="Select Dosage" value="" />
                 <Picker.Item label="250 mg" value="250 mg" />
@@ -123,7 +167,10 @@ const MedicationMgtClient = ({ navigation }) => {
               </Picker>
               {med.dosage === "custom" && (
                 <TextInput
-                  style={styles.textInput}
+                  style={[
+                    styles.textInput,
+                    errors[index]?.dosage && { borderColor: "red", borderWidth: 2 },
+                  ]}
                   placeholder="Enter custom dosage (e.g., 475 mg)"
                   keyboardType="numeric"
                   value={med.customDosage || ""}
@@ -132,12 +179,19 @@ const MedicationMgtClient = ({ navigation }) => {
                   }
                 />
               )}
+              {errors[index]?.dosage && (
+                <Text style={styles.errorText}>{errors[index].dosage}</Text>
+              )}
+
               {/* Schedule Input (Hybrid Picker + Custom Input) */}
               <Text style={styles.label}>Schedule</Text>
               <Picker
                 selectedValue={med.schedule}
                 onValueChange={(value) => updateMedication(index, "schedule", value)}
-                style={styles.picker}
+                style={[
+                  styles.picker,
+                  errors[index]?.schedule && { borderColor: "red", borderWidth: 2 },
+                ]}
               >
                 <Picker.Item label="Select Schedule" value="" />
                 <Picker.Item label="Morning" value="Morning" />
@@ -146,7 +200,10 @@ const MedicationMgtClient = ({ navigation }) => {
               </Picker>
               {med.schedule === "custom" && (
                 <TextInput
-                  style={styles.textInput}
+                  style={[
+                    styles.textInput,
+                    errors[index]?.schedule && { borderColor: "red", borderWidth: 2 },
+                  ]}
                   placeholder="Enter custom schedule (e.g., Afternoon)"
                   value={med.customSchedule || ""}
                   onChangeText={(text) =>
@@ -154,12 +211,19 @@ const MedicationMgtClient = ({ navigation }) => {
                   }
                 />
               )}
+              {errors[index]?.schedule && (
+                <Text style={styles.errorText}>{errors[index].schedule}</Text>
+              )}
+
               {/* Refill Date Input (Hybrid Picker + Custom Input) */}
               <Text style={styles.label}>Next Refill Date</Text>
               <Picker
                 selectedValue={med.refillDate}
                 onValueChange={(value) => updateMedication(index, "refillDate", value)}
-                style={styles.picker}
+                style={[
+                  styles.picker,
+                  errors[index]?.refillDate && { borderColor: "red", borderWidth: 2 },
+                ]}
               >
                 <Picker.Item label="Select Refill Date" value="" />
                 <Picker.Item label="In 1 Week" value="1 Week" />
@@ -168,13 +232,19 @@ const MedicationMgtClient = ({ navigation }) => {
               </Picker>
               {med.refillDate === "custom" && (
                 <TextInput
-                  style={styles.textInput}
+                  style={[
+                    styles.textInput,
+                    errors[index]?.refillDate && { borderColor: "red", borderWidth: 2 },
+                  ]}
                   placeholder="Enter custom refill date (e.g., 2023-12-01)"
                   value={med.customRefillDate || ""}
                   onChangeText={(text) =>
                     updateMedication(index, "customRefillDate", text)
                   }
                 />
+              )}
+              {errors[index]?.refillDate && (
+                <Text style={styles.errorText}>{errors[index].refillDate}</Text>
               )}
             </View>
           ))}
@@ -308,6 +378,11 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontWeight: "bold",
     fontSize: 16,
+  },
+  errorText: {
+    color: "red",
+    fontSize: 12,
+    marginBottom: 10,
   },
 });
 
