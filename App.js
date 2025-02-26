@@ -19,6 +19,13 @@ import NotificationsClient from "./screens/NotificationsClient";
 import NotificationsCN from "./screens/NotificationsCN";
 import ClientDashboard from "./screens/ClientDashboard";
 import CNDashboard from "./screens/CNDashboard";
+import Personalinfo from "./screens/Personalinfo";
+import HealthConditions from "./screens/HealthConditions";
+import EmergencyContact from "./screens/EmergencyContact";
+import CareNeedsPreferences from "./screens/CareNeedsPreferences";
+import CareIntakeReview from "./screens/CareIntakeReview";
+import SubmissionSuccess from "./screens/SubmissionSuccess";
+
 
 const Stack = createStackNavigator();
 
@@ -26,7 +33,7 @@ export default function App() {
   return (
     <NavigationContainer>
       <Stack.Navigator
-        initialRouteName="Welcome"
+        initialRouteName="HealthConditions"
         screenOptions={{ headerShown: false }}
       >
         <Stack.Screen name="Welcome" component={WelcomeScreen} />
@@ -45,6 +52,13 @@ export default function App() {
         <Stack.Screen name="NotificationsCN" component={NotificationsCN} />
         <Stack.Screen name="ClientDashboard" component={ClientDashboard} />
         <Stack.Screen name="CNDashboard" component={CNDashboard} />
+        <Stack.Screen name="Personalinfo" component={Personalinfo} />
+        <Stack.Screen name="HealthConditions" component={HealthConditions} />
+        <Stack.Screen name="EmergencyContact" component={EmergencyContact} />
+        <Stack.Screen name="CareNeedsPreferences" component={CareNeedsPreferences} />
+        <Stack.Screen name="CareIntakeReview" component={CareIntakeReview} />
+        <Stack.Screen name="SubmissionSuccess" component={SubmissionSuccess} />  
+        
       </Stack.Navigator>
     </NavigationContainer>
   );
