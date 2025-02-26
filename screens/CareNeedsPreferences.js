@@ -1,110 +1,157 @@
 import React, { useState } from "react";
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView } from "react-native";
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  StatusBar,
+  useColorScheme,
+  ScrollView,
+  TextInput,
+} from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { Checkbox } from "react-native-paper";
+import BottomNavigationClient from "../Components/BottomNavigationClient";
 
 const CareNeedsPreferences = ({ navigation }) => {
-  const [reasonForCare, setReasonForCare] = useState("");
-  const [additionalNotes, setAdditionalNotes] = useState("");
-  const [selectedConditions, setSelectedConditions] = useState([]);
-  const [selectedAssistance, setSelectedAssistance] = useState([]);
+  const [preference, setPreference] = useState("");
+  const scheme = useColorScheme();
 
-  const conditions = ["Weekdays", "Weekends", "Morning", "Evening"];
-  const assistance = ["Mobility", "Hypertension", "Medication Management", "Hygiene"];
+  // State for checkboxes
+  const [medicalConditions, setMedicalConditions] = useState({
+    "weekdays morning": false,
+    "weekdays evening": false,
+    "weekends morning": false,
+    "weekends evening": false,
+  });
 
-  const toggleSelection = (item, type) => {
-    if (type === "condition") {
-      setSelectedConditions((prev) =>
-        prev.includes(item) ? prev.filter((i) => i !== item) : [...prev, item]
-      );
-    } else {
-      setSelectedAssistance((prev) =>
-        prev.includes(item) ? prev.filter((i) => i !== item) : [...prev, item]
-      );
+  const [specialAssistance, setSpecialAssistance] = useState({
+    mobility: false,
+    hypertension: false,
+    medicationManagement: false,
+    hygiene: false,
+  });
+
+  const handleMedicalConditionChange = (condition) => {
+    const selectedCount = Object.values(medicalConditions).filter(Boolean).length;
+
+    if (medicalConditions[condition]) {
+      // If the checkbox is already checked, uncheck it
+      setMedicalConditions((prev) => ({
+        ...prev,
+        [condition]: false,
+      }));
+    } else if (selectedCount < 2) {
+      // If less than 2 are selected, allow selection
+      setMedicalConditions((prev) => ({
+        ...prev,
+        [condition]: true,
+      }));
+    }
+  };
+
+  const handleSpecialAssistanceChange = (assistance) => {
+    const selectedCount = Object.values(specialAssistance).filter(Boolean).length;
+
+    if (specialAssistance[assistance]) {
+      // If the checkbox is already checked, uncheck it
+      setSpecialAssistance((prev) => ({
+        ...prev,
+        [assistance]: false,
+      }));
+    } else if (selectedCount < 2) {
+      // If less than 2 are selected, allow selection
+      setSpecialAssistance((prev) => ({
+        ...prev,
+        [assistance]: true,
+      }));
     }
   };
 
   return (
     <View style={styles.container}>
-      <Text style={styles.header}>Care Needs And Preferences</Text>
+      <StatusBar
+        barStyle={scheme === "dark" ? "light-content" : "dark-content"}
+        translucent={true}
+        backgroundColor={scheme === "dark" ? "black" : "transparent"}
+      />
 
-      <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
-        {/* Primary Reason For Care */}
-        <Text style={styles.sectionTitle}>Primary Reason For Care</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Describe The Primary Reason For Care..."
-          value={reasonForCare}
-          onChangeText={setReasonForCare}
-          multiline
-        />
+      {/* Header */}
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => navigation.goBack()}>
+          <Ionicons name="arrow-back" size={28} color="white" />
+        </TouchableOpacity>
+        <Text style={styles.headerText}>Care Needs And Preferences</Text>
+      </View>
 
-        {/* Current Medical Conditions */}
-        <Text style={styles.sectionTitle}>Current Medical Conditions</Text>
-        <View style={styles.optionsContainer}>
-          {conditions.map((item) => (
-            <TouchableOpacity
-              key={item}
-              style={[
-                styles.optionButton,
-                selectedConditions.includes(item) && styles.selectedOption,
-              ]}
-              onPress={() => toggleSelection(item, "condition")}
-            >
-              <Ionicons
-                name="checkmark-circle"
-                size={20}
-                color={selectedConditions.includes(item) ? "#00c3ff" : "#ccc"}
-              />
-              <Text style={styles.optionText}>{item}</Text>
-            </TouchableOpacity>
-          ))}
+      <ScrollView contentContainerStyle={styles.scrollContainer}>
+        <View style={styles.contentContainer}>
+          <Text style={styles.sectionTitle}>Primary Reason For Care</Text>
+          <TextInput
+            style={styles.inputBox}
+            placeholder="Describe The Primary Reason For Care..."
+            placeholderTextColor="#999"
+            multiline
+          />
+
+          <Text style={styles.sectionTitle}>Current Medical Conditions</Text>
+          <View style={styles.checkboxContainer}>
+            {Object.keys(medicalConditions).map((condition) => (
+              <View key={condition} style={styles.checkboxRow}>
+                <Checkbox
+                  status={medicalConditions[condition] ? "checked" : "unchecked"}
+                  onPress={() => handleMedicalConditionChange(condition)}
+                  color="#00BCD4" // Set the color for the checked state
+                />
+                <Text style={styles.checkboxLabel}>{condition.charAt(0).toUpperCase() + condition.slice(1)}</Text>
+              </View>
+            ))}
+          </View>
+
+          <Text style={styles.sectionTitle}>Special Assistance Needed</Text>
+          <View style={styles.checkboxContainer}>
+            {Object.keys(specialAssistance).map((assistance) => (
+              <View key={assistance} style={styles.checkboxRow}>
+                <Checkbox
+                  status={specialAssistance[assistance] ? "checked" : "unchecked"}
+                  onPress={() => handleSpecialAssistanceChange(assistance)}
+                  color="#00BCD4" // Set the color for the checked state
+                />
+                <Text style={styles.checkboxLabel}>{assistance.charAt(0).toUpperCase() + assistance.slice(1).replace(/([A-Z])/g, ' $1')}</Text>
+              </View>
+            ))}
+          </View>
+
+          <Text style={styles.sectionTitle}>Additional Notes</Text>
+          <TextInput
+            style={styles.smallInputBox} // Use the new style for a smaller text area
+            placeholder="Provide Any Additional Details..."
+            placeholderTextColor="#999"
+            multiline
+            numberOfLines={3} // Limit the number of lines
+          />
         </View>
-
-        {/* Special Assistance Needed */}
-        <Text style={styles.sectionTitle}>Special Assistance Needed</Text>
-        <View style={styles.optionsContainer}>
-          {assistance.map((item) => (
-            <TouchableOpacity
-              key={item}
-              style={[
-                styles.optionButton,
-                selectedAssistance.includes(item) && styles.selectedOption,
-              ]}
-              onPress={() => toggleSelection(item, "assistance")}
-            >
-              <Ionicons
-                name="checkmark-circle"
-                size={20}
-                color={selectedAssistance.includes(item) ? "#00c3ff" : "#ccc"}
-              />
-              <Text style={styles.optionText}>{item}</Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-
-        {/* Additional Notes */}
-        <Text style={styles.sectionTitle}>Additional Notes</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Provide Any Additional Details..."
-          value={additionalNotes}
-          onChangeText={setAdditionalNotes}
-          multiline
-        />
       </ScrollView>
 
       {/* Buttons */}
       <View style={styles.buttonContainer}>
-        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-          <Text style={styles.backButtonText}>Back</Text>
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => navigation.goBack()}
+        >
+          <Text style={styles.backText}>Back</Text>
         </TouchableOpacity>
+
         <TouchableOpacity
           style={styles.continueButton}
-          onPress={() => navigation.navigate("SubmitForm")}
+          onPress={() => console.log("Continue button pressed")}
         >
-          <Text style={styles.continueButtonText}>Continue</Text>
+          <Text style={styles.continueText}>Continue</Text>
         </TouchableOpacity>
       </View>
+
+      {/* Bottom Navigation */}
+      <BottomNavigationClient navigation={navigation} />
     </View>
   );
 };
@@ -112,81 +159,92 @@ const CareNeedsPreferences = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f0f8ff",
-    paddingHorizontal: 20,
-    paddingTop: 50,
+    backgroundColor: "#F8FDFF",
   },
   header: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: 15,
+    backgroundColor: "#00BCD4",
+    paddingTop: 40,
+  },
+  headerText: {
     fontSize: 20,
     fontWeight: "bold",
-    textAlign: "center",
-    color: "#00c3ff",
-    marginBottom: 20,
+    color: "white",
+    marginLeft: 20,
   },
-  scrollView: {
-    flex: 1,
+  scrollContainer: {
+    flexGrow: 1,
+    paddingBottom: 150,
+  },
+  contentContainer: {
+    padding: 20,
   },
   sectionTitle: {
     fontSize: 16,
     fontWeight: "bold",
-    marginBottom: 8,
+    marginTop: 20,
+    color: "#333",
   },
-  input: {
-    backgroundColor: "#e0f2ff",
+  inputBox: {
+    backgroundColor: "#E3F7FF",
+    padding: 10,
     borderRadius: 10,
-    padding: 12,
-    fontSize: 14,
-    marginBottom: 20,
+    marginTop: 10,
+    color: "#333",
   },
-  optionsContainer: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 10,
-    marginBottom: 20,
+  smallInputBox: {
+    backgroundColor: "#E3F7FF",
+    padding: 10,
+    borderRadius: 10,
+    marginTop: 10,
+    color: "#333",
+    height: 80, // Set a specific height for the smaller text area
   },
-  optionButton: {
+  checkboxContainer: {
+    marginTop: 10,
+  },
+  checkboxRow: {
     flexDirection: "row",
     alignItems: "center",
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    borderRadius: 10,
-    backgroundColor: "#fff",
-    borderWidth: 1,
-    borderColor: "#ccc",
+    marginVertical: 5,
   },
-  selectedOption: {
-    borderColor: "#00c3ff",
-    backgroundColor: "#e0f8ff",
-  },
-  optionText: {
-    marginLeft: 5,
-    fontSize: 14,
+  checkboxLabel: {
+    marginLeft: 10,
+    color: "#333",
+    fontSize: 16,
   },
   buttonContainer: {
     flexDirection: "row",
     justifyContent: "space-between",
-    marginBottom: 20,
+    position: "absolute",
+    bottom: 70,
+    width: "90%",
+    alignSelf: "center",
   },
   backButton: {
+    backgroundColor: "white",
+    paddingVertical: 14,
+    borderRadius: 30,
     borderWidth: 1,
-    borderColor: "#00c3ff",
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 10,
+    borderColor: "#00BCD4",
+    width: "45%",
+    alignItems: "center",
   },
-  backButtonText: {
-    color: "#00c3ff",
-    fontSize: 16,
+  backText: {
+    color: "#00BCD4",
+    fontWeight: "bold",
   },
   continueButton: {
-    backgroundColor: "#00c3ff",
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 10,
+    backgroundColor: "#00BCD4",
+    paddingVertical: 14,
+    borderRadius: 30,
+    width: "45%",
+    alignItems: "center",
   },
-  continueButtonText: {
-    color: "#fff",
-    fontSize: 16,
+  continueText: {
+    color: "white",
     fontWeight: "bold",
   },
 });

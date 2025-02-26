@@ -159,7 +159,7 @@ const styles = StyleSheet.create({
   },
   continueButton: { 
     backgroundColor: "#00BCD4", 
-    paddingVertical: 10, 
+    paddingVertical: 15, 
     paddingHorizontal: 30, 
     borderRadius: 30, 
     flex: 1, 
