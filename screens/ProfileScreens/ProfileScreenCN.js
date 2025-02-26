@@ -9,12 +9,12 @@ import {
   Platform,
   Modal,
 } from "react-native";
-import SideNavigationClient from "../../Components/SideNavigationClient";
-import BottomNavigationClient from "../../Components/BottomNavigationClient";
+import SideNavigationCN from "../../Components/SideNavigationCN";
+import BottomNavigationCN from "../../Components/BottomNavigationCN";
 import { Ionicons, MaterialIcons, Feather } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 
-const ProfileScreen = ({ navigation }) => {
+const ProfileScreenCN = ({ navigation }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
 
@@ -176,7 +176,7 @@ const ProfileScreen = ({ navigation }) => {
       {/* Side Navigation Overlay */}
       {isMenuOpen && (
         <View style={styles.overlay}>
-          <SideNavigationClient navigation={navigation} onClose={toggleMenu} />
+          <SideNavigationCN navigation={navigation} onClose={toggleMenu} />
           <TouchableOpacity
             style={styles.overlayBackground}
             onPress={toggleMenu}
@@ -186,7 +186,7 @@ const ProfileScreen = ({ navigation }) => {
       )}
 
       {/* Bottom Navigation */}
-      <BottomNavigationClient navigation={navigation} />
+      <BottomNavigationCN navigation={navigation} />
     </View>
   );
 };
@@ -353,4 +353,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default ProfileScreen;
+export default ProfileScreenCN;
