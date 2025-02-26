@@ -6,9 +6,10 @@ import { createStackNavigator } from "@react-navigation/stack";
 import WelcomeScreen from "./screens/WelcomeScreen";
 import LoginScreen from "./screens/LoginScreen";
 import SignupScreen from "./screens/SignupScreen";
-import ProfileScreen from "./screens/ProfileScreen";
-import ReadinessQuestionnaire from './screens/ReadinessQuestionnaire';
-import AppointmentScheduling from './screens/AppointmentScheduling';
+import ProfileScreenC from "./screens/ProfileScreens/ProfileScreenC";
+import ProfileScreenCN from "./screens/ProfileScreens/ProfileScreenCN";
+import ReadinessQuestionnaire from "./screens/ReadinessQuestionnaire";
+import AppointmentScheduling from "./screens/AppointmentScheduling";
 import Appointments from "./screens/Appointments";
 import CarePlanMgtClient from "./screens/CarePlanMgtClient";
 import MedicationMgtClient from "./screens/MedicationMgtClient";
@@ -25,16 +26,19 @@ const Stack = createStackNavigator();
 const AppNavigator = () => {
   return (
     <Stack.Navigator
-      initialRouteName="ClientDashboard"
-      screenOptions={{ headerShown: false,
-        gestureEnabled: false }}
+      initialRouteName="CNDashboard"
+      screenOptions={{ headerShown: false, gestureEnabled: false }}
     >
       <Stack.Screen name="Welcome" component={WelcomeScreen} />
       <Stack.Screen name="Login" component={LoginScreen} />
       <Stack.Screen name="Signup" component={SignupScreen} />
-      <Stack.Screen name="Profile" component={ProfileScreen} />
+      <Stack.Screen name="ProfileC" component={ProfileScreenC} />
+      <Stack.Screen name="ProfileCN" component={ProfileScreenCN} />
       <Stack.Screen name="Readiness" component={ReadinessQuestionnaire} />
-      <Stack.Screen name="AppointmentScheduling" component={AppointmentScheduling} />
+      <Stack.Screen
+        name="AppointmentScheduling"
+        component={AppointmentScheduling}
+      />
       <Stack.Screen name="Appointments" component={Appointments} />
       <Stack.Screen name="CarePlanC" component={CarePlanMgtClient} />
       <Stack.Screen name="MedicationC" component={MedicationMgtClient} />
