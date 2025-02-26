@@ -14,7 +14,7 @@ const BottomNavigationClient = ({ navigation }) => {
       route: "CarePlanC",
     },
     { name: "Medication", icon: "clipboard-notes", route: "MedicationC" },
-    { name: "Profile", icon: "person-outline", route: "Profile" },
+    { name: "Profile", icon: "person-outline", route: "ProfileC" },
   ];
 
   const handleNavigation = (item) => {

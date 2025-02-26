@@ -36,7 +36,7 @@ const SideNavigationCN = ({ navigation, onClose }) => {
       icon: "notifications-outline",
       route: "NotificationsCN",
     },
-    { name: "Profile", icon: "person-outline", route: "Profile" },
+    { name: "Profile", icon: "person-outline", route: "ProfileCN" },
   ];
 
   // Slide-in animation when the component mounts
