@@ -1,26 +1,15 @@
-import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  StyleSheet,
-  ScrollView,
-  StatusBar,
-  KeyboardAvoidingView,
-  Platform,
-  useColorScheme,
-} from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, StatusBar, KeyboardAvoidingView, Platform, useColorScheme } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import BottomNavigationClient from '../Components/BottomNavigationClient';
-import SideNavigationClient from '../Components/SideNavigationClient'; // Import the SideNavigationClient
+import SideNavigationClient from '../Components/SideNavigationClient';
 
-const CareIntakeReview = ({ navigation }) => {
+const CareIntakeReview = ({ navigation, route }) => {
   const [fullName, setFullName] = useState('');
   const [dateOfBirth, setDateOfBirth] = useState('');
   const [contactNumber, setContactNumber] = useState('');
   const [homeAddress, setHomeAddress] = useState('');
-  const [gender, setGender] = useState(''); // 'male' or 'female'
+  const [gender, setGender] = useState('');
   const [conditions, setConditions] = useState({
     diabetes: false,
     hypertension: false,
@@ -35,15 +24,23 @@ const CareIntakeReview = ({ navigation }) => {
   const [emergencyContactName, setEmergencyContactName] = useState('');
   const [emergencyContactNumber, setEmergencyContactNumber] = useState('');
   const [relationship, setRelationship] = useState('');
-  const [isSideNavVisible, setIsSideNavVisible] = useState(false); // State to control side navigation visibility
+  const [isSideNavVisible, setIsSideNavVisible] = useState(false);
   const scheme = useColorScheme();
 
-  const toggleCondition = (key) => {
-    setConditions({ ...conditions, [key]: !conditions[key] });
-  };
+  // Extract passed data from route.params
+  useEffect(() => {
+    if (route.params?.personalInfoData) {
+      const { fullName, dateOfBirth, contactNumber, homeAddress, gender } = route.params.personalInfoData;
+      setFullName(fullName);
+      setDateOfBirth(dateOfBirth);
+      setContactNumber(contactNumber);
+      setHomeAddress(homeAddress);
+      setGender(gender);
+    }
+  }, [route.params]);
 
   const handleSubmit = () => {
-    console.log({
+    const formData = {
       fullName,
       dateOfBirth,
       contactNumber,
@@ -57,20 +54,17 @@ const CareIntakeReview = ({ navigation }) => {
       emergencyContactName,
       emergencyContactNumber,
       relationship,
-    });
-    navigation.navigate('SubmissionSuccess'); // Navigate to SubmissionSuccess screen
+    };
+    console.log('Form Data Submitted:', formData);
+    navigation.navigate('SubmissionSuccess'); // Navigate to success screen
   };
 
-  // Function to close the side navigation
   const closeSideNav = () => {
     setIsSideNavVisible(false);
   };
 
   return (
-    <KeyboardAvoidingView 
-      behavior={Platform.OS === "ios" ? "padding" : "height"} 
-      style={{ flex: 1 }}
-    >
+    <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={{ flex: 1 }}>
       <View style={styles.container}>
         <StatusBar
           barStyle={scheme === 'dark' ? 'light-content' : 'dark-content'}
@@ -95,126 +89,51 @@ const CareIntakeReview = ({ navigation }) => {
           <View style={styles.formContainer}>
             {/* Personal Information */}
             <Text style={styles.label}>Full Name</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Enter your full name"
-              placeholderTextColor="#B3E5FC"
-              value={fullName}
-              onChangeText={setFullName}
-            />
+            <Text style={styles.dataText}>{fullName}</Text>
 
             <Text style={styles.label}>Date Of Birth</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="DD / MM / YYYY"
-              placeholderTextColor="#B3E5FC"
-              value={dateOfBirth}
-              onChangeText={setDateOfBirth}
-            />
+            <Text style={styles.dataText}>{dateOfBirth}</Text>
 
             <Text style={styles.label}>Gender</Text>
-            <View style={styles.genderContainer}>
-              <TouchableOpacity onPress={() => setGender('male')} style={styles.genderOption}>
-                <Text style={styles.genderText}>Male</Text>
-              </TouchableOpacity>
-              <TouchableOpacity onPress={() => setGender('female')} style={styles.genderOption}>
-                <Text style={styles.genderText}>Female</Text>
-              </TouchableOpacity>
-            </View>
+            <Text style={styles.dataText}>{gender}</Text>
 
             <Text style={styles.label}>Contact Number</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Enter your contact number"
-              placeholderTextColor="#B3E5FC"
-              keyboardType="phone-pad"
-              value={contactNumber}
-              onChangeText={setContactNumber}
-            />
+            <Text style={styles.dataText}>{contactNumber}</Text>
 
             <Text style={styles.label}>Home Address</Text>
-            <TextInput
-              style={styles.textArea}
-              placeholder="Enter your home address"
-              placeholderTextColor="#B3E5FC"
-              value={homeAddress}
-              onChangeText={setHomeAddress}
-              multiline={true}
-              numberOfLines={4}
-              textAlignVertical="top"
-            />
+            <Text style={styles.dataText}>{homeAddress}</Text>
 
             {/* Health Conditions */}
             <Text style={styles.label}>Current Medical Conditions</Text>
             {Object.keys(conditions).map((key) => (
-              <View key={key} style={styles.checkboxContainer}>
-                <TouchableOpacity onPress={() => toggleCondition(key)} style={styles.checkboxRow}>
-                  <Text style={styles.checkboxText}>{key.charAt(0).toUpperCase() + key.slice(1)}</Text>
-                  <Text style={styles.checkboxText}>{conditions[key] ? '✓' : '✗'}</Text>
-                </TouchableOpacity>
-              </View>
+              conditions[key] && (
+                <Text key={key} style={styles.dataText}>
+                  {key.charAt(0).toUpperCase() + key.slice(1)}
+                </Text>
+              )
             ))}
             {conditions.other && (
-              <TextInput
-                style={styles.textArea}
-                placeholder="Please specify other conditions..."
-                value={otherCondition}
-                onChangeText={setOtherCondition}
-              />
+              <Text style={styles.dataText}>Other: {otherCondition}</Text>
             )}
 
             <Text style={styles.label}>Known Allergies</Text>
-            <TextInput
-              style={styles.textArea}
-              placeholder="List any known allergies..."
-              value={allergies}
-              onChangeText={setAllergies}
-            />
+            <Text style={styles.dataText}>{allergies}</Text>
 
             <Text style={styles.label}>Current Medications</Text>
-            <TextInput
-              style={styles.textArea}
-              placeholder="List all current medications..."
-              value={medications}
-              onChangeText={setMedications}
-            />
+            <Text style={styles.dataText}>{medications}</Text>
 
             <Text style={styles.label}>History of Surgeries/Procedures</Text>
-            <TextInput
-              style={styles.textArea}
-              placeholder="List any surgeries or medical procedures..."
-              value={surgeries}
-              onChangeText={setSurgeries}
-            />
+            <Text style={styles.dataText}>{surgeries}</Text>
 
             {/* Emergency Contact Information */}
             <Text style={styles.label}>Emergency Contact Name</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Enter Contact Name"
-              placeholderTextColor="#B3E5FC"
-              value={emergencyContactName}
-              onChangeText={setEmergencyContactName}
-            />
+            <Text style={styles.dataText}>{emergencyContactName}</Text>
 
             <Text style={styles.label}>Emergency Contact Number</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Enter Contact Number"
-              placeholderTextColor="#B3E5FC"
-              keyboardType="phone-pad"
-              value={emergencyContactNumber}
-              onChangeText={setEmergencyContactNumber}
-            />
+            <Text style={styles.dataText}>{emergencyContactNumber}</Text>
 
             <Text style={styles.label}>Relationship To Emergency Contact</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Enter Relationship"
-              placeholderTextColor="#B3E5FC"
-              value={relationship}
-              onChangeText={setRelationship}
-            />
+            <Text style={styles.dataText}>{relationship}</Text>
           </View>
         </ScrollView>
 
@@ -223,17 +142,14 @@ const CareIntakeReview = ({ navigation }) => {
           <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
             <Text style={styles.backText}>Back</Text>
           </TouchableOpacity>
-          <TouchableOpacity 
-            style={styles.continueButton} 
-            onPress={handleSubmit} // Submit the form
-          >
+          <TouchableOpacity style={styles.continueButton} onPress={handleSubmit}>
             <Text style={styles.continueText}>Submit</Text>
           </TouchableOpacity>
         </View>
 
         {/* Bottom Navigation */}
         <BottomNavigationClient navigation={navigation} />
- </View>
+      </View>
     </KeyboardAvoidingView>
   );
 };
@@ -269,52 +185,10 @@ const styles = StyleSheet.create({
     marginTop: 20,
     color: "#333",
   },
-  input: {
-    backgroundColor: "#E0F7FA",
-    borderRadius: 10,
-    padding: 12,
+  dataText: {
     fontSize: 16,
-    marginTop: 12,
-  },
-  textArea: {
-    backgroundColor: "#E0F7FA",
-    borderRadius: 10,
-    padding: 12,
-    fontSize: 16,
-    marginTop: 12,
-    height: 80,
-    textAlignVertical: "top",
-  },
-  checkboxContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginTop: 10,
-  },
-  checkboxRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    width: "100%",
-  },
-  checkboxText: {
-    fontSize: 16,
-    color: "#333",
-  },
-  genderContainer: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginTop: 12,
-  },
-  genderOption: {
-    backgroundColor: "#E0F7FA",
-    borderRadius: 10,
-    padding: 12,
-    flex: 1,
-    alignItems: "center",
-    marginHorizontal: 5,
-  },
-  genderText: {
-    fontSize: 16,
-    color: "#333",
+    marginTop: 8,
+    color: "#555",
   },
   buttonContainer: {
     flexDirection: "row",

@@ -50,7 +50,14 @@ const PersonalInfo = ({ navigation }) => {
 
   const handleContinue = () => {
     if (validateForm()) {
-      navigation.navigate("HealthConditions");
+      const personalInfoData = {
+        fullName,
+        dateOfBirth,
+        contactNumber,
+        homeAddress,
+        gender: isMale ? "Male" : "Female", // Determine gender based on the selected switch
+      };
+      navigation.navigate("HealthConditions", { personalInfoData }); // Pass data to the next screen
     }
   };
 
@@ -95,6 +102,7 @@ const PersonalInfo = ({ navigation }) => {
               value={fullName}
               onChangeText={handleInputChange(setFullName, "fullName")}
             />
+            {errors.fullName}
           </View>
           {errors.fullName && (
             <View style={styles.errorContainer}>
@@ -112,6 +120,7 @@ const PersonalInfo = ({ navigation }) => {
               value={dateOfBirth}
               onChangeText={handleInputChange(setDateOfBirth, "dateOfBirth")}
             />
+            {errors.dateOfBirth }
           </View>
           {errors.dateOfBirth && (
             <View style={styles.errorContainer}>
@@ -128,7 +137,6 @@ const PersonalInfo = ({ navigation }) => {
                 onValueChange={() => {
                   setIsMale(true);
                   setIsFemale(false);
-                  setErrors((prevErrors) => ({ ...prevErrors, gender: "" })); // Clear error
                 }}
               />
               <Text style={styles.genderText}>Male</Text>
@@ -140,7 +148,6 @@ const PersonalInfo = ({ navigation }) => {
                 onValueChange={() => {
                   setIsFemale(true);
                   setIsMale(false);
-                  setErrors((prevErrors) => ({ ...prevErrors, gender: "" })); // Clear error
                 }}
               />
               <Text style={styles.genderText}>Female</Text>
@@ -163,6 +170,7 @@ const PersonalInfo = ({ navigation }) => {
               value={contactNumber}
               onChangeText={handleInputChange(setContactNumber, "contactNumber")}
             />
+            {errors.contactNumber}
           </View>
           {errors.contactNumber && (
             <View style={styles.errorContainer}>
@@ -183,6 +191,7 @@ const PersonalInfo = ({ navigation }) => {
               numberOfLines={4}
               textAlignVertical="top"
             />
+            {errors.homeAddress}
           </View>
           {errors.homeAddress && (
             <View style={styles.errorContainer}>
