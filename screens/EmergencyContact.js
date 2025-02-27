@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -12,8 +12,9 @@ import {
   useColorScheme,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import BottomNavigationClient from "../Components/BottomNavigationClient";
-import SideNavigationClient from "../Components/SideNavigationClient"; // Import the SideNavigationClient
+import SideNavigationClient from "../Components/SideNavigationClient";
 
 const ErrorIcon = () => (
   <View style={styles.errorIcon}>
@@ -29,34 +30,43 @@ const EmergencyContact = ({ navigation }) => {
   const [contactNumberError, setContactNumberError] = useState("");
   const [relationshipError, setRelationshipError] = useState("");
   const scheme = useColorScheme();
-  const [isSideNavVisible, setIsSideNavVisible] = useState(false); // State to control side navigation visibility
+  const [isSideNavVisible, setIsSideNavVisible] = useState(false);
 
-  // Function to close the side navigation
-  const closeSideNav = () => {
-    setIsSideNavVisible(false);
+  useEffect(() => {
+    const loadData = async () => {
+      const savedData = await AsyncStorage.getItem('emergencyContact');
+      if (savedData) {
+        const { contactName, contactNumber, relationship } = JSON.parse(savedData);
+        setContactName(contactName);
+        setContactNumber(contactNumber);
+        setRelationship(relationship);
+      }
+    };
+    loadData();
+  }, []);
+
+  const saveData = async () => {
+    const data = { contactName, contactNumber, relationship };
+    await AsyncStorage.setItem('emergencyContact', JSON.stringify(data));
   };
 
   const validateForm = () => {
     let isValid = true;
 
-    // Reset error messages
     setContactNameError("");
     setContactNumberError("");
     setRelationshipError("");
 
-    // Validate contact name
     if (!contactName) {
       setContactNameError("Contact name cannot be empty.");
       isValid = false;
     }
 
-    // Validate contact number
     if (!contactNumber) {
       setContactNumberError("Contact number cannot be empty.");
       isValid = false;
     }
 
-    // Validate relationship
     if (!relationship) {
       setRelationshipError("Relationship cannot be empty.");
       isValid = false;
@@ -83,7 +93,7 @@ const EmergencyContact = ({ navigation }) => {
 
         {/* Side Navigation */}
         {isSideNavVisible && (
-          <SideNavigationClient navigation={navigation} onClose={closeSideNav} />
+          <SideNavigationClient navigation={navigation} onClose={() => setIsSideNavVisible(false)} />
         )}
 
         <ScrollView contentContainerStyle={styles.scrollContainer}>
@@ -162,6 +172,7 @@ const EmergencyContact = ({ navigation }) => {
             style={styles.continueButton}
             onPress={() => {
               if (validateForm()) {
+                saveData(); // Save data before navigating
                 navigation.navigate("CareIntakeReview"); // Navigate to CareIntakeReview
               }
             }}

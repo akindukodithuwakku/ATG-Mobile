@@ -1,18 +1,19 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
-  StyleSheet,
+  TextInput,
   TouchableOpacity,
+  StyleSheet,
+  ScrollView,
   StatusBar,
   useColorScheme,
-  ScrollView,
-  TextInput,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { Checkbox } from "react-native-paper";
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import BottomNavigationClient from "../Components/BottomNavigationClient";
-import SideNavigationClient from "../Components/SideNavigationClient"; // Import the SideNavigationClient
+import SideNavigationClient from "../Components/SideNavigationClient";
 
 const ErrorIcon = () => (
   <View style={styles.errorIcon}>
@@ -22,13 +23,13 @@ const ErrorIcon = () => (
 
 const CareNeedsPreferences = ({ navigation }) => {
   const [preference, setPreference] = useState("");
+  const [additionalNotes, setAdditionalNotes] = useState(""); // State for additional notes
   const [primaryReasonError, setPrimaryReasonError] = useState("");
   const [medicalConditionsError, setMedicalConditionsError] = useState("");
   const [specialAssistanceError, setSpecialAssistanceError] = useState("");
   const scheme = useColorScheme();
-  const [isSideNavVisible, setIsSideNavVisible] = useState(false); // State to control side navigation visibility
+  const [isSideNavVisible, setIsSideNavVisible] = useState(false);
 
-  // State for checkboxes
   const [medicalConditions, setMedicalConditions] = useState({
     "weekdays morning": false,
     "weekdays evening": false,
@@ -43,24 +44,40 @@ const CareNeedsPreferences = ({ navigation }) => {
     hygiene: false,
   });
 
+  useEffect(() => {
+    const loadData = async () => {
+      const savedData = await AsyncStorage.getItem('careNeedsPreferences');
+      if (savedData) {
+        const { preference, medicalConditions, specialAssistance, additionalNotes } = JSON.parse(savedData);
+        setPreference(preference);
+        setMedicalConditions(medicalConditions);
+        setSpecialAssistance(specialAssistance);
+        setAdditionalNotes(additionalNotes); // Load additional notes
+      }
+    };
+    loadData();
+  }, []);
+
+  const saveData = async () => {
+    const data = { preference, medicalConditions, specialAssistance, additionalNotes }; // Include additional notes
+    await AsyncStorage.setItem('careNeedsPreferences', JSON.stringify(data));
+  };
+
   const handleMedicalConditionChange = (condition) => {
     const selectedCount = Object.values(medicalConditions).filter(Boolean).length;
 
     if (medicalConditions[condition]) {
-      // If the checkbox is already checked, uncheck it
       setMedicalConditions((prev) => ({
         ...prev,
         [condition]: false,
       }));
     } else if (selectedCount < 2) {
-      // If less than 2 are selected, allow selection
       setMedicalConditions((prev) => ({
         ...prev,
         [condition]: true,
       }));
     }
 
-    // Clear medical conditions error when a checkbox is selected
     setMedicalConditionsError("");
   };
 
@@ -68,50 +85,38 @@ const CareNeedsPreferences = ({ navigation }) => {
     const selectedCount = Object.values(specialAssistance).filter(Boolean).length;
 
     if (specialAssistance[assistance]) {
-      // If the checkbox is already checked, uncheck it
       setSpecialAssistance((prev) => ({
         ...prev,
         [assistance]: false,
       }));
     } else if (selectedCount < 2) {
-      // If less than 2 are selected, allow selection
       setSpecialAssistance((prev) => ({
         ...prev,
         [assistance]: true,
       }));
     }
 
-    // Clear special assistance error when a checkbox is selected
     setSpecialAssistanceError("");
-  };
-
-  // Function to close the side navigation
-  const closeSideNav = () => {
-    setIsSideNavVisible(false);
   };
 
   const validateForm = () => {
     let isValid = true;
 
-    // Reset error messages
     setPrimaryReasonError("");
     setMedicalConditionsError("");
     setSpecialAssistanceError("");
 
-    // Validate primary reason for care
     if (!preference) {
       setPrimaryReasonError("Primary reason for care cannot be empty.");
       isValid = false;
     }
 
-    // Validate medical conditions
     const selectedMedicalConditions = Object.values(medicalConditions).some((value) => value);
     if (!selectedMedicalConditions) {
       setMedicalConditionsError("Please select at least one medical condition.");
       isValid = false;
     }
 
-    // Validate special assistance
     const selectedSpecialAssistance = Object.values(specialAssistance).some((value) => value);
     if (!selectedSpecialAssistance) {
       setSpecialAssistanceError("Please select at least one type of special assistance needed.");
@@ -119,6 +124,13 @@ const CareNeedsPreferences = ({ navigation }) => {
     }
 
     return isValid;
+ };
+
+  const handleContinue = () => {
+    if (validateForm()) {
+      saveData(); // Save data before navigating
+      navigation.navigate("EmergencyContact");
+    }
   };
 
   return (
@@ -139,7 +151,7 @@ const CareNeedsPreferences = ({ navigation }) => {
 
       {/* Side Navigation */}
       {isSideNavVisible && (
-        <SideNavigationClient navigation={navigation} onClose={closeSideNav} />
+        <SideNavigationClient navigation={navigation} onClose={() => setIsSideNavVisible(false)} />
       )}
 
       <ScrollView contentContainerStyle={styles.scrollContainer}>
@@ -154,7 +166,7 @@ const CareNeedsPreferences = ({ navigation }) => {
             onChangeText={(text) => {
               setPreference(text);
               if (text) {
-                setPrimaryReasonError(""); // Clear error when user types
+                setPrimaryReasonError("");
               }
             }}
           />
@@ -172,7 +184,7 @@ const CareNeedsPreferences = ({ navigation }) => {
                 <Checkbox
                   status={medicalConditions[condition] ? "checked" : "unchecked"}
                   onPress={() => handleMedicalConditionChange(condition)}
-                  color="#00BCD4" // Set the color for the checked state
+                  color="#00BCD4"
                 />
                 <Text style={styles.checkboxLabel}>{condition.charAt(0).toUpperCase() + condition.slice(1)}</Text>
               </View>
@@ -192,7 +204,7 @@ const CareNeedsPreferences = ({ navigation }) => {
                 <Checkbox
                   status={specialAssistance[assistance] ? "checked" : "unchecked"}
                   onPress={() => handleSpecialAssistanceChange(assistance)}
-                  color="#00BCD4" // Set the color for the checked state
+                  color="#00BCD4"
                 />
                 <Text style={styles.checkboxLabel}>{assistance.charAt(0).toUpperCase() + assistance.slice(1).replace(/([A-Z])/g, ' $1')}</Text>
               </View>
@@ -207,11 +219,15 @@ const CareNeedsPreferences = ({ navigation }) => {
 
           <Text style={styles.sectionTitle}>Additional Notes</Text>
           <TextInput
-            style={styles.smallInputBox} // Use the new style for a smaller text area
+            style={styles.smallInputBox}
             placeholder="Provide Any Additional Details..."
             placeholderTextColor="#999"
             multiline
-            numberOfLines={3} // Limit the number of lines
+            numberOfLines={3}
+            value={additionalNotes}
+            onChangeText={(text) => {
+              setAdditionalNotes(text);
+            }}
           />
         </View>
       </ScrollView>
@@ -225,13 +241,8 @@ const CareNeedsPreferences = ({ navigation }) => {
           <Text style={styles.backText}>Back</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity
-          style={styles.continueButton}
-          onPress={() => {
-            if (validateForm()) {
-              navigation.navigate("EmergencyContact"); // Navigate to EmergencyContactInformation
-            }
-          }} // Validate before navigating
+        <TouchableOpacity style={styles.continueButton}
+          onPress={handleContinue} // Validate before navigating
         >
           <Text style={styles.continueText}>Continue</Text>
         </TouchableOpacity>
@@ -287,7 +298,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     marginTop: 10,
     color: "#333",
-    height: 80, // Set a specific height for the smaller text area
+    height: 80,
   },
   checkboxContainer: {
     marginTop: 10,
@@ -319,16 +330,16 @@ const styles = StyleSheet.create({
     width: "45%",
     alignItems: "center",
   },
-  backText: {
-    color: "#00BCD4",
-    fontWeight: "bold",
-  },
   continueButton: {
     backgroundColor: "#00BCD4",
     paddingVertical: 14,
     borderRadius: 30,
     width: "45%",
     alignItems: "center",
+  },
+  backText: {
+    color: "#00BCD4",
+    fontWeight: "bold",
   },
   continueText: {
     color: "white",

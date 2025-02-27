@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -12,8 +12,9 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { Checkbox } from "react-native-paper";
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import BottomNavigationClient from "../Components/BottomNavigationClient";
-import SideNavigationClient from "../Components/SideNavigationClient"; // Import the SideNavigationClient
+import SideNavigationClient from "../Components/SideNavigationClient";
 
 const ErrorIcon = () => (
   <View style={styles.errorIcon}>
@@ -33,23 +34,37 @@ const HealthConditions = ({ navigation }) => {
   const [allergies, setAllergies] = useState("");
   const [medications, setMedications] = useState("");
   const [surgeries, setSurgeries] = useState("");
-  const [isSideNavVisible, setIsSideNavVisible] = useState(false); // State to control side navigation visibility
-  const [errors, setErrors] = useState({}); // State for error messages
+  const [isSideNavVisible, setIsSideNavVisible] = useState(false);
+  const [errors, setErrors] = useState({});
+
+  useEffect(() => {
+    const loadData = async () => {
+      const savedData = await AsyncStorage.getItem('healthConditions');
+      if (savedData) {
+        const { conditions, otherCondition, allergies, medications, surgeries } = JSON.parse(savedData);
+        setConditions(conditions);
+        setOtherCondition(otherCondition);
+        setAllergies(allergies);
+        setMedications(medications);
+        setSurgeries(surgeries);
+      }
+    };
+    loadData();
+  }, []);
+
+  const saveData = async () => {
+    const data = { conditions, otherCondition, allergies, medications, surgeries };
+    await AsyncStorage.setItem('healthConditions', JSON.stringify(data));
+  };
 
   const toggleCondition = (key) => {
     setConditions((prevConditions) => {
       const updatedConditions = { ...prevConditions, [key]: !prevConditions[key] };
-      // Clear error if any condition is selected
       if (updatedConditions[key]) {
         setErrors((prevErrors) => ({ ...prevErrors, conditions: "" }));
       }
       return updatedConditions;
     });
-  };
-
-  // Function to close the side navigation
-  const closeSideNav = () => {
-    setIsSideNavVisible(false);
   };
 
   const validateForm = () => {
@@ -65,12 +80,13 @@ const HealthConditions = ({ navigation }) => {
     }
 
     setErrors(newErrors);
-    return Object.keys(newErrors).length === 0; // Return true if no errors
+    return Object.keys(newErrors).length === 0;
   };
 
   const handleContinue = () => {
     if (validateForm()) {
-      navigation.navigate("CareNeedsPreferences"); // Navigate to CareNeedsPreferences
+      saveData(); // Save data before navigating
+      navigation.navigate("CareNeedsPreferences");
     }
   };
 
@@ -92,7 +108,7 @@ const HealthConditions = ({ navigation }) => {
 
         {/* Side Navigation */}
         {isSideNavVisible && (
-          <SideNavigationClient navigation={navigation} onClose={closeSideNav} />
+          <SideNavigationClient navigation={navigation} onClose={() => setIsSideNavVisible(false)} />
         )}
 
         <ScrollView contentContainerStyle={styles.scrollContainer}>
@@ -241,10 +257,10 @@ const styles = StyleSheet.create({
     marginTop: 5,
   },
   errorIcon: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
     backgroundColor: 'red',
-    borderRadius: 10,
-    width: 20,
-    height: 20,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 5,
