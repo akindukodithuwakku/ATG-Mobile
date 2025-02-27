@@ -21,13 +21,49 @@ export const SignUpScreen = ({ navigation }) => {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [passwordVisible, setPasswordVisible] = useState(false);
   const [confirmPasswordVisible, setConfirmPasswordVisible] = useState(false);
+  const [errors, setErrors] = useState({});
   const [isLoading, setIsLoading] = useState(false);
   const [showTermsModal, setShowTermsModal] = useState(false);
   const [showPrivacyModal, setShowPrivacyModal] = useState(false);
 
-  const validateForm = () => {};
+  // Form validation
+  const validateForm = () => {
+    let errorTexts = {};
+    let isValid = true;
 
-  const handleSignUp = async () => {};
+    if (!username.trim()) {
+      errorTexts.username = "Username is required";
+      isValid = false;
+    }
+
+    if (!email.trim()) {
+      errorTexts.email = "Email is required";
+      isValid = false;
+    } else if (!/\S+@\S+\.\S+/.test(email)) {
+      errorTexts.email = "Email is invalid";
+      isValid = false;
+    }
+
+    if (!password) {
+      errorTexts.password = "Password is required";
+      isValid = false;
+    } else if (password.length < 8) {
+      errorTexts.password = "Password must be at least 8 characters";
+      isValid = false;
+    }
+
+    if (password !== confirmPassword) {
+      errorTexts.confirmPassword = "Passwords do not match";
+      isValid = false;
+    }
+
+    setErrors(errorTexts);
+    return isValid;
+  };
+
+  const handleSignUp = async () => {
+    validateForm()
+  };
 
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
@@ -38,7 +74,6 @@ export const SignUpScreen = ({ navigation }) => {
           translucent
         />
 
-        {/* Header */}
         <LinearGradient
           colors={["#09D1C7", "#35AFEA"]}
           style={styles.headerGradient}
@@ -68,8 +103,14 @@ export const SignUpScreen = ({ navigation }) => {
               value={username}
               onChangeText={(text) => {
                 setUsername(text);
+                if (errors.username) {
+                  setErrors({ ...errors, username: null });
+                }
               }}
             />
+            {errors.username && (
+              <Text style={styles.errorText}>{errors.username}</Text>
+            )}
 
             {/* Email Field */}
             <Text style={styles.inputLabel}>Email</Text>
@@ -79,10 +120,16 @@ export const SignUpScreen = ({ navigation }) => {
               value={email}
               onChangeText={(text) => {
                 setEmail(text);
+                if (errors.email) {
+                  setErrors({ ...errors, email: null });
+                }
               }}
               keyboardType="email-address"
               autoCapitalize="none"
             />
+            {errors.email && (
+              <Text style={styles.errorText}>{errors.email}</Text>
+            )}
 
             {/* Password Field */}
             <Text style={styles.inputLabel}>Password</Text>
@@ -93,6 +140,9 @@ export const SignUpScreen = ({ navigation }) => {
                 value={password}
                 onChangeText={(text) => {
                   setPassword(text);
+                  if (errors.password) {
+                    setErrors({ ...errors, password: null });
+                  }
                 }}
                 secureTextEntry={!passwordVisible}
               />
@@ -107,6 +157,9 @@ export const SignUpScreen = ({ navigation }) => {
                 />
               </TouchableOpacity>
             </View>
+            {errors.password && (
+              <Text style={styles.errorText}>{errors.password}</Text>
+            )}
 
             {/* Confirm Password Field */}
             <Text style={styles.inputLabel}>Confirm Password</Text>
@@ -117,6 +170,9 @@ export const SignUpScreen = ({ navigation }) => {
                 value={confirmPassword}
                 onChangeText={(text) => {
                   setConfirmPassword(text);
+                  if (errors.confirmPassword) {
+                    setErrors({ ...errors, confirmPassword: null });
+                  }
                 }}
                 secureTextEntry={!confirmPasswordVisible}
               />
@@ -133,6 +189,9 @@ export const SignUpScreen = ({ navigation }) => {
                 />
               </TouchableOpacity>
             </View>
+            {errors.confirmPassword && (
+              <Text style={styles.errorText}>{errors.confirmPassword}</Text>
+            )}
 
             {/* Terms and Privacy Policy */}
             <Text style={styles.termsText}>
@@ -204,7 +263,7 @@ const styles = StyleSheet.create({
     padding: 10,
   },
   backButtonText: {
-    fontSize: 24,
+    fontSize: 28,
     color: "#ffffff",
     fontWeight: "bold",
   },
@@ -255,6 +314,11 @@ const styles = StyleSheet.create({
   },
   eyeIcon: {
     padding: 10,
+  },
+  errorText: {
+    color: "#FF3B30",
+    fontSize: 14,
+    marginTop: 5,
   },
   termsText: {
     fontSize: 14,
