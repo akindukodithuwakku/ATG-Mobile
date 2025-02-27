@@ -65,7 +65,7 @@ const EmergencyContact = ({ navigation }) => {
           </TouchableOpacity>
           <TouchableOpacity 
             style={styles.continueButton} 
-            onPress={() => navigation.navigate("NextScreen")}
+            onPress={() => navigation.navigate("CareIntakeReview")}
           >
             <Text style={styles.continueText}>Continue</Text>
           </TouchableOpacity>
