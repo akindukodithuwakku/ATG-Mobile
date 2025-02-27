@@ -14,8 +14,17 @@ import { Checkbox } from "react-native-paper";
 import BottomNavigationClient from "../Components/BottomNavigationClient";
 import SideNavigationClient from "../Components/SideNavigationClient"; // Import the SideNavigationClient
 
+const ErrorIcon = () => (
+  <View style={styles.errorIcon}>
+    <Text style={styles.errorIconText}>!</Text>
+  </View>
+);
+
 const CareNeedsPreferences = ({ navigation }) => {
   const [preference, setPreference] = useState("");
+  const [primaryReasonError, setPrimaryReasonError] = useState("");
+  const [medicalConditionsError, setMedicalConditionsError] = useState("");
+  const [specialAssistanceError, setSpecialAssistanceError] = useState("");
   const scheme = useColorScheme();
   const [isSideNavVisible, setIsSideNavVisible] = useState(false); // State to control side navigation visibility
 
@@ -50,6 +59,9 @@ const CareNeedsPreferences = ({ navigation }) => {
         [condition]: true,
       }));
     }
+
+    // Clear medical conditions error when a checkbox is selected
+    setMedicalConditionsError("");
   };
 
   const handleSpecialAssistanceChange = (assistance) => {
@@ -68,11 +80,45 @@ const CareNeedsPreferences = ({ navigation }) => {
         [assistance]: true,
       }));
     }
+
+    // Clear special assistance error when a checkbox is selected
+    setSpecialAssistanceError("");
   };
 
   // Function to close the side navigation
   const closeSideNav = () => {
     setIsSideNavVisible(false);
+  };
+
+  const validateForm = () => {
+    let isValid = true;
+
+    // Reset error messages
+    setPrimaryReasonError("");
+    setMedicalConditionsError("");
+    setSpecialAssistanceError("");
+
+    // Validate primary reason for care
+    if (!preference) {
+      setPrimaryReasonError("Primary reason for care cannot be empty.");
+      isValid = false;
+    }
+
+    // Validate medical conditions
+    const selectedMedicalConditions = Object.values(medicalConditions).some((value) => value);
+    if (!selectedMedicalConditions) {
+      setMedicalConditionsError("Please select at least one medical condition.");
+      isValid = false;
+    }
+
+    // Validate special assistance
+    const selectedSpecialAssistance = Object.values(specialAssistance).some((value) => value);
+    if (!selectedSpecialAssistance) {
+      setSpecialAssistanceError("Please select at least one type of special assistance needed.");
+      isValid = false;
+    }
+
+    return isValid;
   };
 
   return (
@@ -104,7 +150,20 @@ const CareNeedsPreferences = ({ navigation }) => {
             placeholder="Describe The Primary Reason For Care..."
             placeholderTextColor="#999"
             multiline
+            value={preference}
+            onChangeText={(text) => {
+              setPreference(text);
+              if (text) {
+                setPrimaryReasonError(""); // Clear error when user types
+              }
+            }}
           />
+          {primaryReasonError && (
+            <View style={styles.errorContainer}>
+              <ErrorIcon />
+              <Text style={styles.error}>{primaryReasonError}</Text>
+            </View>
+          )}
 
           <Text style={styles.sectionTitle}>Current Medical Conditions</Text>
           <View style={styles.checkboxContainer}>
@@ -119,6 +178,12 @@ const CareNeedsPreferences = ({ navigation }) => {
               </View>
             ))}
           </View>
+          {medicalConditionsError && (
+            <View style={styles.errorContainer}>
+              <ErrorIcon />
+              <Text style={styles.error}>{medicalConditionsError}</Text>
+            </View>
+          )}
 
           <Text style={styles.sectionTitle}>Special Assistance Needed</Text>
           <View style={styles.checkboxContainer}>
@@ -133,6 +198,12 @@ const CareNeedsPreferences = ({ navigation }) => {
               </View>
             ))}
           </View>
+          {specialAssistanceError && (
+            <View style={styles.errorContainer}>
+              <ErrorIcon />
+              <Text style={styles.error}>{specialAssistanceError}</Text>
+            </View>
+          )}
 
           <Text style={styles.sectionTitle}>Additional Notes</Text>
           <TextInput
@@ -156,7 +227,11 @@ const CareNeedsPreferences = ({ navigation }) => {
 
         <TouchableOpacity
           style={styles.continueButton}
-          onPress={() => navigation.navigate("EmergencyContact")} // Navigate to EmergencyContactInformation
+          onPress={() => {
+            if (validateForm()) {
+              navigation.navigate("EmergencyContact"); // Navigate to EmergencyContactInformation
+            }
+          }} // Validate before navigating
         >
           <Text style={styles.continueText}>Continue</Text>
         </TouchableOpacity>
@@ -258,6 +333,29 @@ const styles = StyleSheet.create({
   continueText: {
     color: "white",
     fontWeight: "bold",
+  },
+  error: {
+    color: 'red',
+    marginTop: 5,
+  },
+  errorContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 5,
+  },
+  errorIcon: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: 'red',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 5,
+  },
+  errorIconText: {
+    color: 'white',
+    fontWeight: 'bold',
+    fontSize: 16,
   },
 });
 

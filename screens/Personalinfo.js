@@ -7,12 +7,18 @@ import {
   TouchableOpacity,
   StatusBar,
   useColorScheme,
-  Switch,
   ScrollView,
+  Switch,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import BottomNavigationClient from "../Components/BottomNavigationClient";
 import SideNavigationClient from "../Components/SideNavigationClient";
+
+const ErrorIcon = () => (
+  <View style={styles.errorIcon}>
+    <Text style={styles.errorIconText}>!</Text>
+  </View>
+);
 
 const PersonalInfo = ({ navigation }) => {
   const [fullName, setFullName] = useState("");
@@ -22,11 +28,38 @@ const PersonalInfo = ({ navigation }) => {
   const [isMale, setIsMale] = useState(false);
   const [isFemale, setIsFemale] = useState(false);
   const [isSideNavVisible, setIsSideNavVisible] = useState(false);
+  const [errors, setErrors] = useState({});
   const scheme = useColorScheme();
 
   // Function to close the side navigation
   const closeSideNav = () => {
     setIsSideNavVisible(false);
+  };
+
+  const validateForm = () => {
+    const newErrors = {};
+    if (!fullName) newErrors.fullName = "Full Name cannot be empty";
+    if (!dateOfBirth) newErrors.dateOfBirth = "Date of Birth cannot be empty";
+    if (!contactNumber) newErrors.contactNumber = "Contact Number cannot be empty";
+    if (!homeAddress) newErrors.homeAddress = "Home Address cannot be empty";
+    if (!isMale && !isFemale) newErrors.gender = "Please select a gender";
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0; // Return true if no errors
+  };
+
+  const handleContinue = () => {
+    if (validateForm()) {
+      navigation.navigate("HealthConditions");
+    }
+  };
+
+  // Clear error when user starts typing
+  const handleInputChange = (setter, field) => (text) => {
+    setter(text);
+    if (errors[field]) {
+      setErrors((prevErrors) => ({ ...prevErrors, [field]: "" }));
+    }
   };
 
   return (
@@ -54,22 +87,38 @@ const PersonalInfo = ({ navigation }) => {
         {/* Form Fields */}
         <View style={styles.formContainer}>
           <Text style={styles.label}>Full Name</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Enter your full name"
-            placeholderTextColor="#B3E5FC"
-            value={fullName}
-            onChangeText={setFullName}
-          />
+          <View style={styles.inputContainer}>
+            <TextInput
+              style={styles.input}
+              placeholder="Enter your full name"
+              placeholderTextColor="#B3E5FC"
+              value={fullName}
+              onChangeText={handleInputChange(setFullName, "fullName")}
+            />
+          </View>
+          {errors.fullName && (
+            <View style={styles.errorContainer}>
+              <ErrorIcon />
+              <Text style={styles.error}>{errors.fullName}</Text>
+            </View>
+          )}
 
           <Text style={styles.label}>Date Of Birth</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="DD / MM / YYYY"
-            placeholderTextColor="#B3E5FC"
-            value={dateOfBirth}
-            onChangeText={setDateOfBirth}
-          />
+          <View style={styles.inputContainer}>
+            <TextInput
+              style={styles.input}
+              placeholder="DD / MM / YYYY"
+              placeholderTextColor="#B3E5FC"
+              value={dateOfBirth}
+              onChangeText={handleInputChange(setDateOfBirth, "dateOfBirth")}
+            />
+          </View>
+          {errors.dateOfBirth && (
+            <View style={styles.errorContainer}>
+              <ErrorIcon />
+              <Text style={styles.error}>{errors.dateOfBirth}</Text>
+            </View>
+          )}
 
           <Text style={styles.label}>Gender</Text>
           <View style={styles.genderContainer}>
@@ -79,6 +128,7 @@ const PersonalInfo = ({ navigation }) => {
                 onValueChange={() => {
                   setIsMale(true);
                   setIsFemale(false);
+                  setErrors((prevErrors) => ({ ...prevErrors, gender: "" })); // Clear error
                 }}
               />
               <Text style={styles.genderText}>Male</Text>
@@ -90,40 +140,63 @@ const PersonalInfo = ({ navigation }) => {
                 onValueChange={() => {
                   setIsFemale(true);
                   setIsMale(false);
+                  setErrors((prevErrors) => ({ ...prevErrors, gender: "" })); // Clear error
                 }}
               />
               <Text style={styles.genderText}>Female</Text>
             </View>
           </View>
+          {errors.gender && (
+            <View style={styles.errorContainer}>
+              <ErrorIcon />
+              <Text style={styles.error}>{errors.gender}</Text>
+            </View>
+          )}
 
           <Text style={styles.label}>Contact Number</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Enter your contact number"
-            placeholderTextColor="#B3E5FC"
-            keyboardType="phone-pad"
-            value={contactNumber}
-            onChangeText={setContactNumber}
-          />
+          <View style={styles.inputContainer}>
+            <TextInput
+              style={styles.input}
+              placeholder="Enter your contact number"
+              placeholderTextColor="#B3E5FC"
+              keyboardType="phone-pad"
+              value={contactNumber}
+              onChangeText={handleInputChange(setContactNumber, "contactNumber")}
+            />
+          </View>
+          {errors.contactNumber && (
+            <View style={styles.errorContainer}>
+              <ErrorIcon />
+              <Text style={styles.error}>{errors.contactNumber}</Text>
+            </View>
+          )}
 
           <Text style={styles.label}>Home Address</Text>
-          <TextInput
-            style={styles.textArea}
-            placeholder="Enter your home address"
-            placeholderTextColor="#B3E5FC"
-            value={homeAddress}
-            onChangeText={setHomeAddress}
-            multiline={true}
-            numberOfLines={4}
-            textAlignVertical="top"
-          />
+          <View style={styles.inputContainer}>
+            <TextInput
+              style={styles.textArea}
+              placeholder="Enter your home address"
+              placeholderTextColor="#B3E5FC"
+              value={homeAddress}
+              onChangeText={handleInputChange(setHomeAddress, "homeAddress")}
+              multiline={true}
+              numberOfLines={4}
+              textAlignVertical="top"
+            />
+          </View>
+          {errors.homeAddress && (
+            <View style={styles.errorContainer}>
+              <ErrorIcon />
+              <Text style={styles.error}>{errors.homeAddress}</Text>
+            </View>
+          )}
         </View>
       </ScrollView>
 
       {/* Continue Button */}
       <TouchableOpacity
         style={styles.continueButton}
-        onPress={() => navigation.navigate("HealthConditions")}
+        onPress={handleContinue}
       >
         <Text style={styles.continueText}>Continue</Text>
       </TouchableOpacity>
@@ -165,12 +238,26 @@ const styles = StyleSheet.create({
     marginTop: 20,
     color: "#333",
   },
+  inputContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: 12,
+  },
   input: {
     backgroundColor: "#E0F7FA",
     borderRadius: 10,
     padding: 12,
     fontSize: 16,
-    marginTop: 12,
+    flex: 1,
+  },
+  textArea: {
+    backgroundColor: "#E0F7FA",
+    borderRadius: 10,
+    padding: 12,
+    fontSize: 16,
+    height: 80,
+    textAlignVertical: "top",
+    flex: 1,
   },
   genderContainer: {
     flexDirection: "row",
@@ -202,14 +289,27 @@ const styles = StyleSheet.create({
     color: "white",
     fontWeight: "bold",
   },
-  textArea: {
-    backgroundColor: "#E0F7FA",
-    borderRadius: 10,
-    padding: 12,
+  error: {
+    color: 'red',
+    marginTop: 5,
+  },
+  errorContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 5,
+  },
+  errorIcon: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: 'red',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 5,
+  },
+  errorIconText: {
     fontSize: 16,
-    marginTop: 12,
-    height: 80,
-    textAlignVertical: "top",
+    color: 'white',
   },
 });
 

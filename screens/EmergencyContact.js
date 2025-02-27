@@ -15,16 +15,54 @@ import { Ionicons } from "@expo/vector-icons";
 import BottomNavigationClient from "../Components/BottomNavigationClient";
 import SideNavigationClient from "../Components/SideNavigationClient"; // Import the SideNavigationClient
 
+const ErrorIcon = () => (
+  <View style={styles.errorIcon}>
+    <Text style={styles.errorIconText}>!</Text>
+  </View>
+);
+
 const EmergencyContact = ({ navigation }) => {
   const [contactName, setContactName] = useState("");
   const [contactNumber, setContactNumber] = useState("");
   const [relationship, setRelationship] = useState("");
+  const [contactNameError, setContactNameError] = useState("");
+  const [contactNumberError, setContactNumberError] = useState("");
+  const [relationshipError, setRelationshipError] = useState("");
   const scheme = useColorScheme();
   const [isSideNavVisible, setIsSideNavVisible] = useState(false); // State to control side navigation visibility
 
   // Function to close the side navigation
   const closeSideNav = () => {
     setIsSideNavVisible(false);
+  };
+
+  const validateForm = () => {
+    let isValid = true;
+
+    // Reset error messages
+    setContactNameError("");
+    setContactNumberError("");
+    setRelationshipError("");
+
+    // Validate contact name
+    if (!contactName) {
+      setContactNameError("Contact name cannot be empty.");
+      isValid = false;
+    }
+
+    // Validate contact number
+    if (!contactNumber) {
+      setContactNumberError("Contact number cannot be empty.");
+      isValid = false;
+    }
+
+    // Validate relationship
+    if (!relationship) {
+      setRelationshipError("Relationship cannot be empty.");
+      isValid = false;
+    }
+
+    return isValid;
   };
 
   return (
@@ -57,8 +95,19 @@ const EmergencyContact = ({ navigation }) => {
               placeholder="Enter Contact Name"
               placeholderTextColor="#B3E5FC"
               value={contactName}
-              onChangeText={setContactName}
+              onChangeText={(text) => {
+                setContactName(text);
+                if (text) {
+                  setContactNameError(""); // Clear error when user types
+                }
+              }}
             />
+            {contactNameError && (
+              <View style={styles.errorContainer}>
+                <ErrorIcon />
+                <Text style={styles.error}>{contactNameError}</Text>
+              </View>
+            )}
 
             <Text style={styles.label}>Emergency Contact Number</Text>
             <TextInput
@@ -67,8 +116,19 @@ const EmergencyContact = ({ navigation }) => {
               placeholderTextColor="#B3E5FC"
               keyboardType="phone-pad"
               value={contactNumber}
-              onChangeText={setContactNumber}
+              onChangeText={(text) => {
+                setContactNumber(text);
+                if (text) {
+                  setContactNumberError(""); // Clear error when user types
+                }
+              }}
             />
+            {contactNumberError && (
+              <View style={styles.errorContainer}>
+                <ErrorIcon />
+                <Text style={styles.error}>{contactNumberError}</Text>
+              </View>
+            )}
 
             <Text style={styles.label}>Relationship To Emergency Contact</Text>
             <TextInput
@@ -76,8 +136,19 @@ const EmergencyContact = ({ navigation }) => {
               placeholder="Enter Relationship"
               placeholderTextColor="#B3E5FC"
               value={relationship}
-              onChangeText={setRelationship}
+              onChangeText={(text) => {
+                setRelationship(text);
+                if (text) {
+                  setRelationshipError(""); // Clear error when user types
+                }
+              }}
             />
+            {relationshipError && (
+              <View style={styles.errorContainer}>
+                <ErrorIcon />
+                <Text style={styles.error}>{relationshipError}</Text>
+              </View>
+            )}
           </View>
         </ScrollView>
 
@@ -89,7 +160,11 @@ const EmergencyContact = ({ navigation }) => {
           
           <TouchableOpacity
             style={styles.continueButton}
-            onPress={() => navigation.navigate("CareIntakeReview")} // Navigate to CareIntakeReview
+            onPress={() => {
+              if (validateForm()) {
+                navigation.navigate("CareIntakeReview"); // Navigate to CareIntakeReview
+              }
+            }}
           >
             <Text style={styles.continueText}>Continue</Text>
           </TouchableOpacity>
@@ -149,6 +224,29 @@ const styles = StyleSheet.create({
   },
   backText: { fontSize: 16, fontWeight: "bold", color: "#00BCD4", textAlign: "center" },
   continueText: { fontSize: 16, fontWeight: "bold", color: "white", textAlign: "center" },
+  error: {
+    color: 'red',
+    marginTop: 5,
+  },
+  errorContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 5,
+  },
+  errorIcon: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: 'red',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 5,
+  },
+  errorIconText: {
+    color: 'white',
+    fontWeight: 'bold',
+    fontSize: 16,
+  },
 });
 
 export default EmergencyContact;

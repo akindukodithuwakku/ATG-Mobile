@@ -15,6 +15,12 @@ import { Checkbox } from "react-native-paper";
 import BottomNavigationClient from "../Components/BottomNavigationClient";
 import SideNavigationClient from "../Components/SideNavigationClient"; // Import the SideNavigationClient
 
+const ErrorIcon = () => (
+  <View style={styles.errorIcon}>
+    <Text style={styles.errorIconText}>!</Text>
+  </View>
+);
+
 const HealthConditions = ({ navigation }) => {
   const [conditions, setConditions] = useState({
     diabetes: false,
@@ -28,14 +34,44 @@ const HealthConditions = ({ navigation }) => {
   const [medications, setMedications] = useState("");
   const [surgeries, setSurgeries] = useState("");
   const [isSideNavVisible, setIsSideNavVisible] = useState(false); // State to control side navigation visibility
+  const [errors, setErrors] = useState({}); // State for error messages
 
   const toggleCondition = (key) => {
-    setConditions({ ...conditions, [key]: !conditions[key] });
+    setConditions((prevConditions) => {
+      const updatedConditions = { ...prevConditions, [key]: !prevConditions[key] };
+      // Clear error if any condition is selected
+      if (updatedConditions[key]) {
+        setErrors((prevErrors) => ({ ...prevErrors, conditions: "" }));
+      }
+      return updatedConditions;
+    });
   };
 
   // Function to close the side navigation
   const closeSideNav = () => {
     setIsSideNavVisible(false);
+  };
+
+  const validateForm = () => {
+    const newErrors = {};
+    const selectedConditions = Object.values(conditions).some((value) => value === true);
+
+    if (!selectedConditions) {
+      newErrors.conditions = "Please select at least one medical condition.";
+    }
+
+    if (!medications) {
+      newErrors.medications = "Current medications cannot be empty.";
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0; // Return true if no errors
+  };
+
+  const handleContinue = () => {
+    if (validateForm()) {
+      navigation.navigate("CareNeedsPreferences"); // Navigate to CareNeedsPreferences
+    }
   };
 
   return (
@@ -72,6 +108,12 @@ const HealthConditions = ({ navigation }) => {
                 <Text style={styles.checkboxText}>{key.charAt(0).toUpperCase() + key.slice(1)}</Text>
               </View>
             ))}
+            {errors.conditions && (
+              <View style={styles.errorContainer}>
+                <ErrorIcon />
+                <Text style={styles.error}>{errors.conditions}</Text>
+              </View>
+            )}
 
             {conditions.other && (
               <TextInput
@@ -95,8 +137,19 @@ const HealthConditions = ({ navigation }) => {
               style={styles.textArea}
               placeholder="List all current medications..."
               value={medications}
-              onChangeText={setMedications}
+              onChangeText={(text) => {
+                setMedications(text);
+                if (text) {
+                  setErrors((prevErrors) => ({ ...prevErrors, medications: "" }));
+                }
+              }}
             />
+            {errors.medications && (
+              <View style={styles.errorContainer}>
+                <ErrorIcon />
+                <Text style={styles.error}>{errors.medications}</Text>
+              </View>
+            )}
 
             <Text style={styles.label}>History of Surgeries/Procedures</Text>
             <TextInput
@@ -115,7 +168,7 @@ const HealthConditions = ({ navigation }) => {
           </TouchableOpacity>
           <TouchableOpacity 
             style={styles.continueButton} 
-            onPress={() => navigation.navigate("CareNeedsPreferences")} // Navigate to CareNeedsPreferences
+            onPress={handleContinue} // Validate and navigate
           >
             <Text style={styles.continueText}>Continue</Text>
           </TouchableOpacity>
@@ -178,6 +231,29 @@ const styles = StyleSheet.create({
   },
   backText: { fontSize: 16, fontWeight: "bold", color: "#00BCD4", textAlign: "center" },
   continueText: { fontSize: 16, fontWeight: "bold", color: "white", textAlign: "center" },
+  error: {
+    color: 'red',
+    marginTop: 5,
+  },
+  errorContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 5,
+  },
+  errorIcon: {
+    backgroundColor: 'red',
+    borderRadius: 10,
+    width: 20,
+    height: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 5,
+  },
+  errorIconText: {
+    color: 'white',
+    fontWeight: 'bold',
+    fontSize: 16,
+  },
 });
 
 export default HealthConditions;
