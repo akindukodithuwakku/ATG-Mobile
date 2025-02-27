@@ -5,7 +5,7 @@ import { createStackNavigator } from "@react-navigation/stack";
 // Import screens
 import WelcomeScreen from "./screens/WelcomeScreen";
 import LoginScreen from "./screens/LoginScreen";
-import SignupScreen from "./screens/SignupScreen";
+import {SignUpScreen, VerificationSentScreen} from "./screens/SignupScreen";
 import ProfileScreenC from "./screens/ProfileScreens/ProfileScreenC";
 import ProfileScreenCN from "./screens/ProfileScreens/ProfileScreenCN";
 import ReadinessQuestionnaire from "./screens/ReadinessQuestionnaire";
@@ -26,12 +26,13 @@ const Stack = createStackNavigator();
 const AppNavigator = () => {
   return (
     <Stack.Navigator
-      initialRouteName="CNDashboard"
+      initialRouteName="Signup"
       screenOptions={{ headerShown: false, gestureEnabled: false }}
     >
       <Stack.Screen name="Welcome" component={WelcomeScreen} />
       <Stack.Screen name="Login" component={LoginScreen} />
-      <Stack.Screen name="Signup" component={SignupScreen} />
+      <Stack.Screen name="Signup" component={SignUpScreen} />
+      <Stack.Screen name="VerificationSent" component={VerificationSentScreen} />
       <Stack.Screen name="ProfileC" component={ProfileScreenC} />
       <Stack.Screen name="ProfileCN" component={ProfileScreenCN} />
       <Stack.Screen name="Readiness" component={ReadinessQuestionnaire} />
