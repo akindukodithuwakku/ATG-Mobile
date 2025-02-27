@@ -10,6 +10,7 @@ import {
   Platform,
   StatusBar,
   ScrollView,
+  Modal,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
@@ -62,8 +63,89 @@ export const SignUpScreen = ({ navigation }) => {
   };
 
   const handleSignUp = async () => {
-    validateForm()
+    validateForm();
   };
+
+  // Terms Modal
+  const TermsModal = () => (
+    <Modal
+      animationType="fade"
+      transparent={true}
+      visible={showTermsModal}
+      onRequestClose={() => setShowTermsModal(false)}
+    >
+      <View style={styles.modalContainer}>
+        <View style={styles.modalContent}>
+          <View style={styles.modalHeader}>
+            <Text style={styles.modalTitle}>Terms of Use</Text>
+            <TouchableOpacity onPress={() => setShowTermsModal(false)}>
+              <Ionicons name="close" size={24} color="#333" />
+            </TouchableOpacity>
+          </View>
+          <ScrollView style={styles.modalBody}>
+            <Text style={styles.modalText}>
+              By signing up, you agree to our{" "}
+              <Text style={styles.boldText}>Terms of Use</Text>, including:
+            </Text>
+
+            <View style={styles.bulletPoint}>
+              <Text style={styles.bullet}>•</Text>
+              <Text style={styles.bulletText}>
+                You must provide <Text style={styles.boldText}>accurate</Text>{" "}
+                information and use the app responsibly.
+              </Text>
+            </View>
+
+            <View style={styles.bulletPoint}>
+              <Text style={styles.bullet}>•</Text>
+              <Text style={styles.bulletText}>
+                The app is for{" "}
+                <Text style={styles.boldText}>
+                  personal healthcare management
+                </Text>{" "}
+                and does not replace medical advice.
+              </Text>
+            </View>
+
+            <View style={styles.bulletPoint}>
+              <Text style={styles.bullet}>•</Text>
+              <Text style={styles.bulletText}>
+                <Text style={styles.boldText}>Security</Text>: You are
+                responsible for your account and password protection.
+              </Text>
+            </View>
+
+            <View style={styles.bulletPoint}>
+              <Text style={styles.bullet}>•</Text>
+              <Text style={styles.bulletText}>
+                <Text style={styles.boldText}>Misuse</Text> may result in
+                account suspension.
+              </Text>
+            </View>
+
+            <View style={styles.bulletPoint}>
+              <Text style={styles.bullet}>•</Text>
+              <Text style={styles.bulletText}>
+                We may <Text style={styles.boldText}>update</Text> the terms and
+                policies, and you will be notified.
+              </Text>
+            </View>
+          </ScrollView>
+          <TouchableOpacity
+            style={styles.modalButton}
+            onPress={() => setShowTermsModal(false)}
+          >
+            <LinearGradient
+              colors={["#09D1C7", "#35AFEA"]}
+              style={styles.gradientButton}
+            >
+              <Text style={styles.modalButtonText}>I Understand</Text>
+            </LinearGradient>
+          </TouchableOpacity>
+        </View>
+      </View>
+    </Modal>
+  );
 
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
@@ -236,6 +318,8 @@ export const SignUpScreen = ({ navigation }) => {
             </View>
           </View>
         </ScrollView>
+
+        <TermsModal />
       </View>
     </TouchableWithoutFeedback>
   );
@@ -359,5 +443,83 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "#09D1C7",
     fontWeight: "bold",
+  },
+  // Modal styles
+  modalContainer: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  modalContent: {
+    backgroundColor: 'white',
+    borderRadius: 20,
+    width: '100%',
+    maxHeight: '70%',
+    padding: 20,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 15,
+    borderBottomWidth: 2,
+    borderBottomColor: '#EFEFEF',
+    paddingBottom: 15,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+  },
+  modalBody: {
+    maxHeight: '65%',
+    marginBottom: 20,
+  },
+  modalText: {
+    fontSize: 16,
+    color: '#444',
+    lineHeight: 22,
+    marginBottom: 10,
+  },
+  bulletPoint: {
+    flexDirection: 'row',
+    marginBottom: 10,
+    paddingLeft: 5,
+  },
+  bullet: {
+    fontSize: 14,
+    marginRight: 10,
+    color: '#444',
+  },
+  bulletText: {
+    flex: 1,
+    fontSize: 14,
+    color: '#444',
+    lineHeight: 22,
+  },
+  boldText: {
+    fontWeight: 'bold',
+  },
+  marginTop: {
+    marginTop: 10,
+  },
+  modalButton: {
+    height: 50,
+    borderRadius: 25,
+    overflow: 'hidden',
+  },
+  modalButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
 });
