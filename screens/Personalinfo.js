@@ -96,14 +96,14 @@ const PersonalInfo = ({ navigation }) => {
 
           <Text style={styles.label}>Home Address</Text>
           <TextInput
-            style={styles.textArea} // Use a separate style for the text area
+            style={styles.textArea}
             placeholder="Enter your home address"
             placeholderTextColor="#B3E5FC"
             value={homeAddress}
             onChangeText={setHomeAddress}
-            multiline={true} // Allows multiple lines like a textarea
-            numberOfLines={4} // Sets initial visible lines
-            textAlignVertical="top" // Aligns text to the top
+            multiline={true}
+            numberOfLines={4}
+            textAlignVertical="top"
           />
         </View>
       </ScrollView>
@@ -111,7 +111,7 @@ const PersonalInfo = ({ navigation }) => {
       {/* Continue Button */}
       <TouchableOpacity
         style={styles.continueButton}
-        onPress={() => console.log("Continue button pressed")}
+        onPress={() => navigation.navigate("HealthConditions")} // Navigate to HealthConditions
       >
         <Text style={styles.continueText}>Continue</Text>
       </TouchableOpacity>
@@ -121,7 +121,6 @@ const PersonalInfo = ({ navigation }) => {
     </View>
   );
 };
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,

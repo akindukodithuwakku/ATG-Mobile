@@ -103,7 +103,7 @@ const HealthConditions = ({ navigation }) => {
           </TouchableOpacity>
           <TouchableOpacity 
             style={styles.continueButton} 
-            onPress={() => navigation.navigate("NextScreen")}
+            onPress={() => navigation.navigate("CareNeedsPreferences")} // Navigate to CareNeedsPreferences
           >
             <Text style={styles.continueText}>Continue</Text>
           </TouchableOpacity>

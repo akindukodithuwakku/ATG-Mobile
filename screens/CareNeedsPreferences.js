@@ -144,7 +144,7 @@ const CareNeedsPreferences = ({ navigation }) => {
 
         <TouchableOpacity
           style={styles.continueButton}
-          onPress={() => console.log("Continue button pressed")}
+          onPress={() => navigation.navigate("EmergencyContact")} // Navigate to EmergencyContactInformation
         >
           <Text style={styles.continueText}>Continue</Text>
         </TouchableOpacity>
