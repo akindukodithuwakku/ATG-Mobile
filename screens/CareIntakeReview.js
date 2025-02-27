@@ -3,16 +3,17 @@ import {
   View,
   Text,
   TextInput,
-  StyleSheet,
   TouchableOpacity,
-  StatusBar,
-  useColorScheme,
+  StyleSheet,
   ScrollView,
+  StatusBar,
   KeyboardAvoidingView,
   Platform,
+  useColorScheme,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import BottomNavigationClient from '../Components/BottomNavigationClient';
+import SideNavigationClient from '../Components/SideNavigationClient'; // Import the SideNavigationClient
 
 const CareIntakeReview = ({ navigation }) => {
   const [fullName, setFullName] = useState('');
@@ -34,6 +35,7 @@ const CareIntakeReview = ({ navigation }) => {
   const [emergencyContactName, setEmergencyContactName] = useState('');
   const [emergencyContactNumber, setEmergencyContactNumber] = useState('');
   const [relationship, setRelationship] = useState('');
+  const [isSideNavVisible, setIsSideNavVisible] = useState(false); // State to control side navigation visibility
   const scheme = useColorScheme();
 
   const toggleCondition = (key) => {
@@ -59,6 +61,11 @@ const CareIntakeReview = ({ navigation }) => {
     navigation.navigate('SubmissionSuccess'); // Navigate to SubmissionSuccess screen
   };
 
+  // Function to close the side navigation
+  const closeSideNav = () => {
+    setIsSideNavVisible(false);
+  };
+
   return (
     <KeyboardAvoidingView 
       behavior={Platform.OS === "ios" ? "padding" : "height"} 
@@ -73,11 +80,16 @@ const CareIntakeReview = ({ navigation }) => {
 
         {/* Header */}
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => navigation.goBack()}>
-            <Ionicons name="arrow-back" size={28} color="white" />
+          <TouchableOpacity onPress={() => setIsSideNavVisible(!isSideNavVisible)}>
+            <Ionicons name="menu" size={28} color="white" />
           </TouchableOpacity>
           <Text style={styles.headerText}>Care Intake Review</Text>
         </View>
+
+        {/* Side Navigation */}
+        {isSideNavVisible && (
+          <SideNavigationClient navigation={navigation} onClose={closeSideNav} />
+        )}
 
         <ScrollView contentContainerStyle={styles.scrollContainer}>
           <View style={styles.formContainer}>
@@ -120,7 +132,8 @@ const CareIntakeReview = ({ navigation }) => {
               onChangeText={setContactNumber}
             />
 
-            <Text style={styles.label}>Home Address</Text> <TextInput
+            <Text style={styles.label}>Home Address</Text>
+            <TextInput
               style={styles.textArea}
               placeholder="Enter your home address"
               placeholderTextColor="#B3E5FC"
@@ -206,21 +219,21 @@ const CareIntakeReview = ({ navigation }) => {
         </ScrollView>
 
         {/* Buttons */}
-                <View style={styles.buttonContainer}>
-                  <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-                    <Text style={styles.backText}>Back</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity 
-                    style={styles.continueButton} 
-                    onPress={() => navigation.navigate("SubmissionSuccess")} // Navigate to CareNeedsPreferences
-                  >
-                    <Text style={styles.continueText}>Submit</Text>
-                  </TouchableOpacity>
-                </View>
+        <View style={styles.buttonContainer}>
+          <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+            <Text style={styles.backText}>Back</Text>
+          </TouchableOpacity>
+          <TouchableOpacity 
+            style={styles.continueButton} 
+            onPress={handleSubmit} // Submit the form
+          >
+            <Text style={styles.continueText}>Submit</Text>
+          </TouchableOpacity>
+        </View>
 
         {/* Bottom Navigation */}
         <BottomNavigationClient navigation={navigation} />
-      </View>
+ </View>
     </KeyboardAvoidingView>
   );
 };
@@ -284,7 +297,7 @@ const styles = StyleSheet.create({
   },
   checkboxText: {
     fontSize: 16,
-    color : "#333",
+    color: "#333",
   },
   genderContainer: {
     flexDirection: "row",
@@ -303,11 +316,11 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: "#333",
   },
-  buttonContainer: { 
-    flexDirection: "row", 
-    justifyContent: "space-between", 
-    paddingHorizontal: 20, 
-    paddingVertical: 65, 
+  buttonContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    paddingHorizontal: 20,
+    paddingVertical: 65,
     backgroundColor: "#F8FDFF",
   },
   backButton: {
@@ -319,16 +332,16 @@ const styles = StyleSheet.create({
     width: "45%",
     alignItems: "center",
   },
-  continueButton: { 
-    backgroundColor: "#00BCD4", 
-    paddingVertical: 15, 
-    paddingHorizontal: 30, 
-    borderRadius: 30, 
-    flex: 1, 
-    marginLeft: 10 
+  continueButton: {
+    backgroundColor: "#00BCD4",
+    paddingVertical: 15,
+    paddingHorizontal: 30,
+    borderRadius: 30,
+    flex: 1,
+    marginLeft: 10,
   },
   backText: { fontSize: 16, fontWeight: "bold", color: "#00BCD4", textAlign: "center" },
   continueText: { fontSize: 16, fontWeight: "bold", color: "white", textAlign: "center" },
 });
 
-export default CareIntakeReview
+export default CareIntakeReview;

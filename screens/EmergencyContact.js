@@ -1,13 +1,31 @@
 import React, { useState } from "react";
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, StatusBar, KeyboardAvoidingView, Platform,useColorScheme,} from "react-native";
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+  ScrollView,
+  StatusBar,
+  KeyboardAvoidingView,
+  Platform,
+  useColorScheme,
+} from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import BottomNavigationClient from "../Components/BottomNavigationClient";
+import SideNavigationClient from "../Components/SideNavigationClient"; // Import the SideNavigationClient
 
 const EmergencyContact = ({ navigation }) => {
   const [contactName, setContactName] = useState("");
   const [contactNumber, setContactNumber] = useState("");
   const [relationship, setRelationship] = useState("");
   const scheme = useColorScheme();
+  const [isSideNavVisible, setIsSideNavVisible] = useState(false); // State to control side navigation visibility
+
+  // Function to close the side navigation
+  const closeSideNav = () => {
+    setIsSideNavVisible(false);
+  };
 
   return (
     <KeyboardAvoidingView 
@@ -19,11 +37,16 @@ const EmergencyContact = ({ navigation }) => {
 
         {/* Header */}
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => navigation.goBack()}>
-            <Ionicons name="arrow-back" size={28} color="white" />
+          <TouchableOpacity onPress={() => setIsSideNavVisible(!isSideNavVisible)}>
+            <Ionicons name="menu" size={28} color="white" />
           </TouchableOpacity>
           <Text style={styles.headerText}>Emergency Contact Information</Text>
         </View>
+
+        {/* Side Navigation */}
+        {isSideNavVisible && (
+          <SideNavigationClient navigation={navigation} onClose={closeSideNav} />
+        )}
 
         <ScrollView contentContainerStyle={styles.scrollContainer}>
           {/* Form Fields */}
@@ -63,9 +86,10 @@ const EmergencyContact = ({ navigation }) => {
           <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
             <Text style={styles.backText}>Back</Text>
           </TouchableOpacity>
-          <TouchableOpacity 
-            style={styles.continueButton} 
-            onPress={() => navigation.navigate("CareIntakeReview")}
+          
+          <TouchableOpacity
+            style={styles.continueButton}
+            onPress={() => navigation.navigate("CareIntakeReview")} // Navigate to CareIntakeReview
           >
             <Text style={styles.continueText}>Continue</Text>
           </TouchableOpacity>

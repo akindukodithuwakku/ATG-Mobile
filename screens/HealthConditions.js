@@ -13,6 +13,7 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { Checkbox } from "react-native-paper";
 import BottomNavigationClient from "../Components/BottomNavigationClient";
+import SideNavigationClient from "../Components/SideNavigationClient"; // Import the SideNavigationClient
 
 const HealthConditions = ({ navigation }) => {
   const [conditions, setConditions] = useState({
@@ -26,9 +27,15 @@ const HealthConditions = ({ navigation }) => {
   const [allergies, setAllergies] = useState("");
   const [medications, setMedications] = useState("");
   const [surgeries, setSurgeries] = useState("");
+  const [isSideNavVisible, setIsSideNavVisible] = useState(false); // State to control side navigation visibility
 
   const toggleCondition = (key) => {
     setConditions({ ...conditions, [key]: !conditions[key] });
+  };
+
+  // Function to close the side navigation
+  const closeSideNav = () => {
+    setIsSideNavVisible(false);
   };
 
   return (
@@ -41,11 +48,16 @@ const HealthConditions = ({ navigation }) => {
         
         {/* Header */}
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => navigation.goBack()}>
-            <Ionicons name="arrow-back" size={28} color="white" />
+          <TouchableOpacity onPress={() => setIsSideNavVisible(!isSideNavVisible)}>
+            <Ionicons name="menu" size={28} color="white" />
           </TouchableOpacity>
           <Text style={styles.headerText}>Health Conditions</Text>
         </View>
+
+        {/* Side Navigation */}
+        {isSideNavVisible && (
+          <SideNavigationClient navigation={navigation} onClose={closeSideNav} />
+        )}
 
         <ScrollView contentContainerStyle={styles.scrollContainer}>
           <View style={styles.formContainer}>

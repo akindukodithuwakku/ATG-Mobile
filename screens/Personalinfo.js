@@ -12,6 +12,7 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import BottomNavigationClient from "../Components/BottomNavigationClient";
+import SideNavigationClient from "../Components/SideNavigationClient";
 
 const PersonalInfo = ({ navigation }) => {
   const [fullName, setFullName] = useState("");
@@ -20,7 +21,13 @@ const PersonalInfo = ({ navigation }) => {
   const [homeAddress, setHomeAddress] = useState("");
   const [isMale, setIsMale] = useState(false);
   const [isFemale, setIsFemale] = useState(false);
+  const [isSideNavVisible, setIsSideNavVisible] = useState(false);
   const scheme = useColorScheme();
+
+  // Function to close the side navigation
+  const closeSideNav = () => {
+    setIsSideNavVisible(false);
+  };
 
   return (
     <View style={styles.container}>
@@ -32,11 +39,16 @@ const PersonalInfo = ({ navigation }) => {
 
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Ionicons name="arrow-back" size={28} color="white" />
+        <TouchableOpacity onPress={() => setIsSideNavVisible(!isSideNavVisible)}>
+          <Ionicons name="menu" size={28} color="white" />
         </TouchableOpacity>
         <Text style={styles.headerText}>Personal Information</Text>
       </View>
+
+      {/* Side Navigation */}
+      {isSideNavVisible && (
+        <SideNavigationClient navigation={navigation} onClose={closeSideNav} />
+      )}
 
       <ScrollView contentContainerStyle={styles.scrollContainer}>
         {/* Form Fields */}
@@ -111,7 +123,7 @@ const PersonalInfo = ({ navigation }) => {
       {/* Continue Button */}
       <TouchableOpacity
         style={styles.continueButton}
-        onPress={() => navigation.navigate("HealthConditions")} // Navigate to HealthConditions
+        onPress={() => navigation.navigate("HealthConditions")}
       >
         <Text style={styles.continueText}>Continue</Text>
       </TouchableOpacity>
@@ -121,6 +133,7 @@ const PersonalInfo = ({ navigation }) => {
     </View>
   );
 };
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -195,8 +208,8 @@ const styles = StyleSheet.create({
     padding: 12,
     fontSize: 16,
     marginTop: 12,
-    height: 80, // Adjust height as needed
-    textAlignVertical: "top", // Ensures text starts at the top
+    height: 80,
+    textAlignVertical: "top",
   },
 });
 
