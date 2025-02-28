@@ -9,8 +9,10 @@ import {
   useColorScheme,
   ScrollView,
   Switch,
+  Platform,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import DateTimePicker from '@react-native-community/datetimepicker';
 import BottomNavigationClient from "../Components/BottomNavigationClient";
 import SideNavigationClient from "../Components/SideNavigationClient";
 
@@ -29,7 +31,20 @@ const PersonalInfo = ({ navigation }) => {
   const [isFemale, setIsFemale] = useState(false);
   const [isSideNavVisible, setIsSideNavVisible] = useState(false);
   const [errors, setErrors] = useState({});
+  const [showDatePicker, setShowDatePicker] = useState(false);
   const scheme = useColorScheme();
+
+  const handleDateChange = (event, selectedDate) => {
+    setShowDatePicker(Platform.OS === 'ios');
+    if (selectedDate) {
+      const formattedDate = selectedDate.toLocaleDateString();
+      setDateOfBirth(formattedDate);
+    }
+  };
+
+  const showDatepicker = () => {
+    setShowDatePicker(true);
+  };
 
   // Function to close the side navigation
   const closeSideNav = () => {
@@ -119,9 +134,20 @@ const PersonalInfo = ({ navigation }) => {
               placeholderTextColor="#B3E5FC"
               value={dateOfBirth}
               onChangeText={handleInputChange(setDateOfBirth, "dateOfBirth")}
+              onFocus={showDatepicker}
             />
-            {errors.dateOfBirth }
+            <TouchableOpacity onPress={showDatepicker}>
+              <Ionicons name="calendar" size={24} color="#00BCD4" />
+            </TouchableOpacity>
           </View>
+          {showDatePicker && (
+            <DateTimePicker
+              value={new Date()}
+              mode="date"
+              display="default"
+              onChange={handleDateChange}
+            />
+          )}
           {errors.dateOfBirth && (
             <View style={styles.errorContainer}>
               <ErrorIcon />
