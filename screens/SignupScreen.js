@@ -416,11 +416,11 @@ export const VerificationSentScreen = ({ navigation }) => {
   const scheme = useColorScheme();
   return (
     <View style={styles.container}>
-            <StatusBar
-              barStyle={scheme === "dark" ? "light-content" : "dark-content"}
-              translucent={true}
-              backgroundColor={scheme === "dark" ? "black" : "transparent"}
-            />
+      <StatusBar
+        barStyle={scheme === "dark" ? "light-content" : "dark-content"}
+        translucent={true}
+        backgroundColor={scheme === "dark" ? "black" : "transparent"}
+      />
 
       {/* Content */}
       <View style={styles.verificationContainer}>
@@ -440,14 +440,13 @@ export const VerificationSentScreen = ({ navigation }) => {
           finalize your registration.
         </Text>
 
-        {/* Action */}
         <View style={styles.actionsContainer}>
           <TouchableOpacity
             style={styles.primaryButton}
             onPress={() => {
               navigation.reset({
                 index: 0,
-                routes: [{ name: 'CareIntakeForm' }],
+                routes: [{ name: "CareIntakeForm" }],
               });
             }}
           >
@@ -460,6 +459,33 @@ export const VerificationSentScreen = ({ navigation }) => {
               </Text>
             </LinearGradient>
           </TouchableOpacity>
+
+          <View style={styles.alternativeActions}>
+            <TouchableOpacity
+              style={styles.textButton}
+              onPress={() => {
+                // Functionality to clear any partial registration data will be added later.
+                navigation.reset({
+                  index: 0,
+                  routes: [{ name: "Welcome" }],
+                });
+              }}
+            >
+              <Text style={styles.textButtonText}>Start Over</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.textButton}
+              onPress={() => {
+                navigation.reset({
+                  index: 0,
+                  routes: [{ name: "Login" }],
+                });
+              }}
+            >
+              <Text style={styles.textButtonText}>Go to Login</Text>
+            </TouchableOpacity>
+          </View>
         </View>
       </View>
     </View>
@@ -714,5 +740,18 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontSize: 16,
     fontWeight: "bold",
+  },
+  alternativeActions: {
+    flexDirection: "row",
+    width: "100%",
+    marginTop: 20,
+  },
+  textButton: {
+    padding: 10,
+    paddingRight: 25,
+  },
+  textButtonText: {
+    color: "#35AFEA",
+    fontSize: 16,
   },
 });
