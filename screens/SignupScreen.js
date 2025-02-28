@@ -147,6 +147,90 @@ export const SignUpScreen = ({ navigation }) => {
     </Modal>
   );
 
+  // Privacy Policy Modal
+  const PrivacyModal = () => (
+    <Modal
+      animationType="fade"
+      transparent={true}
+      visible={showPrivacyModal}
+      onRequestClose={() => setShowPrivacyModal(false)}
+    >
+      <View style={styles.modalContainer}>
+        <View style={styles.modalContent}>
+          <View style={styles.modalHeader}>
+            <Text style={styles.modalTitle}>Privacy Policy</Text>
+            <TouchableOpacity onPress={() => setShowPrivacyModal(false)}>
+              <Ionicons name="close" size={24} color="#333" />
+            </TouchableOpacity>
+          </View>
+          <ScrollView style={styles.modalBody}>
+            <Text style={styles.modalText}>
+              By signing up, you agree to our{" "}
+              <Text style={styles.boldText}>Privacy Policy</Text>, which
+              outlines:
+            </Text>
+
+            <View style={styles.bulletPoint}>
+              <Text style={styles.bullet}>•</Text>
+              <Text style={styles.bulletText}>
+                <Text style={styles.boldText}>What we collect</Text>: Profile
+                details, health-related data, and usage information.
+              </Text>
+            </View>
+
+            <View style={styles.bulletPoint}>
+              <Text style={styles.bullet}>•</Text>
+              <Text style={styles.bulletText}>
+                <Text style={styles.boldText}>Why we collect it</Text>: To
+                enable care plan management, appointments, and security.
+              </Text>
+            </View>
+
+            <View style={styles.bulletPoint}>
+              <Text style={styles.bullet}>•</Text>
+              <Text style={styles.bulletText}>
+                <Text style={styles.boldText}>Who we share with</Text>:
+                Healthcare providers, AWS Cognito, and third-party integrations.
+              </Text>
+            </View>
+
+            <View style={styles.bulletPoint}>
+              <Text style={styles.bullet}>•</Text>
+              <Text style={styles.bulletText}>
+                <Text style={styles.boldText}>Your rights</Text>: Access,
+                update, or request deletion of your data.
+              </Text>
+            </View>
+
+            <View style={styles.bulletPoint}>
+              <Text style={styles.bullet}>•</Text>
+              <Text style={styles.bulletText}>
+                <Text style={styles.boldText}>Security</Text>: Your data is
+                protected with encryption and strict security measures.
+              </Text>
+            </View>
+
+            <Text style={[styles.modalText, styles.marginTop]}>
+              By continuing, you confirm that you have read and accept our full
+              Privacy Policy.
+            </Text>
+          </ScrollView>
+          <TouchableOpacity
+            style={styles.modalButton}
+            onPress={() => setShowPrivacyModal(false)}
+          >
+            <LinearGradient
+              colors={["#09D1C7", "#35AFEA"]}
+              style={styles.gradientButton}
+            >
+              <Text style={styles.modalButtonText}>I Understand</Text>
+            </LinearGradient>
+          </TouchableOpacity>
+        </View>
+      </View>
+    </Modal>
+  );
+
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
       <View style={styles.container}>
@@ -320,6 +404,7 @@ export const SignUpScreen = ({ navigation }) => {
         </ScrollView>
 
         <TermsModal />
+        <PrivacyModal />
       </View>
     </TouchableWithoutFeedback>
   );
@@ -447,18 +532,18 @@ const styles = StyleSheet.create({
   // Modal styles
   modalContainer: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "center",
+    alignItems: "center",
     padding: 20,
   },
   modalContent: {
-    backgroundColor: 'white',
+    backgroundColor: "white",
     borderRadius: 20,
-    width: '100%',
-    maxHeight: '70%',
+    width: "100%",
+    maxHeight: "70%",
     padding: 20,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: {
       width: 0,
       height: 2,
@@ -468,46 +553,46 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
   modalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     marginBottom: 15,
     borderBottomWidth: 2,
-    borderBottomColor: '#EFEFEF',
+    borderBottomColor: "#EFEFEF",
     paddingBottom: 15,
   },
   modalTitle: {
     fontSize: 20,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   modalBody: {
-    maxHeight: '65%',
+    maxHeight: "65%",
     marginBottom: 20,
   },
   modalText: {
     fontSize: 16,
-    color: '#444',
+    color: "#444",
     lineHeight: 22,
     marginBottom: 10,
   },
   bulletPoint: {
-    flexDirection: 'row',
+    flexDirection: "row",
     marginBottom: 10,
     paddingLeft: 5,
   },
   bullet: {
     fontSize: 14,
     marginRight: 10,
-    color: '#444',
+    color: "#444",
   },
   bulletText: {
     flex: 1,
     fontSize: 14,
-    color: '#444',
+    color: "#444",
     lineHeight: 22,
   },
   boldText: {
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   marginTop: {
     marginTop: 10,
@@ -515,11 +600,11 @@ const styles = StyleSheet.create({
   modalButton: {
     height: 50,
     borderRadius: 25,
-    overflow: 'hidden',
+    overflow: "hidden",
   },
   modalButtonText: {
-    color: '#fff',
+    color: "#fff",
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
 });
