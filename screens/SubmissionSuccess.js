@@ -10,7 +10,7 @@ const SubmissionSuccess = () => {
       <Image source={require('../assets/checkmark.png')} style={styles.image} />
       <Text style={styles.title}>Your Form is successfully Submitted</Text>
       <Text style={styles.subtitle}>Thank you for getting in touch!</Text>
-      <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('Home')}>
+      <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('Personalinfo')}>
         <Text style={styles.buttonText}>Close</Text>
       </TouchableOpacity>
     </View>
@@ -22,15 +22,17 @@ const styles = StyleSheet.create({
   image: { width: 180, height: 150, marginBottom: 20 },
   title: { fontSize: 22, fontWeight: 'bold', textAlign: 'center' },
   subtitle: { fontSize: 19, textAlign: 'center', color: '#555', marginBottom: 25 },
-  button: { backgroundColor: "#00BCD4",
+  button: { 
+    backgroundColor: "#00BCD4",
     paddingVertical: 20,
     borderRadius: 30,
     alignItems: "center",
     alignSelf: "center",
     width: "90%",
     position: "absolute",
-    bottom: 70,},
-  buttonText: { color: '#fff', fontWeight: 'bold',fontSize:20 },
+    bottom: 70,
+  },
+  buttonText: { color: '#fff', fontWeight: 'bold', fontSize: 20 },
 });
 
 export default SubmissionSuccess;

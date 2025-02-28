@@ -49,7 +49,7 @@ const CareIntakeReview = ({ navigation, route }) => {
     }
   }, [route.params]);
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     const formData = {
       fullName,
       dateOfBirth,
@@ -65,8 +65,42 @@ const CareIntakeReview = ({ navigation, route }) => {
       emergencyContactNumber,
       relationship,
     };
-    console.log('Form Data Submitted:', formData);
-    navigation.navigate('SubmissionSuccess'); // Navigate to success screen
+  
+    try {
+      // Replace with your API endpoint
+      const response = await fetch('https://your-api-endpoint.com/submit', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
+      });
+  
+      if (!response.ok) {
+        throw new Error('Network response was not ok');
+      }
+  
+      // Clear the form fields
+      setFullName('');
+      setDateOfBirth('');
+      setContactNumber('');
+      setHomeAddress('');
+      setGender('');
+      setConditions({});
+      setOtherCondition('');
+      setAllergies('');
+      setMedications('');
+      setSurgeries('');
+      setEmergencyContactName('');
+      setEmergencyContactNumber('');
+      setRelationship('');
+  
+      // Navigate to a success screen or the same form
+      navigation.navigate('SubmissionSuccess'); // or navigate to the form screen again
+    } catch (error) {
+      console.error('Error submitting form:', error);
+      // Handle error (e.g., show an alert)
+    }
   };
 
   const closeSideNav = () => {
