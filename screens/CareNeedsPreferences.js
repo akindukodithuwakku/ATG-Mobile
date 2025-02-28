@@ -1,3 +1,4 @@
+//careneeds prefernces form
 import React, { useState, useEffect } from "react";
 import {
   View,
@@ -126,12 +127,18 @@ const CareNeedsPreferences = ({ navigation }) => {
     return isValid;
  };
 
-  const handleContinue = () => {
-    if (validateForm()) {
-      saveData(); // Save data before navigating
-      navigation.navigate("EmergencyContact");
-    }
-  };
+ const handleContinue = () => {
+  if (validateForm()) {
+    saveData(); // Save data before navigating
+    const careNeedsData = {
+      preference,
+      medicalConditions,
+      specialAssistance,
+      additionalNotes,
+    };
+    navigation.navigate("EmergencyContact", { careNeedsData }); // Pass data to the next screen
+  }
+};
 
   return (
     <View style={styles.container}>

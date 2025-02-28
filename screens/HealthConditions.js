@@ -1,3 +1,4 @@
+//health condtions form
 import React, { useState, useEffect } from "react";
 import {
   View,
@@ -86,7 +87,14 @@ const HealthConditions = ({ navigation }) => {
   const handleContinue = () => {
     if (validateForm()) {
       saveData(); // Save data before navigating
-      navigation.navigate("CareNeedsPreferences");
+      const healthData = {
+        conditions,
+        otherCondition,
+        allergies,
+        medications,
+        surgeries,
+      };
+      navigation.navigate("CareNeedsPreferences", { healthData }); // Pass data to the next screen
     }
   };
 

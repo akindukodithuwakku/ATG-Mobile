@@ -1,3 +1,4 @@
+//final review of the care intake form after entering data into the form
 import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView, StatusBar, KeyboardAvoidingView, Platform, useColorScheme } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -10,13 +11,7 @@ const CareIntakeReview = ({ navigation, route }) => {
   const [contactNumber, setContactNumber] = useState('');
   const [homeAddress, setHomeAddress] = useState('');
   const [gender, setGender] = useState('');
-  const [conditions, setConditions] = useState({
-    diabetes: false,
-    hypertension: false,
-    arthritis: false,
-    heartDisease: false,
-    other: false,
-  });
+  const [conditions, setConditions] = useState({});
   const [otherCondition, setOtherCondition] = useState('');
   const [allergies, setAllergies] = useState('');
   const [medications, setMedications] = useState('');
@@ -27,7 +22,6 @@ const CareIntakeReview = ({ navigation, route }) => {
   const [isSideNavVisible, setIsSideNavVisible] = useState(false);
   const scheme = useColorScheme();
 
-  // Extract passed data from route.params
   useEffect(() => {
     if (route.params?.personalInfoData) {
       const { fullName, dateOfBirth, contactNumber, homeAddress, gender } = route.params.personalInfoData;
@@ -36,6 +30,22 @@ const CareIntakeReview = ({ navigation, route }) => {
       setContactNumber(contactNumber);
       setHomeAddress(homeAddress);
       setGender(gender);
+    }
+
+    if (route.params?.healthData) {
+      const { conditions, otherCondition, allergies, medications, surgeries } = route.params.healthData;
+      setConditions(conditions);
+      setOtherCondition(otherCondition);
+      setAllergies(allergies);
+      setMedications(medications);
+      setSurgeries(surgeries);
+    }
+
+    if (route.params?.emergencyContactData) {
+      const { contactName, contactNumber, relationship } = route.params.emergencyContactData;
+      setEmergencyContactName(contactName);
+      setEmergencyContactNumber(contactNumber);
+      setRelationship(relationship);
     }
   }, [route.params]);
 
@@ -193,7 +203,7 @@ const styles = StyleSheet.create({
   buttonContainer: {
     flexDirection: "row",
     justifyContent: "space-between",
-    paddingHorizontal: 20,
+ paddingHorizontal: 20,
     paddingVertical: 65,
     backgroundColor: "#F8FDFF",
   },

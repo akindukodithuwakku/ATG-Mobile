@@ -1,3 +1,4 @@
+//emergency contact information form
 import React, { useState, useEffect } from "react";
 import {
   View,
@@ -73,6 +74,17 @@ const EmergencyContact = ({ navigation }) => {
     }
 
     return isValid;
+  };
+  const handleContinue = () => {
+    if (validateForm()) {
+      saveData(); // Save data before navigating
+      const emergencyContactData = {
+        contactName,
+        contactNumber,
+        relationship,
+      };
+      navigation.navigate("CareIntakeReview", { emergencyContactData }); // Pass data to the review screen
+    }
   };
 
   return (
