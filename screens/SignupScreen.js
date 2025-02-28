@@ -11,6 +11,7 @@ import {
   StatusBar,
   ScrollView,
   Modal,
+  useColorScheme,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
@@ -412,7 +413,57 @@ export const SignUpScreen = ({ navigation }) => {
 
 // Verification Sent Screen Component
 export const VerificationSentScreen = ({ navigation }) => {
-  return null;
+  const scheme = useColorScheme();
+  return (
+    <View style={styles.container}>
+            <StatusBar
+              barStyle={scheme === "dark" ? "light-content" : "dark-content"}
+              translucent={true}
+              backgroundColor={scheme === "dark" ? "black" : "transparent"}
+            />
+
+      {/* Content */}
+      <View style={styles.verificationContainer}>
+        {/* Email icon */}
+        <View style={styles.iconContainer}>
+          <Ionicons name="mail-outline" size={70} color="#35AFEA" />
+        </View>
+
+        <Text style={styles.verificationTitle}>Verification Email Sent!</Text>
+        <Text style={styles.verificationText}>
+          Please check your email inbox and click on the verification link to
+          continue your account setup.
+        </Text>
+
+        <Text style={styles.noteText}>
+          You must verify your email and complete the care intake form to
+          finalize your registration.
+        </Text>
+
+        {/* Action */}
+        <View style={styles.actionsContainer}>
+          <TouchableOpacity
+            style={styles.primaryButton}
+            onPress={() => {
+              navigation.reset({
+                index: 0,
+                routes: [{ name: 'CareIntakeForm' }],
+              });
+            }}
+          >
+            <LinearGradient
+              colors={["#09D1C7", "#35AFEA"]}
+              style={styles.gradientButton}
+            >
+              <Text style={styles.primaryButtonText}>
+                Continue to Care Intake Form
+              </Text>
+            </LinearGradient>
+          </TouchableOpacity>
+        </View>
+      </View>
+    </View>
+  );
 };
 
 const styles = StyleSheet.create({
@@ -603,6 +654,63 @@ const styles = StyleSheet.create({
     overflow: "hidden",
   },
   modalButtonText: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "bold",
+  },
+  // Verification Screen styles
+  verificationContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 30,
+  },
+  iconContainer: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    backgroundColor: "#F5F5F5",
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 30,
+  },
+  verificationTitle: {
+    fontSize: 24,
+    fontWeight: "bold",
+    marginBottom: 20,
+    textAlign: "center",
+  },
+  verificationText: {
+    fontSize: 16,
+    textAlign: "center",
+    color: "#666",
+    lineHeight: 24,
+    marginBottom: 20,
+  },
+  noteText: {
+    fontSize: 14,
+    textAlign: "center",
+    color: "#888",
+    fontStyle: "italic",
+    marginBottom: 30,
+  },
+  actionsContainer: {
+    width: "100%",
+    alignItems: "center",
+  },
+  primaryButton: {
+    width: "100%",
+    height: 50,
+    borderRadius: 25,
+    overflow: "hidden",
+  },
+  gradientButton: {
+    width: "100%",
+    height: "100%",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  primaryButtonText: {
     color: "#fff",
     fontSize: 16,
     fontWeight: "bold",
