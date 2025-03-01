@@ -64,7 +64,24 @@ export const SignUpScreen = ({ navigation }) => {
   };
 
   const handleSignUp = async () => {
-    validateForm();
+    if (validateForm()) {
+      setIsLoading(true);
+
+      try {
+        // Simulate API call
+        await new Promise((resolve) => setTimeout(resolve, 1500));
+
+        // Navigate to verification screen on success
+        setIsLoading(false);
+        navigation.reset({
+          index: 0,
+          routes: [{ name: "VerificationSent" }],
+        });
+      } catch (error) {
+        setIsLoading(false);
+        Alert.alert("Error", "Something went wrong. Please try again.");
+      }
+    }
   };
 
   // Terms Modal
@@ -260,6 +277,7 @@ export const SignUpScreen = ({ navigation }) => {
           style={styles.formScrollView}
           contentContainerStyle={styles.formContentContainer}
           showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
         >
           <View style={styles.form}>
             {/* Username Field */}
