@@ -1,6 +1,6 @@
-import React, { createContext, useContext, useEffect, useState } from "react";
+import React, { createContext, useContext, useEffect, useState, useRef } from "react";
 import { View, Text, TouchableOpacity, StyleSheet, AppState } from "react-native";
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 
 // Create context
 export const LogoutContext = createContext(null);
@@ -9,6 +9,7 @@ export const LogoutContext = createContext(null);
 export const LogoutProvider = ({ children }) => {
   const [lastActivity, setLastActivity] = useState(Date.now());
   const [isTimerActive, setIsTimerActive] = useState(true);
+  const autoLogoutOccurred = useRef(false);
 
   useEffect(() => {
     let timeoutId;
@@ -18,6 +19,7 @@ export const LogoutProvider = ({ children }) => {
       // 10 seconds for testing
       if (isTimerActive && timeSinceLastActivity > 10000) {
         setIsTimerActive(false);
+        autoLogoutOccurred.current = true;
       }
     };
 
@@ -57,8 +59,15 @@ export const LogoutProvider = ({ children }) => {
     }
   };
 
+  // Method to check and clear the auto logout flag
+  const checkAndClearAutoLogout = () => {
+    const wasAutoLogout = autoLogoutOccurred.current;
+    autoLogoutOccurred.current = false;
+    return wasAutoLogout;
+  };
+
   return (
-    <LogoutContext.Provider value={{ updateActivity, resetTimer, isTimerActive }}>
+    <LogoutContext.Provider value={{ updateActivity, resetTimer, isTimerActive, checkAndClearAutoLogout }}>
       {children}
     </LogoutContext.Provider>
   );
@@ -140,6 +149,30 @@ export const AutomaticLogoutScreen = ({ navigation }) => {
         </View>
       </View>
     </View>
+  );
+};
+
+// Special hook to be used in login screen for a force auto logout timer reset
+export const useResetTimerOnLogin = () => {
+  const context = useContext(LogoutContext);
+  const initialCheckRef = useRef(false);
+
+  // Only check once when the screen is focused
+  useFocusEffect(
+    React.useCallback(() => {
+      if (!initialCheckRef.current && context && context.checkAndClearAutoLogout) {
+        initialCheckRef.current = true;
+        
+        // Only reset the timer if we came from an auto logout
+        if (context.checkAndClearAutoLogout()) {
+          context.resetTimer();
+        }
+      }
+      
+      return () => {
+        initialCheckRef.current = false;
+      };
+    }, [context])
   );
 };
 
