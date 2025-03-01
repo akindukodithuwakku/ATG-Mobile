@@ -1,4 +1,4 @@
-import React, { useState, useCallback  } from "react";
+import React, { useState, useCallback } from "react";
 import {
   View,
   Text,
@@ -6,77 +6,96 @@ import {
   Image,
   TouchableOpacity,
   StatusBar,
-  useColorScheme,
   ScrollView,
+  Platform,
 } from "react-native";
+import { useFocusEffect } from "@react-navigation/native";
 import SideNavigationCN from "../Components/SideNavigationCN";
 import BottomNavigationCN from "../Components/BottomNavigationCN";
-import { Ionicons, Foundation } from "@expo/vector-icons";
-import FontAwesome from "@expo/vector-icons/FontAwesome";
-import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
-import Feather from "@expo/vector-icons/Feather";
+import {
+  Ionicons,
+  Foundation,
+  Feather,
+  FontAwesome,
+  FontAwesome5,
+} from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
+import { useAutomaticLogout } from "../screens/AutoLogout";
 
 const CNDashboard = ({ navigation }) => {
+  const { resetTimer } = useAutomaticLogout();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const scheme = useColorScheme();
+
+  // Reset timer when screen comes into focus
+  useFocusEffect(
+    React.useCallback(() => {
+      resetTimer();
+    }, [])
+  );
+
+  // Handle user interactions to reset the timer
+  const handleUserInteraction = useCallback(() => {
+    resetTimer();
+  }, [resetTimer]);
 
   const toggleMenu = useCallback(() => {
+    resetTimer();
     setIsMenuOpen(!isMenuOpen);
-  }, [isMenuOpen]);
+  }, [isMenuOpen, resetTimer]);
 
-  const navigateToNotifications = useCallback(() => {
-    navigation.navigate("NotificationsCN");
-  }, [navigation]);
-
-  const navigateToChat = useCallback(() => {
-    navigation.navigate("Chat");
-  }, [navigation]);
+  const navigateToScreen = useCallback(
+    (screenName) => {
+      resetTimer();
+      navigation.navigate(screenName);
+    },
+    [navigation, resetTimer]
+  );
 
   return (
-    <View style={styles.container}>
+    <TouchableOpacity
+      activeOpacity={1}
+      onPress={handleUserInteraction}
+      style={styles.container}
+    >
       <StatusBar
-        barStyle={scheme === "dark" ? "light-content" : "dark-content"}
-        translucent={true}
-        backgroundColor={scheme === "dark" ? "black" : "transparent"}
+        barStyle="light-content"
+        backgroundColor="transparent"
+        translucent
       />
 
-      {/* Header */}
       <LinearGradient
         colors={["#09D1C7", "#35AFEA"]}
-        style={styles.header}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 0, y: 1 }}
+        style={styles.headerGradient}
       >
-        <TouchableOpacity style={styles.menuButton} onPress={toggleMenu}>
-          <Ionicons
-            name={isMenuOpen ? "close" : "menu"}
-            size={30}
-            color="black"
-          />
-        </TouchableOpacity>
+        <View style={styles.header}>
+          <TouchableOpacity style={styles.menuButton} onPress={toggleMenu}>
+            <Ionicons
+              name={isMenuOpen ? "close" : "menu"}
+              size={30}
+              color="black"
+            />
+          </TouchableOpacity>
 
-        <View style={styles.logoContainer}>
-          <LinearGradient
-            colors={["#09D1C7", "#0C6478"]}
-            style={styles.circleGradient}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-          />
-          <Image
-            source={require("../assets/Ayman_Logo.png")}
-            style={styles.logo}
-          />
+          <View style={styles.logoContainer}>
+            <LinearGradient
+              colors={["#09D1C7", "#0C6478"]}
+              style={styles.circleGradient}
+            />
+            <Image
+              source={require("../assets/Ayman_Logo.png")}
+              style={styles.logo}
+            />
+          </View>
+
+          <Text style={styles.headerText}>DASHBOARD</Text>
+
+          <TouchableOpacity
+            style={styles.notificationButton}
+            onPress={() => navigateToScreen("NotificationsCN")}
+          >
+            <Ionicons name="notifications-outline" size={30} color="black" />
+          </TouchableOpacity>
         </View>
-
-        <Text style={styles.headerText}>DASHBOARD</Text>
-
-        <TouchableOpacity
-          style={styles.notificationButton}
-          onPress={navigateToNotifications}
-        >
-          <Ionicons name="notifications-outline" size={30} color="black" />
-        </TouchableOpacity>
       </LinearGradient>
 
       {/* Overlay for Side Navigation */}
@@ -94,18 +113,17 @@ const CNDashboard = ({ navigation }) => {
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
+        onScrollBeginDrag={handleUserInteraction}
       >
         {/* Main Navigation Cards */}
         <View style={styles.cardContainer}>
           <TouchableOpacity
             style={styles.card}
-            onPress={() => navigation.navigate("CarePlanCN")}
+            onPress={() => navigateToScreen("CarePlanCN")}
           >
             <LinearGradient
               colors={["#6a3093", "#a044ff"]}
               style={styles.cardGradient}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
             >
               <View style={styles.carePlanIcon}>
                 {/* Heart */}
@@ -131,13 +149,11 @@ const CNDashboard = ({ navigation }) => {
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.card}
-            onPress={() => navigation.navigate("MedicationCN")}
+            onPress={() => navigateToScreen("MedicationCN")}
           >
             <LinearGradient
               colors={["#FF512F", "#DD2476"]}
               style={styles.cardGradient}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
             >
               <Foundation name="clipboard-notes" size={32} color="black" />
               <Text style={styles.cardTitle}>Medication Adherence</Text>
@@ -149,13 +165,11 @@ const CNDashboard = ({ navigation }) => {
 
           <TouchableOpacity
             style={styles.card}
-            onPress={() => navigation.navigate("Appointments")}
+            onPress={() => navigateToScreen("Appointments")}
           >
             <LinearGradient
               colors={["#1FA2FF", "#12D8FA"]}
               style={styles.cardGradient}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
             >
               <Ionicons name="calendar-outline" size={32} color="black" />
               <Text style={styles.cardTitle}>Appointments</Text>
@@ -169,14 +183,17 @@ const CNDashboard = ({ navigation }) => {
           {/* View Documents Button */}
           <TouchableOpacity
             style={styles.documentsButton}
-            onPress={() => navigation.navigate("DocumentCN")}
+            onPress={() => navigateToScreen("DocumentCN")}
           >
             <Ionicons name="document-text-outline" size={24} color="white" />
             <Text style={styles.documentsButtonText}>View Documents</Text>
           </TouchableOpacity>
 
           {/* Chat Icon */}
-          <TouchableOpacity style={styles.chatButton} onPress={navigateToChat}>
+          <TouchableOpacity
+            style={styles.chatButton}
+            onPress={() => navigateToScreen("Chat")}
+          >
             <View style={styles.chatIconContainer}>
               <Feather
                 name="message-circle"
@@ -195,7 +212,7 @@ const CNDashboard = ({ navigation }) => {
 
       {/* Bottom Navigation */}
       <BottomNavigationCN navigation={navigation} />
-    </View>
+    </TouchableOpacity>
   );
 };
 
@@ -204,11 +221,13 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#fff",
   },
+  headerGradient: {
+    paddingTop: Platform.OS === "ios" ? 50 : StatusBar.currentHeight,
+  },
   header: {
     flexDirection: "row",
     alignItems: "center",
     padding: 15,
-    marginTop: 30,
     justifyContent: "space-between",
   },
   menuButton: {
