@@ -26,7 +26,7 @@ import CareNeedsPreferences from "./screens/CareNeedsPreferences";
 import CareIntakeReview from "./screens/CareIntakeReview";
 import SubmissionSuccess from "./screens/SubmissionSuccess";
 import AddTaskScreen from "./screens/AddTaskScreen";
-
+import Task from "./screens/Task";
 
 
 const Stack = createStackNavigator();
@@ -35,7 +35,7 @@ export default function App() {
   return (
     <NavigationContainer>
       <Stack.Navigator
-        initialRouteName="AddTaskScreen"
+        initialRouteName="Task"
         screenOptions={{ headerShown: false }}
       >
         <Stack.Screen name="Welcome" component={WelcomeScreen} />
@@ -61,6 +61,7 @@ export default function App() {
         <Stack.Screen name="CareIntakeReview" component={CareIntakeReview} />
         <Stack.Screen name="SubmissionSuccess" component={SubmissionSuccess} />  
         <Stack.Screen name="AddTaskScreen" component={AddTaskScreen} />
+        <Stack.Screen name="Task" component={Task} />
         
       </Stack.Navigator>
     </NavigationContainer>
