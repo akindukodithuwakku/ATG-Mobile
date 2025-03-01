@@ -11,7 +11,9 @@ import {
   StatusBar,
   ScrollView,
   Alert,
+  useColorScheme,
 } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 
 // Forgot Password Initial Screen
@@ -149,6 +151,90 @@ export const ForgotPasswordScreen = ({ navigation }) => {
   );
 };
 
+// Reset Code Sent Verification Screen
+export const ResetCodeSentScreen = ({ navigation, route }) => {
+  const { email } = route.params || { email: "" };
+  const scheme = useColorScheme();
+
+  return (
+    <View style={styles.container}>
+      <StatusBar
+        barStyle={scheme === "dark" ? "light-content" : "dark-content"}
+        translucent={true}
+        backgroundColor={scheme === "dark" ? "black" : "transparent"}
+      />
+
+      <View style={styles.verificationContainer}>
+        <View style={styles.iconContainer}>
+          <Ionicons name="lock-open-outline" size={70} color="#35AFEA" />
+        </View>
+
+        <Text style={styles.verificationTitle}>Verification Code Sent!</Text>
+        <Text style={styles.verificationText}>
+          We've sent a verification code to{" "}
+          <Text style={styles.boldText}>{email}</Text>. Please check your email
+          inbox and use the code to reset your password.
+        </Text>
+
+        <Text style={styles.noteText}>
+          The verification code will expire within a limited time. If you don't
+          see the email, please check your spam folder.
+        </Text>
+
+        <View style={styles.actionsContainer}>
+          <TouchableOpacity
+            style={styles.primaryButton}
+            onPress={() => {
+              navigation.navigate("ForgotPWDReset", { email });
+            }}
+          >
+            <LinearGradient
+              colors={["#09D1C7", "#35AFEA"]}
+              style={styles.gradientButton}
+            >
+              <Text style={styles.primaryButtonText}>
+                Enter Verification Code
+              </Text>
+            </LinearGradient>
+          </TouchableOpacity>
+
+          <View style={styles.alternativeActions}>
+            <TouchableOpacity
+              style={styles.textButton}
+              onPress={() => {
+                // navigation.goBack();
+                try {
+                  // Requests to AWS Cognito
+                  // await Auth.forgotPassword(email);
+                } catch (error) {
+                  Alert.alert(
+                    "Error",
+                    "Something went wrong. Please try again later."
+                  );
+                }
+              }}
+            >
+              <Text style={styles.textButtonText}>Resend Code</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.textButton}
+              onPress={() => {
+                navigation.reset({
+                  index: 0,
+                  routes: [{ name: "Login" }],
+                });
+              }}
+            >
+              <Text style={styles.textButtonText}>Back to Login</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </View>
+    </View>
+  );
+};
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -253,6 +339,73 @@ const styles = StyleSheet.create({
   loginLink: {
     fontSize: 14,
     color: "#09D1C7",
+    fontWeight: "bold",
+  },
+  // Verification screen styles
+  verificationContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 30,
+  },
+  iconContainer: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    backgroundColor: "#F5F5F5",
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 30,
+  },
+  verificationTitle: {
+    fontSize: 24,
+    fontWeight: "bold",
+    marginBottom: 20,
+    textAlign: "center",
+  },
+  verificationText: {
+    fontSize: 16,
+    textAlign: "center",
+    color: "#666",
+    lineHeight: 24,
+    marginBottom: 20,
+  },
+  noteText: {
+    fontSize: 14,
+    textAlign: "center",
+    color: "#888",
+    fontStyle: "italic",
+    marginBottom: 30,
+  },
+  actionsContainer: {
+    width: "100%",
+    alignItems: "center",
+  },
+  primaryButton: {
+    width: "100%",
+    height: 50,
+    borderRadius: 25,
+    overflow: "hidden",
+  },
+  primaryButtonText: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "bold",
+  },
+  alternativeActions: {
+    flexDirection: "row",
+    width: "100%",
+    justifyContent: "space-around",
+    marginTop: 20,
+  },
+  textButton: {
+    padding: 10,
+  },
+  textButtonText: {
+    color: "#35AFEA",
+    fontSize: 16,
+  },
+  boldText: {
     fontWeight: "bold",
   },
 });
