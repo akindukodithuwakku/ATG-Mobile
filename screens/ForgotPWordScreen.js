@@ -115,7 +115,6 @@ export const ForgotPasswordScreen = ({ navigation }) => {
                   setErrors({ ...errors, email: null });
                 }
               }}
-              keyboardType="email-address"
               autoCapitalize="none"
             />
             {errors.email && (
@@ -235,6 +234,239 @@ export const ResetCodeSentScreen = ({ navigation, route }) => {
   );
 };
 
+// Enter code and reset password screen
+export const ResetPasswordScreen = ({ navigation, route }) => {
+  const { email } = route.params || { email: "" };
+  const [verificationCode, setVerificationCode] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [passwordVisible, setPasswordVisible] = useState(false);
+  const [confirmPasswordVisible, setConfirmPasswordVisible] = useState(false);
+  const [errors, setErrors] = useState({});
+  const [isLoading, setIsLoading] = useState(false);
+
+  // Form validation
+  const validateForm = () => {
+    let errorTexts = {};
+    let isValid = true;
+
+    if (!verificationCode.trim()) {
+      errorTexts.verificationCode = "Verification code is required";
+      isValid = false;
+    }
+
+    if (!newPassword) {
+      errorTexts.newPassword = "New password is required";
+      isValid = false;
+    } else if (newPassword.length < 8) {
+      errorTexts.newPassword = "Password must be at least 8 characters";
+      isValid = false;
+    }
+
+    if (newPassword !== confirmPassword) {
+      errorTexts.confirmPassword = "Passwords do not match";
+      isValid = false;
+    }
+
+    setErrors(errorTexts);
+    return isValid;
+  };
+
+  const handleResetPassword = async () => {
+    if (validateForm()) {
+      setIsLoading(true);
+      
+      try {
+        // AWS Cognito requests would be added here
+        // await Auth.forgotPasswordSubmit(email, verificationCode, newPassword);
+        
+        // Simulation with a timeout for testing
+        setTimeout(() => {
+          setIsLoading(false);
+          Alert.alert(
+            "Success",
+            "Your password has been reset successfully!",
+            [
+              {
+                text: "OK",
+                onPress: () => 
+                  navigation.reset({
+                    index: 0,
+                    routes: [{ name: "Login" }],
+                  }),
+              },
+            ]
+          );
+        }, 1500);
+      } catch (error) {
+        setIsLoading(false);
+        if (error.code === "CodeMismatchException") {
+          setErrors({ verificationCode: "Invalid verification code" });
+        } else if (error.code === "ExpiredCodeException") {
+          setErrors({ 
+            verificationCode: "Verification code has expired. Please request a new one." 
+          });
+        } else {
+          Alert.alert(
+            "Error",
+            "Something went wrong. Please try again later."
+          );
+        }
+      }
+    }
+  };
+
+  return (
+    <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+      <View style={styles.container}>
+        <StatusBar
+          barStyle="light-content"
+          backgroundColor="transparent"
+          translucent
+        />
+
+        <LinearGradient
+          colors={["#09D1C7", "#35AFEA"]}
+          style={styles.headerGradient}
+        >
+          <View style={styles.header}>
+            <TouchableOpacity
+              onPress={() => navigation.goBack()}
+              style={styles.backButton}
+            >
+              <Text style={styles.backButtonText}>{"<"}</Text>
+            </TouchableOpacity>
+            <Text style={styles.headerText}>Reset Password</Text>
+          </View>
+        </LinearGradient>
+
+        <ScrollView
+          style={styles.formScrollView}
+          contentContainerStyle={styles.formContentContainer}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+        >
+          <View style={styles.form}>
+            <View style={styles.instructionContainer}>
+              <Text style={styles.instructionTitle}>Create New Password</Text>
+              <Text style={styles.instructionText}>
+                Enter the verification code sent to <Text style={styles.boldText}>{email}</Text> and create a new password.
+              </Text>
+            </View>
+
+            {/* Verification Code Field */}
+            <Text style={styles.inputLabel}>Verification Code</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Enter verification code"
+              value={verificationCode}
+              onChangeText={(text) => {
+                setVerificationCode(text);
+                if (errors.verificationCode) {
+                  setErrors({ ...errors, verificationCode: null });
+                }
+              }}
+              autoCapitalize="none"
+            />
+            {errors.verificationCode && (
+              <Text style={styles.errorText}>{errors.verificationCode}</Text>
+            )}
+
+            {/* New Password Field */}
+            <Text style={styles.inputLabel}>New Password</Text>
+            <View style={styles.passwordContainer}>
+              <TextInput
+                style={styles.passwordInput}
+                placeholder="Enter new password"
+                value={newPassword}
+                onChangeText={(text) => {
+                  setNewPassword(text);
+                  if (errors.newPassword) {
+                    setErrors({ ...errors, newPassword: null });
+                  }
+                }}
+                secureTextEntry={!passwordVisible}
+              />
+              <TouchableOpacity
+                style={styles.eyeIcon}
+                onPress={() => setPasswordVisible(!passwordVisible)}
+              >
+                <Ionicons
+                  name={passwordVisible ? "eye-off" : "eye"}
+                  size={24}
+                  color="#777"
+                />
+              </TouchableOpacity>
+            </View>
+            {errors.newPassword && (
+              <Text style={styles.errorText}>{errors.newPassword}</Text>
+            )}
+
+            {/* Confirm New Password Field */}
+            <Text style={styles.inputLabel}>Confirm New Password</Text>
+            <View style={styles.passwordContainer}>
+              <TextInput
+                style={styles.passwordInput}
+                placeholder="Confirm new password"
+                value={confirmPassword}
+                onChangeText={(text) => {
+                  setConfirmPassword(text);
+                  if (errors.confirmPassword) {
+                    setErrors({ ...errors, confirmPassword: null });
+                  }
+                }}
+                secureTextEntry={!confirmPasswordVisible}
+              />
+              <TouchableOpacity
+                style={styles.eyeIcon}
+                onPress={() =>
+                  setConfirmPasswordVisible(!confirmPasswordVisible)
+                }
+              >
+                <Ionicons
+                  name={confirmPasswordVisible ? "eye-off" : "eye"}
+                  size={24}
+                  color="#777"
+                />
+              </TouchableOpacity>
+            </View>
+            {errors.confirmPassword && (
+              <Text style={styles.errorText}>{errors.confirmPassword}</Text>
+            )}
+
+            <TouchableOpacity
+              style={styles.resetButton}
+              onPress={handleResetPassword}
+              disabled={isLoading}
+            >
+              <LinearGradient
+                colors={["#09D1C7", "#35AFEA"]}
+                style={styles.gradientButton}
+              >
+                <Text style={styles.resetButtonText}>
+                  {isLoading ? "Resetting..." : "Reset Password"}
+                </Text>
+              </LinearGradient>
+            </TouchableOpacity>
+
+            {/* Resend Code Link */}
+            <View style={styles.resendCodeContainer}>
+              <Text style={styles.resendText}>Didn't receive the code? </Text>
+              <TouchableOpacity 
+                onPress={() => {
+                  navigation.navigate("ForgotPWD");
+                }}
+              >
+                <Text style={styles.resendLink}>Resend Code</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </ScrollView>
+      </View>
+    </TouchableWithoutFeedback>
+  );
+};
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -305,6 +537,22 @@ const styles = StyleSheet.create({
     backgroundColor: "#E9F6FE",
     fontSize: 16,
   },
+  passwordContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    borderWidth: 1,
+    borderRadius: 10,
+    backgroundColor: "#E9F6FE",
+  },
+  passwordInput: {
+    flex: 1,
+    height: 50,
+    paddingHorizontal: 15,
+    fontSize: 16,
+  },
+  eyeIcon: {
+    padding: 10,
+  },
   errorText: {
     color: "#FF3B30",
     fontSize: 14,
@@ -337,6 +585,20 @@ const styles = StyleSheet.create({
     color: "#666",
   },
   loginLink: {
+    fontSize: 14,
+    color: "#09D1C7",
+    fontWeight: "bold",
+  },
+  resendCodeContainer: {
+    flexDirection: "row",
+    justifyContent: "center",
+    marginTop: 20,
+  },
+  resendText: {
+    fontSize: 14,
+    color: "#666",
+  },
+  resendLink: {
     fontSize: 14,
     color: "#09D1C7",
     fontWeight: "bold",
