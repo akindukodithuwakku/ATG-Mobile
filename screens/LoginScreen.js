@@ -13,6 +13,7 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
+import { useResetTimerOnLogin } from "./AutoLogout";
 
 const LoginScreen = ({ navigation }) => {
   const [email, setEmail] = useState("");
@@ -21,6 +22,8 @@ const LoginScreen = ({ navigation }) => {
   const [errors, setErrors] = useState({});
   const [isLoading, setIsLoading] = useState(false);
 
+  useResetTimerOnLogin();
+  
   // Form validation
   const validateForm = () => {
     let errorTexts = {};
@@ -53,7 +56,7 @@ const LoginScreen = ({ navigation }) => {
         setIsLoading(false);
         navigation.reset({
           index: 0,
-          routes: [{ name: "ClientDashboard" }],
+          routes: [{ name: "CNDashboard" }],
         });
       }, 1500);
     }
