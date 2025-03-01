@@ -48,7 +48,7 @@ const LoginScreen = ({ navigation }) => {
       setIsLoading(true);
       // Backend authentication actions need to be added here.
 
-      // Simulating process with a timeout
+      // Simulating process with a timeout, roll based access need to be done
       setTimeout(() => {
         setIsLoading(false);
         navigation.reset({
@@ -149,7 +149,7 @@ const LoginScreen = ({ navigation }) => {
             {/* Forgot Password Link */}
             <TouchableOpacity
               style={styles.forgotPasswordContainer}
-              onPress={() => navigation.navigate("ForgotPassword")}
+              onPress={() => navigation.navigate("ForgotPWD")}
             >
               <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
             </TouchableOpacity>
