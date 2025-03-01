@@ -8,9 +8,11 @@ import {
 } from "react-native";
 import { Ionicons, Foundation } from "@expo/vector-icons";
 import { useRoute } from "@react-navigation/native";
+import { useAutomaticLogout } from "../screens/AutoLogout";
 
 const SideNavigationClient = ({ navigation, onClose }) => {
   const route = useRoute();
+  const { resetTimer } = useAutomaticLogout();
   const [slideAnim] = React.useState(new Animated.Value(-300)); // Slide-in animation
 
   // Menu items with routes and icons
@@ -43,13 +45,19 @@ const SideNavigationClient = ({ navigation, onClose }) => {
   }, []);
 
   const handleNavigation = (route) => {
+    resetTimer();
     navigation.navigate(route);
     onClose();
+  };
+
+  const handleInteraction = () => {
+    resetTimer();
   };
 
   return (
     <Animated.View
       style={[styles.container, { transform: [{ translateX: slideAnim }] }]}
+      onTouchStart={handleInteraction}
     >
       {/* Close Button */}
       <TouchableOpacity style={styles.closeButton} onPress={onClose}>
@@ -68,6 +76,7 @@ const SideNavigationClient = ({ navigation, onClose }) => {
             route.name === item.route && styles.activeMenuItem, // Highlight active item
           ]}
           onPress={() => handleNavigation(item.route)}
+          onPressIn={handleInteraction}
         >
           {typeof item.icon === "string" ? (
             item.icon === "clipboard-notes" ? (

@@ -23,15 +23,13 @@ const BottomNavigationCN = ({ navigation }) => {
     resetTimer();
     navigation.navigate(route);
   };
-  
-  // Handler for user interactions
+
   const handleInteraction = () => {
     resetTimer();
   };
 
   return (
-    <View style={styles.container}
-    onTouchStart={handleInteraction}>
+    <View style={styles.container} onTouchStart={handleInteraction}>
       {menuItems.map((item, index) => (
         <TouchableOpacity
           key={index}

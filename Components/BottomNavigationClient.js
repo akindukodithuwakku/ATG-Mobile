@@ -2,9 +2,11 @@ import React from "react";
 import { View, TouchableOpacity, StyleSheet, Image } from "react-native";
 import { Ionicons, Foundation } from "@expo/vector-icons";
 import { useRoute } from "@react-navigation/native";
+import { useAutomaticLogout } from "../screens/AutoLogout";
 
 const BottomNavigationClient = ({ navigation }) => {
   const route = useRoute();
+  const { resetTimer } = useAutomaticLogout();
 
   const menuItems = [
     { name: "Home", icon: "home-outline", route: "ClientDashboard" },
@@ -18,11 +20,16 @@ const BottomNavigationClient = ({ navigation }) => {
   ];
 
   const handleNavigation = (item) => {
+    resetTimer();
     navigation.navigate(item.route);
   };
 
+  const handleInteraction = () => {
+    resetTimer();
+  };
+
   return (
-    <View style={styles.container}>
+    <View style={styles.container} onTouchStart={handleInteraction}>
       {menuItems.map((item, index) => (
         <TouchableOpacity
           key={index}
@@ -31,6 +38,7 @@ const BottomNavigationClient = ({ navigation }) => {
             route.name === item.route && styles.activeMenuItem,
           ]}
           onPress={() => handleNavigation(item)}
+          onPressIn={handleInteraction}
         >
           {typeof item.icon === "string" ? (
             item.icon === "clipboard-notes" ? (
