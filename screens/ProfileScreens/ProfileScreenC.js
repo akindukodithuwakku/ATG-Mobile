@@ -8,7 +8,10 @@ import {
   Image,
   Platform,
   Modal,
+  Alert,
+  ScrollView,
 } from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import SideNavigationClient from "../../Components/SideNavigationClient";
 import BottomNavigationClient from "../../Components/BottomNavigationClient";
 import { Ionicons, MaterialIcons, Feather } from "@expo/vector-icons";
@@ -17,6 +20,8 @@ import { LinearGradient } from "expo-linear-gradient";
 const ProfileScreenC = ({ navigation }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [showClearDataModal, setShowClearDataModal] = useState(false);
+  const [clearDataConfirmText, setClearDataConfirmText] = useState("");
 
   const toggleMenu = useCallback(() => {
     setIsMenuOpen(!isMenuOpen);
@@ -32,6 +37,33 @@ const ProfileScreenC = ({ navigation }) => {
       index: 0,
       routes: [{ name: "Welcome" }],
     });
+  };
+
+  const handleClearData = () => {
+    setShowClearDataModal(true);
+  };
+
+  const clearStorage = async () => {
+    try {
+      await AsyncStorage.clear();
+      console.log("AsyncStorage has been cleared!");
+      setShowClearDataModal(false);
+      setClearDataConfirmText("");
+
+      // Success alert
+      Alert.alert(
+        "Data Cleared",
+        "All app data has been successfully cleared.",
+        [{ text: "OK" }]
+      );
+    } catch (error) {
+      console.error("Failed to clear AsyncStorage:", error);
+
+      // Error alert
+      Alert.alert("Error", "Failed to clear app data. Please try again.", [
+        { text: "OK" },
+      ]);
+    }
   };
 
   const menuItems = [
@@ -60,11 +92,18 @@ const ProfileScreenC = ({ navigation }) => {
       icon: <MaterialIcons name="logout" size={24} color="#ff4757" />,
       isLogout: true,
     },
+    {
+      title: "Clear App Data",
+      icon: <MaterialIcons name="delete-forever" size={24} color="#ff4757" />,
+      isClearData: true,
+    },
   ];
 
   const handleMenuItemPress = (item) => {
     if (item.isLogout) {
       handleLogout();
+    } else if (item.isClearData) {
+      handleClearData();
     } else {
       navigation.navigate(item.route);
     }
@@ -112,36 +151,45 @@ const ProfileScreenC = ({ navigation }) => {
         </View>
       </LinearGradient>
 
-      {/* Menu Items */}
-      <View style={styles.menuContainer}>
-        {menuItems.map((item, index) => (
-          <TouchableOpacity
-            key={index}
-            style={styles.menuItem}
-            onPress={() => handleMenuItemPress(item)}
-            activeOpacity={0.7}
-          >
-            <View style={styles.menuItemLeft}>
-              {item.icon}
-              <Text
-                style={[
-                  styles.menuItemText,
-                  item.route === "Logout" && styles.logoutText,
-                ]}
-              >
-                {item.title}
-              </Text>
-            </View>
-            <View style={styles.menuItemRight}>
-              <Feather
-                name="chevron-right"
-                size={24}
-                color={item.route === "Logout" ? "#ff4757" : "#35AFEA"}
-              />
-            </View>
-          </TouchableOpacity>
-        ))}
-      </View>
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollViewContent}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Menu Items */}
+        <View style={styles.menuContainer}>
+          {menuItems.map((item, index) => (
+            <TouchableOpacity
+              key={index}
+              style={styles.menuItem}
+              onPress={() => handleMenuItemPress(item)}
+              activeOpacity={0.7}
+            >
+              <View style={styles.menuItemLeft}>
+                {item.icon}
+                <Text
+                  style={[
+                    styles.menuItemText,
+                    item.isLogout && styles.logoutText,
+                    item.isClearData && styles.dangerText,
+                  ]}
+                >
+                  {item.title}
+                </Text>
+              </View>
+              <View style={styles.menuItemRight}>
+                <Feather
+                  name="chevron-right"
+                  size={24}
+                  color={
+                    item.isLogout || item.isClearData ? "#ff4757" : "#35AFEA"
+                  }
+                />
+              </View>
+            </TouchableOpacity>
+          ))}
+        </View>
+      </ScrollView>
 
       {/* Logout Confirmation Modal */}
       <Modal
@@ -167,6 +215,94 @@ const ProfileScreenC = ({ navigation }) => {
                 onPress={confirmLogout}
               >
                 <Text style={styles.logoutButtonText}>Yes, Logout</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Clear Data Confirmation Modal */}
+      <Modal
+        animationType="fade"
+        transparent={true}
+        visible={showClearDataModal}
+        onRequestClose={() => {
+          setShowClearDataModal(false);
+          setClearDataConfirmText("");
+        }}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <MaterialIcons
+              name="warning"
+              size={40}
+              color="#ff4757"
+              style={styles.warningIcon}
+            />
+            <Text style={styles.modalTitle}>Clear All App Data?</Text>
+            <Text style={styles.modalText}>
+              This action will permanently delete all your saved data and cannot
+              be undone.
+            </Text>
+            <Text style={styles.confirmInstructionText}>
+              Type "DELETE" to confirm:
+            </Text>
+            <View style={styles.confirmInputContainer}>
+              <Text style={styles.confirmInputText}>
+                {clearDataConfirmText}
+              </Text>
+            </View>
+            <View style={styles.keypadContainer}>
+              {["D", "E", "L", "T"].map((letter, index) => (
+                <TouchableOpacity
+                  key={index}
+                  style={styles.keypadButton}
+                  onPress={() =>
+                    setClearDataConfirmText(clearDataConfirmText + letter)
+                  }
+                >
+                  <Text style={styles.keypadButtonText}>{letter}</Text>
+                </TouchableOpacity>
+              ))}
+              <TouchableOpacity
+                style={styles.keypadButton}
+                onPress={() =>
+                  setClearDataConfirmText(clearDataConfirmText.slice(0, -1))
+                }
+              >
+                <Feather name="delete" size={24} color="#333" />
+              </TouchableOpacity>
+            </View>
+            <View style={styles.modalButtons}>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.cancelButton]}
+                onPress={() => {
+                  setShowClearDataModal(false);
+                  setClearDataConfirmText("");
+                }}
+              >
+                <Text style={styles.cancelButtonText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[
+                  styles.modalButton,
+                  styles.dangerButton,
+                  clearDataConfirmText !== "DELETE" && styles.disabledButton,
+                ]}
+                onPress={
+                  clearDataConfirmText === "DELETE" ? clearStorage : null
+                }
+                disabled={clearDataConfirmText !== "DELETE"}
+              >
+                <Text
+                  style={[
+                    styles.dangerButtonText,
+                    clearDataConfirmText !== "DELETE" &&
+                      styles.disabledButtonText,
+                  ]}
+                >
+                  Clear Data
+                </Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -221,7 +357,6 @@ const styles = StyleSheet.create({
   },
   profileImageContainer: {
     position: "relative",
-    marginBottom: 10,
   },
   profileImage: {
     width: 100,
@@ -253,9 +388,16 @@ const styles = StyleSheet.create({
     color: "#fff",
     marginTop: 10,
   },
+  scrollView: {
+    flex: 1,
+  },
+  scrollViewContent: {
+    flexGrow: 1,
+  },
   menuContainer: {
     padding: 15,
     backgroundColor: "#f8f9fa",
+    marginBottom: 60,
   },
   menuItem: {
     flexDirection: "row",
@@ -291,6 +433,9 @@ const styles = StyleSheet.create({
   logoutText: {
     color: "#ff4757",
   },
+  dangerText: {
+    color: "#ff4757",
+  },
   overlay: {
     ...StyleSheet.absoluteFillObject,
     backgroundColor: "rgba(0,0,0,0.4)",
@@ -302,28 +447,28 @@ const styles = StyleSheet.create({
   // modal styles
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "center",
+    alignItems: "center",
   },
   modalContent: {
-    backgroundColor: 'white',
+    backgroundColor: "white",
     borderRadius: 20,
     padding: 25,
-    width: '80%',
-    alignItems: 'center',
+    width: "80%",
+    alignItems: "center",
   },
   modalText: {
     fontSize: 18,
-    fontWeight: '500',
-    color: '#333',
+    fontWeight: "500",
+    color: "#333",
     marginBottom: 25,
-    textAlign: 'center',
+    textAlign: "center",
   },
   modalButtons: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    width: '100%',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    width: "100%",
   },
   modalButton: {
     flex: 1,
@@ -332,24 +477,90 @@ const styles = StyleSheet.create({
     marginHorizontal: 8,
   },
   cancelButton: {
-    backgroundColor: 'white',
+    backgroundColor: "white",
     borderWidth: 1,
-    borderColor: '#35AFEA',
+    borderColor: "#35AFEA",
   },
   logoutButton: {
-    backgroundColor: '#35AFEA',
+    backgroundColor: "#35AFEA",
   },
   cancelButtonText: {
-    color: '#35AFEA',
-    textAlign: 'center',
+    color: "#35AFEA",
+    textAlign: "center",
     fontSize: 16,
-    fontWeight: '500',
+    fontWeight: "500",
   },
   logoutButtonText: {
-    color: 'white',
-    textAlign: 'center',
+    color: "white",
+    textAlign: "center",
     fontSize: 16,
-    fontWeight: '500',
+    fontWeight: "500",
+  },
+  // Clear modal styles
+  warningIcon: {
+    marginBottom: 10,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: "bold",
+    color: "#333",
+    marginBottom: 15,
+    textAlign: "center",
+  },
+  confirmInstructionText: {
+    fontSize: 14,
+    fontWeight: "500",
+    color: "#333",
+    marginBottom: 10,
+  },
+  confirmInputContainer: {
+    width: "80%",
+    height: 50,
+    borderWidth: 1,
+    borderColor: "#ddd",
+    borderRadius: 10,
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 15,
+  },
+  confirmInputText: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "#ff4757",
+  },
+  keypadContainer: {
+    flexDirection: "row",
+    // flexWrap: "wrap",
+    justifyContent: "center",
+    marginBottom: 20,
+  },
+  keypadButton: {
+    width: 40,
+    height: 40,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#f0f0f0",
+    borderRadius: 8,
+    margin: 5,
+  },
+  keypadButtonText: {
+    fontSize: 16,
+    fontWeight: "500",
+  },
+  dangerButton: {
+    backgroundColor: "#ff4757",
+  },
+  disabledButton: {
+    backgroundColor: "#ffa0aa",
+  },
+  dangerButtonText: {
+    color: "white",
+    textAlign: "center",
+    fontSize: 16,
+    fontWeight: "500",
+  },
+  disabledButtonText: {
+    opacity: 0.7,
   },
 });
 
