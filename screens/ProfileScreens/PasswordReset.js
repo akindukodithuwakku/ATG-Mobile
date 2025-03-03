@@ -15,7 +15,7 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 
-const PasswordResetClient = ({ navigation }) => {
+const PasswordReset = ({ navigation }) => {
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -368,4 +368,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default PasswordResetClient;
+export default PasswordReset;
