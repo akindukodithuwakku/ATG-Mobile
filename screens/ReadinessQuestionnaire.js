@@ -26,41 +26,47 @@ const ReadinessQuestionnaire = ({ visible, onClose, navigation }) => {
   const [allQuestionsAnswered, setAllQuestionsAnswered] = useState(false);
 
   // Check if all questions have been answered
-  const checkAllAnswered = (newAnswers) => {
+  const checkAllAnswered = useCallback((newAnswers) => {
+    resetTimer();
     const allAnswered = newAnswers.every((answer) => answer !== null);
     setAllQuestionsAnswered(allAnswered);
-  };
+  }, [resetTimer]);
 
   // Handle answer selection for a question
-  const handleAnswer = (index, value) => {
+  const handleAnswer = useCallback((index, value) => {
     resetTimer();
     const newAnswers = [...answers];
     newAnswers[index] = value;
     setAnswers(newAnswers);
     checkAllAnswered(newAnswers);
-  }; 
+  }, [answers, checkAllAnswered, resetTimer]);
 
   const handleClose = useCallback(() => {
-    if (resetTimer) resetTimer();
+    resetTimer();
     onClose();
   }, [onClose, resetTimer]);
 
   // Handle submit button press
-  const handleSubmit = async () => {
+  const handleSubmit = useCallback(async () => {
     try {
+      resetTimer();
       // Save answers to AsyncStorage
       // await AsyncStorage.setItem('questionnaireAnswers', JSON.stringify(answers));
       
       // Close the questionnaire
       onClose();
-      resetTimer();
       
       // Navigate to appointment scheduling
       navigation.navigate("AppointmentScheduling");
     } catch (error) {
       console.error("Error saving questionnaire answers:", error);
     }
-  };
+  }, [answers, navigation, onClose, resetTimer]);
+
+  // Handler for scroll events to reset timer
+  const handleScroll = useCallback(() => {
+    resetTimer();
+  }, [resetTimer]);
 
   return (
     <Modal
@@ -78,7 +84,11 @@ const ReadinessQuestionnaire = ({ visible, onClose, navigation }) => {
             <Text style={styles.title}>Readiness Questionnaire</Text>
           </View>
 
-          <ScrollView style={styles.scrollView}>
+          <ScrollView 
+            style={styles.scrollView}
+            onScrollBeginDrag={handleScroll}
+            onMomentumScrollBegin={handleScroll}
+          >
             {questions.map((question, index) => (
               <View key={index} style={styles.questionContainer}>
                 <Text style={styles.questionText}>
@@ -116,7 +126,7 @@ const ReadinessQuestionnaire = ({ visible, onClose, navigation }) => {
             <View style={styles.bottomButtonsContainer}>
               <TouchableOpacity
                 style={styles.cancelButton}
-                onPress={onClose}
+                onPress={handleClose}
               >
                 <Text style={styles.cancelButtonText}>Cancel</Text>
               </TouchableOpacity>
