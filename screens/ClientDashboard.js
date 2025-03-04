@@ -20,9 +20,12 @@ import {
   FontAwesome5,
 } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
+import { useFocusEffect } from "@react-navigation/native";
+import { useAutomaticLogout } from "../screens/AutoLogout";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const ClientDashboard = ({ navigation }) => {
+  const { resetTimer } = useAutomaticLogout();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [showQuestionnaire, setShowQuestionnaire] = useState(false);
   const [hasAppointment, setHasAppointment] = useState(false);
@@ -33,6 +36,18 @@ const ClientDashboard = ({ navigation }) => {
     minutes: 0,
     seconds: 0,
   });
+
+  // Reset timer when screen comes into focus
+  useFocusEffect(
+    React.useCallback(() => {
+      resetTimer();
+    }, [])
+  );
+
+  // Handle user interactions to reset the timer
+  const handleUserInteraction = useCallback(() => {
+    resetTimer();
+  }, [resetTimer]);
 
   // Check for existing appointment on component mount
   useEffect(() => {
@@ -115,16 +130,17 @@ const ClientDashboard = ({ navigation }) => {
   }, [hasAppointment, appointmentTime]);
 
   const toggleMenu = useCallback(() => {
+    resetTimer();
     setIsMenuOpen(!isMenuOpen);
-  }, [isMenuOpen]);
+  }, [isMenuOpen, resetTimer]);
 
-  const navigateToNotifications = useCallback(() => {
-    navigation.navigate("NotificationsC");
-  }, [navigation]);
-
-  const navigateToChat = useCallback(() => {
-    navigation.navigate("Chat");
-  }, [navigation]);
+  const navigateToScreen = useCallback(
+    (screenName) => {
+      resetTimer();
+      navigation.navigate(screenName);
+    },
+    [navigation, resetTimer]
+  );
 
   const navigateToReadiness = useCallback(() => {
     setShowQuestionnaire(true);
@@ -178,7 +194,11 @@ const ClientDashboard = ({ navigation }) => {
   };
 
   return (
-    <TouchableOpacity activeOpacity={1} style={styles.container}>
+    <TouchableOpacity
+      activeOpacity={1}
+      onPress={handleUserInteraction}
+      style={styles.container}
+    >
       <StatusBar
         barStyle="light-content"
         backgroundColor="transparent"
@@ -191,12 +211,7 @@ const ClientDashboard = ({ navigation }) => {
         style={styles.headerGradient}
       >
         <View style={styles.header}>
-          <TouchableOpacity
-            style={styles.menuButton}
-            onPress={() => {
-              toggleMenu();
-            }}
-          >
+          <TouchableOpacity style={styles.menuButton} onPress={toggleMenu}>
             <Ionicons
               name={isMenuOpen ? "close" : "menu"}
               size={30}
@@ -219,9 +234,7 @@ const ClientDashboard = ({ navigation }) => {
 
           <TouchableOpacity
             style={styles.notificationButton}
-            onPress={() => {
-              navigateToNotifications();
-            }}
+            onPress={() => navigateToScreen("NotificationsC")}
           >
             <Ionicons name="notifications-outline" size={30} color="black" />
           </TouchableOpacity>
@@ -243,6 +256,7 @@ const ClientDashboard = ({ navigation }) => {
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
+        onScrollBeginDrag={handleUserInteraction}
       >
         {/* Conditional rendering: either appointment countdown or consultation button */}
         {hasAppointment ? (
@@ -252,6 +266,7 @@ const ClientDashboard = ({ navigation }) => {
             style={styles.consultationButton}
             onPress={() => {
               navigateToReadiness();
+              handleUserInteraction();
             }}
           >
             <Text style={styles.consultationButtonText}>
@@ -263,7 +278,7 @@ const ClientDashboard = ({ navigation }) => {
         <View style={styles.cardContainer}>
           <TouchableOpacity
             style={styles.card}
-            onPress={() => navigation.navigate("CarePlanC")}
+            onPress={() => navigateToScreen("CarePlanC")}
           >
             <LinearGradient
               colors={["#6a3093", "#a044ff"]}
@@ -293,7 +308,7 @@ const ClientDashboard = ({ navigation }) => {
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.card}
-            onPress={() => navigation.navigate("MedicationC")}
+            onPress={() => navigateToScreen("MedicationC")}
           >
             <LinearGradient
               colors={["#FF512F", "#DD2476"]}
@@ -311,16 +326,15 @@ const ClientDashboard = ({ navigation }) => {
           {/* Documents Upload Button */}
           <TouchableOpacity
             style={styles.documentsButton}
-            onPress={() => {
-              navigation.navigate("DocumentC");
-            }}
+            onPress={() => navigateToScreen("DocumentC")}
           >
             <Ionicons name="document-text-outline" size={24} color="white" />
             <Text style={styles.documentsButtonText}>Documents Upload</Text>
           </TouchableOpacity>
 
           {/* Chat Icon */}
-          <TouchableOpacity style={styles.chatButton} onPress={navigateToChat}>
+          <TouchableOpacity style={styles.chatButton}
+            onPress={() => navigateToScreen("Chat")}>
             <View style={styles.chatIconContainer}>
               <Feather
                 name="message-circle"
