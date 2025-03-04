@@ -6,7 +6,6 @@ import {
   Image,
   TouchableOpacity,
   StatusBar,
-  useColorScheme,
   ScrollView,
   Platform,
 } from "react-native";
@@ -34,64 +33,96 @@ const ClientDashboard = ({ navigation }) => {
     minutes: 0,
     seconds: 0,
   });
-  const scheme = useColorScheme();
+
+  const tempFunction = async () => {
+    const appointmentDateTime = await AsyncStorage.getItem(
+      "appointmentDateTime"
+    );
+    const appointmentDate = new Date(appointmentDateTime);
+    const now = new Date();
+    console.log("Appointment time: " + appointmentDate);
+    console.log("Now time: " + now);
+  };
 
   // Check for existing appointment on component mount
   useEffect(() => {
     const checkAppointment = async () => {
       try {
-        const appointmentData = await AsyncStorage.getItem("appointmentData");
-        if (appointmentData) {
-          const parsedData = JSON.parse(appointmentData);
-          const appointmentDate = new Date(parsedData.appointmentTime);
+        // Get both hasAppointment flag and appointment date
+        const hasAppointmentFlag = await AsyncStorage.getItem("hasAppointment");
+        const appointmentDateTime = await AsyncStorage.getItem(
+          "appointmentDateTime"
+        );
+
+        if (hasAppointmentFlag === "true" && appointmentDateTime) {
+          const appointmentDate = new Date(appointmentDateTime);
+          const now = new Date();
 
           // Only show appointment if it's in the future
-          if (appointmentDate > new Date()) {
+          if (appointmentDate > now) {
             setHasAppointment(true);
             setAppointmentTime(appointmentDate.getTime());
           } else {
             // Clear expired appointment
-            await AsyncStorage.removeItem("appointmentData");
+            await AsyncStorage.removeItem("hasAppointment");
+            await AsyncStorage.removeItem("appointmentDateTime");
             setHasAppointment(false);
+            setAppointmentTime(null);
           }
+        } else {
+          setHasAppointment(false);
+          setAppointmentTime(null);
         }
       } catch (error) {
         console.error("Error checking appointment:", error);
+        setHasAppointment(false);
+        setAppointmentTime(null);
       }
     };
 
-    checkAppointment();
-  }, []);
+    // checkAppointment();
+
+    // Check for appointment updates whenever the dashboard is focused
+    const unsubscribe = navigation.addListener("focus", () => {
+      // checkAppointment();
+    });
+
+    return unsubscribe;
+  }, [navigation]);
 
   // Update countdown timer
-  useEffect(() => {
-    if (!hasAppointment || !appointmentTime) return;
+  // useEffect(() => {
+  //   if (!hasAppointment || !appointmentTime) return;
 
-    const intervalId = setInterval(() => {
-      const now = new Date().getTime();
-      const distance = appointmentTime - now;
+  //   const intervalId = setInterval(() => {
+  //     const now = new Date().getTime();
+  //     const distance = appointmentTime - now;
 
-      // If appointment time has passed, clear the appointment
-      if (distance < 0) {
-        clearInterval(intervalId);
-        setHasAppointment(false);
-        AsyncStorage.removeItem("appointmentData");
-        return;
-      }
+  //     // If appointment time has passed, clear the appointment
+  //     if (distance < 0) {
+  //       clearInterval(intervalId);
+  //       setHasAppointment(false);
+  //       setAppointmentTime(null);
 
-      // Calculate time units
-      const days = Math.floor(distance / (1000 * 60 * 60 * 24));
-      const hours = Math.floor(
-        (distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)
-      );
-      const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
-      const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+  //       // Clear from storage
+  //       AsyncStorage.removeItem("hasAppointment");
+  //       AsyncStorage.removeItem("appointmentDateTime");
+  //       return;
+  //     }
 
-      setCountdown({ days, hours, minutes, seconds });
-    }, 1000);
+  //     // Calculate time units
+  //     const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+  //     const hours = Math.floor(
+  //       (distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)
+  //     );
+  //     const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+  //     const seconds = Math.floor((distance % (1000 * 60)) / 1000);
 
-    return () => clearInterval(intervalId);
-  }, [hasAppointment, appointmentTime]);
+  //     setCountdown({ days, hours, minutes, seconds });
+  //   }, 1000);
+
+  //   return () => clearInterval(intervalId);
+  // }, [hasAppointment, appointmentTime]);
 
   const toggleMenu = useCallback(() => {
     setIsMenuOpen(!isMenuOpen);
@@ -290,7 +321,10 @@ const ClientDashboard = ({ navigation }) => {
           {/* Documents Upload Button */}
           <TouchableOpacity
             style={styles.documentsButton}
-            onPress={() => navigation.navigate("DocumentC")}
+            onPress={() => {
+              tempFunction();
+              navigation.navigate("DocumentC");
+            }}
           >
             <Ionicons name="document-text-outline" size={24} color="white" />
             <Text style={styles.documentsButtonText}>Documents Upload</Text>
