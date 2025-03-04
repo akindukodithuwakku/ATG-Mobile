@@ -261,8 +261,9 @@ const styles = StyleSheet.create({
     color: "white",
   },
   notificationButton: {
-    width: 40,
+    width: 30,
     alignItems: "flex-end",
+    marginRight: 15,
   },
   scrollView: {
     flex: 1,

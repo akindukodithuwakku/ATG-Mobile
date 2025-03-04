@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect} from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import {
   View,
   Text,
@@ -8,20 +8,22 @@ import {
   StatusBar,
   useColorScheme,
   ScrollView,
+  Platform,
 } from "react-native";
 import SideNavigationClient from "../Components/SideNavigationClient";
 import BottomNavigationClient from "../Components/BottomNavigationClient";
 import ReadinessQuestionnaire from "./ReadinessQuestionnaire";
-import { useAutomaticLogout } from "./AutoLogout";
-import { Ionicons, Foundation } from "@expo/vector-icons";
-import FontAwesome from "@expo/vector-icons/FontAwesome";
-import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
-import Feather from "@expo/vector-icons/Feather";
+import {
+  Ionicons,
+  Foundation,
+  Feather,
+  FontAwesome,
+  FontAwesome5,
+} from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const ClientDashboard = ({ navigation }) => {
-  const { resetTimer } = useAutomaticLogout();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [showQuestionnaire, setShowQuestionnaire] = useState(false);
   const [hasAppointment, setHasAppointment] = useState(false);
@@ -91,15 +93,6 @@ const ClientDashboard = ({ navigation }) => {
     return () => clearInterval(intervalId);
   }, [hasAppointment, appointmentTime]);
 
-  // Reset auto logout timer when dashboard mounts
-  useEffect(() => {
-    resetTimer();
-  }, []);
-  
-const handleUserInteraction = useCallback(() => {
-  resetTimer();
-}, [resetTimer]);
-
   const toggleMenu = useCallback(() => {
     setIsMenuOpen(!isMenuOpen);
   }, [isMenuOpen]);
@@ -164,28 +157,25 @@ const handleUserInteraction = useCallback(() => {
   };
 
   return (
-    <TouchableOpacity activeOpacity={1} onPress={handleUserInteraction} style={{ flex: 1 }}>
-      <View style={styles.container}>
-        <StatusBar
-          barStyle={scheme === "dark" ? "light-content" : "dark-content"}
-          translucent={true}
-          backgroundColor={scheme === "dark" ? "black" : "transparent"}
-        />
+    <TouchableOpacity activeOpacity={1} style={styles.container}>
+      <StatusBar
+        barStyle="light-content"
+        backgroundColor="transparent"
+        translucent
+      />
 
-        {/* Header */}
-        <LinearGradient
-          colors={["#09D1C7", "#35AFEA"]}
-          style={styles.header}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 0, y: 1 }}
-        >
-          <TouchableOpacity 
-  style={styles.menuButton} 
-  onPress={() => {
-    handleUserInteraction();
-    toggleMenu();
-  }}
->
+      {/* Header */}
+      <LinearGradient
+        colors={["#09D1C7", "#35AFEA"]}
+        style={styles.headerGradient}
+      >
+        <View style={styles.header}>
+          <TouchableOpacity
+            style={styles.menuButton}
+            onPress={() => {
+              toggleMenu();
+            }}
+          >
             <Ionicons
               name={isMenuOpen ? "close" : "menu"}
               size={30}
@@ -197,8 +187,6 @@ const handleUserInteraction = useCallback(() => {
             <LinearGradient
               colors={["#09D1C7", "#0C6478"]}
               style={styles.circleGradient}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
             />
             <Image
               source={require("../assets/Ayman_Logo.png")}
@@ -209,144 +197,132 @@ const handleUserInteraction = useCallback(() => {
           <Text style={styles.headerText}>DASHBOARD</Text>
 
           <TouchableOpacity
-  style={styles.notificationButton}
-  onPress={() => {
-    handleUserInteraction();
-    navigateToNotifications();
-  }}
->
+            style={styles.notificationButton}
+            onPress={() => {
+              navigateToNotifications();
+            }}
+          >
             <Ionicons name="notifications-outline" size={30} color="black" />
           </TouchableOpacity>
-        </LinearGradient>
+        </View>
+      </LinearGradient>
 
-        {/* Overlay for Side Navigation */}
-        {isMenuOpen && (
-          <View style={styles.overlay}>
-            <SideNavigationClient
-              navigation={navigation}
-              onClose={toggleMenu}
-            />
-            <TouchableOpacity
-              style={styles.overlayBackground}
-              onPress={toggleMenu}
-            />
-          </View>
+      {/* Overlay for Side Navigation */}
+      {isMenuOpen && (
+        <View style={styles.overlay}>
+          <SideNavigationClient navigation={navigation} onClose={toggleMenu} />
+          <TouchableOpacity
+            style={styles.overlayBackground}
+            onPress={toggleMenu}
+          />
+        </View>
+      )}
+
+      {/* Dashboard Content */}
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollContent}
+      >
+        {/* Conditional rendering: either appointment countdown or consultation button */}
+        {hasAppointment ? (
+          renderAppointmentCountdown()
+        ) : (
+          <TouchableOpacity
+            style={styles.consultationButton}
+            onPress={() => {
+              navigateToReadiness();
+            }}
+          >
+            <Text style={styles.consultationButtonText}>
+              Need a Consultation?
+            </Text>
+          </TouchableOpacity>
         )}
-
-        {/* Dashboard Content */}
-        <ScrollView
-          style={styles.scrollView}
-          contentContainerStyle={styles.scrollContent}
-        >
-          {/* Conditional rendering: either appointment countdown or consultation button */}
-          {hasAppointment ? (
-            renderAppointmentCountdown()
-          ) : (
-            <TouchableOpacity
-  style={styles.consultationButton}
-  onPress={() => {
-    handleUserInteraction();
-    navigateToReadiness();
-  }}
->
-              <Text style={styles.consultationButtonText}>
-                Need a Consultation?
-              </Text>
-            </TouchableOpacity>
-          )}
-          {/* Main Navigation Cards */}
-          <View style={styles.cardContainer}>
-            <TouchableOpacity
-              style={styles.card}
-              onPress={() => navigation.navigate("CarePlanC")}
+        {/* Main Navigation Cards */}
+        <View style={styles.cardContainer}>
+          <TouchableOpacity
+            style={styles.card}
+            onPress={() => navigation.navigate("CarePlanC")}
+          >
+            <LinearGradient
+              colors={["#6a3093", "#a044ff"]}
+              style={styles.cardGradient}
             >
-              <LinearGradient
-                colors={["#6a3093", "#a044ff"]}
-                style={styles.cardGradient}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-              >
-                <View style={styles.carePlanIcon}>
-                  {/* Heart */}
-                  <FontAwesome
-                    name="plus"
-                    size={24}
-                    color="black"
-                    style={styles.heartIcon}
-                  />
-                  {/* Hands */}
-                  <FontAwesome5
-                    name="hands"
-                    size={24}
-                    color="black"
-                    style={styles.handIcon}
-                  />
-                </View>
-                <Text style={styles.cardTitle}>Care Plan</Text>
-                <Text style={styles.cardSubtitle}>
-                  View and manage your personalized care plan.
-                </Text>
-              </LinearGradient>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.card}
-              onPress={() => navigation.navigate("MedicationC")}
-            >
-              <LinearGradient
-                colors={["#FF512F", "#DD2476"]}
-                style={styles.cardGradient}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-              >
-                <Foundation name="clipboard-notes" size={32} color="black" />
-                <Text style={styles.cardTitle}>Medication Management</Text>
-                <Text style={styles.cardSubtitle}>
-                  Track your medications and prescriptions.
-                </Text>
-              </LinearGradient>
-            </TouchableOpacity>
-          </View>
-          <View style={styles.bottomRow}>
-            {/* Documents Upload Button */}
-            <TouchableOpacity
-              style={styles.documentsButton}
-              onPress={() => navigation.navigate("DocumentC")}
-            >
-              <Ionicons name="document-text-outline" size={24} color="white" />
-              <Text style={styles.documentsButtonText}>Documents Upload</Text>
-            </TouchableOpacity>
-
-            {/* Chat Icon */}
-            <TouchableOpacity
-              style={styles.chatButton}
-              onPress={navigateToChat}
-            >
-              <View style={styles.chatIconContainer}>
-                <Feather
-                  name="message-circle"
-                  size={62}
-                  color="#09D1C7"
-                  style={styles.mirroredIcon}
+              <View style={styles.carePlanIcon}>
+                {/* Heart */}
+                <FontAwesome
+                  name="plus"
+                  size={24}
+                  color="black"
+                  style={styles.heartIcon}
                 />
-                <Image
-                  source={require("../assets/ChatAvatar.png")}
-                  style={styles.chatAvatar}
+                {/* Hands */}
+                <FontAwesome5
+                  name="hands"
+                  size={24}
+                  color="black"
+                  style={styles.handIcon}
                 />
               </View>
-            </TouchableOpacity>
-          </View>
-        </ScrollView>
+              <Text style={styles.cardTitle}>Care Plan</Text>
+              <Text style={styles.cardSubtitle}>
+                View and manage your personalized care plan.
+              </Text>
+            </LinearGradient>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.card}
+            onPress={() => navigation.navigate("MedicationC")}
+          >
+            <LinearGradient
+              colors={["#FF512F", "#DD2476"]}
+              style={styles.cardGradient}
+            >
+              <Foundation name="clipboard-notes" size={32} color="black" />
+              <Text style={styles.cardTitle}>Medication Management</Text>
+              <Text style={styles.cardSubtitle}>
+                Track your medications and prescriptions.
+              </Text>
+            </LinearGradient>
+          </TouchableOpacity>
+        </View>
+        <View style={styles.bottomRow}>
+          {/* Documents Upload Button */}
+          <TouchableOpacity
+            style={styles.documentsButton}
+            onPress={() => navigation.navigate("DocumentC")}
+          >
+            <Ionicons name="document-text-outline" size={24} color="white" />
+            <Text style={styles.documentsButtonText}>Documents Upload</Text>
+          </TouchableOpacity>
 
-        {/* Bottom Navigation */}
-        <BottomNavigationClient navigation={navigation} />
+          {/* Chat Icon */}
+          <TouchableOpacity style={styles.chatButton} onPress={navigateToChat}>
+            <View style={styles.chatIconContainer}>
+              <Feather
+                name="message-circle"
+                size={62}
+                color="#09D1C7"
+                style={styles.mirroredIcon}
+              />
+              <Image
+                source={require("../assets/ChatAvatar.png")}
+                style={styles.chatAvatar}
+              />
+            </View>
+          </TouchableOpacity>
+        </View>
+      </ScrollView>
 
-        <ReadinessQuestionnaire
-          visible={showQuestionnaire}
-          onClose={handleCloseQuestionnaire}
-          navigation={navigation}
-        />
-      </View>
-   </TouchableOpacity>
+      {/* Bottom Navigation */}
+      <BottomNavigationClient navigation={navigation} />
+
+      <ReadinessQuestionnaire
+        visible={showQuestionnaire}
+        onClose={handleCloseQuestionnaire}
+        navigation={navigation}
+      />
+    </TouchableOpacity>
   );
 };
 
@@ -355,11 +331,13 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#fff",
   },
+  headerGradient: {
+    paddingTop: Platform.OS === "ios" ? 50 : StatusBar.currentHeight,
+  },
   header: {
     flexDirection: "row",
     alignItems: "center",
     padding: 15,
-    marginTop: 30,
     justifyContent: "space-between",
   },
   menuButton: {
@@ -393,8 +371,9 @@ const styles = StyleSheet.create({
     color: "white",
   },
   notificationButton: {
-    width: 40,
+    width: 30,
     alignItems: "flex-end",
+    marginRight: 15,
   },
   scrollView: {
     flex: 1,
