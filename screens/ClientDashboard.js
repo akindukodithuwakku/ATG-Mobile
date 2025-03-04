@@ -34,16 +34,6 @@ const ClientDashboard = ({ navigation }) => {
     seconds: 0,
   });
 
-  const tempFunction = async () => {
-    const appointmentDateTime = await AsyncStorage.getItem(
-      "appointmentDateTime"
-    );
-    const appointmentDate = new Date(appointmentDateTime);
-    const now = new Date();
-    console.log("Appointment time: " + appointmentDate);
-    console.log("Now time: " + now);
-  };
-
   // Check for existing appointment on component mount
   useEffect(() => {
     const checkAppointment = async () => {
@@ -80,49 +70,49 @@ const ClientDashboard = ({ navigation }) => {
       }
     };
 
-    // checkAppointment();
+    checkAppointment();
 
     // Check for appointment updates whenever the dashboard is focused
     const unsubscribe = navigation.addListener("focus", () => {
-      // checkAppointment();
+      checkAppointment();
     });
 
     return unsubscribe;
   }, [navigation]);
 
   // Update countdown timer
-  // useEffect(() => {
-  //   if (!hasAppointment || !appointmentTime) return;
+  useEffect(() => {
+    if (!hasAppointment || !appointmentTime) return;
 
-  //   const intervalId = setInterval(() => {
-  //     const now = new Date().getTime();
-  //     const distance = appointmentTime - now;
+    const intervalId = setInterval(() => {
+      const now = new Date().getTime();
+      const distance = appointmentTime - now;
 
-  //     // If appointment time has passed, clear the appointment
-  //     if (distance < 0) {
-  //       clearInterval(intervalId);
-  //       setHasAppointment(false);
-  //       setAppointmentTime(null);
+      // If appointment time has passed, clear the appointment
+      if (distance < 0) {
+        clearInterval(intervalId);
+        setHasAppointment(false);
+        setAppointmentTime(null);
 
-  //       // Clear from storage
-  //       AsyncStorage.removeItem("hasAppointment");
-  //       AsyncStorage.removeItem("appointmentDateTime");
-  //       return;
-  //     }
+        // Clear from storage
+        AsyncStorage.removeItem("hasAppointment");
+        AsyncStorage.removeItem("appointmentDateTime");
+        return;
+      }
 
-  //     // Calculate time units
-  //     const days = Math.floor(distance / (1000 * 60 * 60 * 24));
-  //     const hours = Math.floor(
-  //       (distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)
-  //     );
-  //     const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
-  //     const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+      // Calculate time units
+      const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+      const hours = Math.floor(
+        (distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)
+      );
+      const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+      const seconds = Math.floor((distance % (1000 * 60)) / 1000);
 
-  //     setCountdown({ days, hours, minutes, seconds });
-  //   }, 1000);
+      setCountdown({ days, hours, minutes, seconds });
+    }, 1000);
 
-  //   return () => clearInterval(intervalId);
-  // }, [hasAppointment, appointmentTime]);
+    return () => clearInterval(intervalId);
+  }, [hasAppointment, appointmentTime]);
 
   const toggleMenu = useCallback(() => {
     setIsMenuOpen(!isMenuOpen);
@@ -322,7 +312,6 @@ const ClientDashboard = ({ navigation }) => {
           <TouchableOpacity
             style={styles.documentsButton}
             onPress={() => {
-              tempFunction();
               navigation.navigate("DocumentC");
             }}
           >
