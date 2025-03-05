@@ -136,6 +136,85 @@ const TermsAndPrivacy = ({ navigation }) => {
               communicated within the app.
             </Text>
           </SectionCard>
+
+          <Text style={styles.mainTopic}>Terms</Text>
+          <SectionCard title="1. Introduction">
+            <Text style={styles.sectionText}>
+              These Terms of Use govern your access and use of ATG Healthcare's
+              mobile application. By using the app, you agree to abide by these
+              terms.
+            </Text>
+          </SectionCard>
+
+          <SectionCard title="2. User Responsibilities">
+            <BulletPoint>
+              You must provide{" "}
+              <Text style={styles.boldText}>accurate and complete</Text>{" "}
+              information.
+            </BulletPoint>
+            <BulletPoint>
+              The app is for{" "}
+              <Text style={styles.boldText}>
+                personal healthcare management only
+              </Text>
+              .
+            </BulletPoint>
+            <BulletPoint>
+              You are responsible for keeping your account and login credentials
+              secure.
+            </BulletPoint>
+          </SectionCard>
+
+          <SectionCard title="3. Limitations of Use">
+            <BulletPoint>
+              You must <Text style={styles.boldText}>not misuse</Text> the app
+              or attempt unauthorized access.
+            </BulletPoint>
+            <BulletPoint>
+              The app{" "}
+              <Text style={styles.boldText}>
+                does not provide medical advice
+              </Text>
+              —always consult a licensed professional.
+            </BulletPoint>
+            <BulletPoint>
+              We reserve the right to{" "}
+              <Text style={styles.boldText}>suspend or terminate</Text> accounts
+              that violate our policies.
+            </BulletPoint>
+          </SectionCard>
+
+          <SectionCard title="4. Intellectual Property">
+            <Text style={styles.sectionText}>
+              All content, logos, and trademarks in the app belong to ATG
+              Healthcare and cannot be used without permission.
+            </Text>
+          </SectionCard>
+
+          <SectionCard title="5. Disclaimers & Liability">
+            <BulletPoint>
+              The app provides{" "}
+              <Text style={styles.boldText}>healthcare management tools</Text>{" "}
+              but does not replace professional medical care.
+            </BulletPoint>
+            <BulletPoint>
+              We are <Text style={styles.boldText}>not liable</Text> for any
+              loss or misuse of data due to user negligence.
+            </BulletPoint>
+          </SectionCard>
+
+          <SectionCard title="6. Modifications & Updates">
+            <Text style={styles.sectionText}>
+              We may update these terms periodically, and continued use of the
+              app constitutes agreement to the changes.
+            </Text>
+          </SectionCard>
+
+          <SectionCard title="7. Contact Information">
+            <Text style={styles.sectionText}>
+              For any questions, contact us at support@atghealthcare.com
+            </Text>
+          </SectionCard>
         </View>
         <View style={styles.bottomPadding} />
       </ScrollView>
