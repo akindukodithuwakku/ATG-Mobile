@@ -26,20 +26,26 @@ const ReadinessQuestionnaire = ({ visible, onClose, navigation }) => {
   const [allQuestionsAnswered, setAllQuestionsAnswered] = useState(false);
 
   // Check if all questions have been answered
-  const checkAllAnswered = useCallback((newAnswers) => {
-    resetTimer();
-    const allAnswered = newAnswers.every((answer) => answer !== null);
-    setAllQuestionsAnswered(allAnswered);
-  }, [resetTimer]);
+  const checkAllAnswered = useCallback(
+    (newAnswers) => {
+      resetTimer();
+      const allAnswered = newAnswers.every((answer) => answer !== null);
+      setAllQuestionsAnswered(allAnswered);
+    },
+    [resetTimer]
+  );
 
   // Handle answer selection for a question
-  const handleAnswer = useCallback((index, value) => {
-    resetTimer();
-    const newAnswers = [...answers];
-    newAnswers[index] = value;
-    setAnswers(newAnswers);
-    checkAllAnswered(newAnswers);
-  }, [answers, checkAllAnswered, resetTimer]);
+  const handleAnswer = useCallback(
+    (index, value) => {
+      resetTimer();
+      const newAnswers = [...answers];
+      newAnswers[index] = value;
+      setAnswers(newAnswers);
+      checkAllAnswered(newAnswers);
+    },
+    [answers, checkAllAnswered, resetTimer]
+  );
 
   const handleClose = useCallback(() => {
     resetTimer();
@@ -52,10 +58,10 @@ const ReadinessQuestionnaire = ({ visible, onClose, navigation }) => {
       resetTimer();
       // Save answers to AsyncStorage
       // await AsyncStorage.setItem('questionnaireAnswers', JSON.stringify(answers));
-      
+
       // Close the questionnaire
       onClose();
-      
+
       // Navigate to appointment scheduling
       navigation.navigate("AppointmentScheduling");
     } catch (error) {
@@ -84,7 +90,7 @@ const ReadinessQuestionnaire = ({ visible, onClose, navigation }) => {
             <Text style={styles.title}>Readiness Questionnaire</Text>
           </View>
 
-          <ScrollView 
+          <ScrollView
             style={styles.scrollView}
             onScrollBeginDrag={handleScroll}
             onMomentumScrollBegin={handleScroll}

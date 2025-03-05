@@ -9,13 +9,13 @@ import {
 } from "react-native";
 import SideNavigationCN from "../Components/SideNavigationCN";
 import BottomNavigationCN from "../Components/BottomNavigationCN";
-import { WebView } from 'react-native-webview';
+import { WebView } from "react-native-webview";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 
 const Appointments = ({ navigation }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  
+
   // Replace this with the care navigator's calendar URL
   // const calendarUrl = 'https://calendar.google.com/calendar/embed?src=benjaminalec285%40gmail.com';
   const calanderEmail = "benjaminalec285";
@@ -32,7 +32,7 @@ const Appointments = ({ navigation }) => {
         backgroundColor="transparent"
         translucent
       />
-      
+
       <LinearGradient
         colors={["#09D1C7", "#35AFEA"]}
         style={styles.headerGradient}
@@ -61,7 +61,7 @@ const Appointments = ({ navigation }) => {
       )}
 
       <View style={styles.content}>
-        <WebView 
+        <WebView
           source={{ uri: calendarUrl }}
           style={styles.calendar}
           javaScriptEnabled={true}

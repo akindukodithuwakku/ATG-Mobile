@@ -22,7 +22,6 @@ const AppointmentScheduling = ({ navigation }) => {
   const [bookingProcessed, setBookingProcessed] = useState(false);
 
   // JavaScript to inject for capturing the booking response
-  
 
   // JavaScript to inject for capturing the booking response
   const injectedJavaScript = `
@@ -99,10 +98,16 @@ const AppointmentScheduling = ({ navigation }) => {
       console.log("Fetched local start time: " + localStartTime);
 
       // Save to AsyncStorage
-      await AsyncStorage.setItem("appointmentDateTime", localStartTime.toISOString());
+      await AsyncStorage.setItem(
+        "appointmentDateTime",
+        localStartTime.toISOString()
+      );
       await AsyncStorage.setItem("hasAppointment", "true");
 
-      console.log("Appointment saved to storage:", localStartTime.toISOString());
+      console.log(
+        "Appointment saved to storage:",
+        localStartTime.toISOString()
+      );
     } catch (error) {
       console.error("Error saving booking to storage:", error);
       Alert.alert(

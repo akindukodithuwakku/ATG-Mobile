@@ -275,42 +275,36 @@ export const ResetPasswordScreen = ({ navigation, route }) => {
   const handleResetPassword = async () => {
     if (validateForm()) {
       setIsLoading(true);
-      
+
       try {
         // AWS Cognito requests would be added here
         // await Auth.forgotPasswordSubmit(email, verificationCode, newPassword);
-        
+
         // Simulation with a timeout for testing
         setTimeout(() => {
           setIsLoading(false);
-          Alert.alert(
-            "Success",
-            "Your password has been reset successfully!",
-            [
-              {
-                text: "OK",
-                onPress: () => 
-                  navigation.reset({
-                    index: 0,
-                    routes: [{ name: "Login" }],
-                  }),
-              },
-            ]
-          );
+          Alert.alert("Success", "Your password has been reset successfully!", [
+            {
+              text: "OK",
+              onPress: () =>
+                navigation.reset({
+                  index: 0,
+                  routes: [{ name: "Login" }],
+                }),
+            },
+          ]);
         }, 1500);
       } catch (error) {
         setIsLoading(false);
         if (error.code === "CodeMismatchException") {
           setErrors({ verificationCode: "Invalid verification code" });
         } else if (error.code === "ExpiredCodeException") {
-          setErrors({ 
-            verificationCode: "Verification code has expired. Please request a new one." 
+          setErrors({
+            verificationCode:
+              "Verification code has expired. Please request a new one.",
           });
         } else {
-          Alert.alert(
-            "Error",
-            "Something went wrong. Please try again later."
-          );
+          Alert.alert("Error", "Something went wrong. Please try again later.");
         }
       }
     }
@@ -350,7 +344,9 @@ export const ResetPasswordScreen = ({ navigation, route }) => {
             <View style={styles.instructionContainer}>
               <Text style={styles.instructionTitle}>Create New Password</Text>
               <Text style={styles.instructionText}>
-                Enter the verification code sent to <Text style={styles.boldText}>{email}</Text> and create a new password.
+                Enter the verification code sent to{" "}
+                <Text style={styles.boldText}>{email}</Text> and create a new
+                password.
               </Text>
             </View>
 
@@ -452,7 +448,7 @@ export const ResetPasswordScreen = ({ navigation, route }) => {
             {/* Resend Code Link */}
             <View style={styles.resendCodeContainer}>
               <Text style={styles.resendText}>Didn't receive the code? </Text>
-              <TouchableOpacity 
+              <TouchableOpacity
                 onPress={() => {
                   navigation.navigate("ForgotPWD");
                 }}

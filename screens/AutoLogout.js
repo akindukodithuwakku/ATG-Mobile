@@ -1,6 +1,18 @@
-import React, { createContext, useContext, useEffect, useState, useRef } from "react";
-import { View, Text, TouchableOpacity, StyleSheet, AppState } from "react-native";
-import { useNavigation, useFocusEffect } from '@react-navigation/native';
+import React, {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  useRef,
+} from "react";
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  AppState,
+} from "react-native";
+import { useNavigation, useFocusEffect } from "@react-navigation/native";
 
 // Create context
 export const LogoutContext = createContext(null);
@@ -36,8 +48,8 @@ export const LogoutProvider = ({ children }) => {
 
   // Handle app state changes
   useEffect(() => {
-    const subscription = AppState.addEventListener('change', nextAppState => {
-      if (nextAppState === 'active') {
+    const subscription = AppState.addEventListener("change", (nextAppState) => {
+      if (nextAppState === "active") {
         setLastActivity(Date.now());
         setIsTimerActive(true);
       }
@@ -67,7 +79,14 @@ export const LogoutProvider = ({ children }) => {
   };
 
   return (
-    <LogoutContext.Provider value={{ updateActivity, resetTimer, isTimerActive, checkAndClearAutoLogout }}>
+    <LogoutContext.Provider
+      value={{
+        updateActivity,
+        resetTimer,
+        isTimerActive,
+        checkAndClearAutoLogout,
+      }}
+    >
       {children}
     </LogoutContext.Provider>
   );
@@ -77,25 +96,25 @@ export const LogoutProvider = ({ children }) => {
 export const useAutomaticLogout = () => {
   const context = useContext(LogoutContext);
   const navigation = useNavigation();
-  
+
   // Return early if context is not available
   if (!context) {
     console.warn("useAutomaticLogout must be used within a LogoutProvider");
     return { resetTimer: () => {} }; // Return dummy function
   }
-  
+
   useEffect(() => {
     if (context.isTimerActive === false) {
       // Force close any open modals before navigating
       navigation.setOptions({
-        gestureEnabled: false
+        gestureEnabled: false,
       });
-      navigation.navigate('AutomaticLogout');
+      navigation.navigate("AutomaticLogout");
     }
   }, [context.isTimerActive]);
-  
+
   return {
-    resetTimer: context.resetTimer
+    resetTimer: context.resetTimer,
   };
 };
 
@@ -134,9 +153,7 @@ export const AutomaticLogoutScreen = ({ navigation }) => {
     <View style={styles.container}>
       <View style={styles.modalOverlay}>
         <View style={styles.autoLogoutModal}>
-          <Text style={styles.inactivityText}>
-            Inactivity detected
-          </Text>
+          <Text style={styles.inactivityText}>Inactivity detected</Text>
           <Text style={styles.autoLogoutText}>
             Automatic Logout in {timeLeft} seconds...
           </Text>
@@ -160,15 +177,19 @@ export const useResetTimerOnLogin = () => {
   // Only check once when the screen is focused
   useFocusEffect(
     React.useCallback(() => {
-      if (!initialCheckRef.current && context && context.checkAndClearAutoLogout) {
+      if (
+        !initialCheckRef.current &&
+        context &&
+        context.checkAndClearAutoLogout
+      ) {
         initialCheckRef.current = true;
-        
+
         // Only reset the timer if we came from an auto logout
         if (context.checkAndClearAutoLogout()) {
           context.resetTimer();
         }
       }
-      
+
       return () => {
         initialCheckRef.current = false;
       };

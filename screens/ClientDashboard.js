@@ -333,8 +333,10 @@ const ClientDashboard = ({ navigation }) => {
           </TouchableOpacity>
 
           {/* Chat Icon */}
-          <TouchableOpacity style={styles.chatButton}
-            onPress={() => navigateToScreen("Chat")}>
+          <TouchableOpacity
+            style={styles.chatButton}
+            onPress={() => navigateToScreen("Chat")}
+          >
             <View style={styles.chatIconContainer}>
               <Feather
                 name="message-circle"

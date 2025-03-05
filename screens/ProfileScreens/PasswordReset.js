@@ -63,16 +63,12 @@ const PasswordReset = ({ navigation }) => {
       // Simulating process with a timeout
       setTimeout(() => {
         setIsLoading(false);
-        Alert.alert(
-          "Success",
-          "Your password has been reset successfully!",
-          [
-            {
-              text: "OK",
-              onPress: () => navigation.goBack(),
-            },
-          ]
-        );
+        Alert.alert("Success", "Your password has been reset successfully!", [
+          {
+            text: "OK",
+            onPress: () => navigation.goBack(),
+          },
+        ]);
       }, 1500);
     }
   };
@@ -91,9 +87,7 @@ const PasswordReset = ({ navigation }) => {
           onPress: () => {
             navigation.reset({
               index: 0,
-              routes: [
-                { name: "ForgotPWD" },
-              ],
+              routes: [{ name: "ForgotPWD" }],
             });
           },
         },
@@ -156,7 +150,9 @@ const PasswordReset = ({ navigation }) => {
               />
               <TouchableOpacity
                 style={styles.eyeIcon}
-                onPress={() => setCurrentPasswordVisible(!currentPasswordVisible)}
+                onPress={() =>
+                  setCurrentPasswordVisible(!currentPasswordVisible)
+                }
               >
                 <Ionicons
                   name={currentPasswordVisible ? "eye-off" : "eye"}
@@ -224,7 +220,9 @@ const PasswordReset = ({ navigation }) => {
               />
               <TouchableOpacity
                 style={styles.eyeIcon}
-                onPress={() => setConfirmPasswordVisible(!confirmPasswordVisible)}
+                onPress={() =>
+                  setConfirmPasswordVisible(!confirmPasswordVisible)
+                }
               >
                 <Ionicons
                   name={confirmPasswordVisible ? "eye-off" : "eye"}

@@ -23,7 +23,7 @@ const LoginScreen = ({ navigation }) => {
   const [isLoading, setIsLoading] = useState(false);
 
   useResetTimerOnLogin();
-  
+
   // Form validation
   const validateForm = () => {
     let errorTexts = {};
