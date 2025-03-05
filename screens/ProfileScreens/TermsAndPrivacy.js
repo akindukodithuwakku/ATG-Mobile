@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   View,
   Text,
@@ -33,6 +33,8 @@ const BulletPoint = ({ bold, children }) => {
 };
 
 const TermsAndPrivacy = ({ navigation }) => {
+  const [activeTab, setActiveTab] = useState("privacy"); // "privacy" or "terms"
+
   return (
     <View style={styles.container}>
       <StatusBar
@@ -56,166 +58,182 @@ const TermsAndPrivacy = ({ navigation }) => {
         </View>
       </LinearGradient>
 
+      <View style={styles.tabContainer}>
+        <TouchableOpacity
+          style={[
+            styles.tabButton,
+            activeTab === "privacy" && styles.activeTabButton,
+          ]}
+          onPress={() => setActiveTab("privacy")}
+        >
+          <Text
+            style={[
+              styles.tabText,
+              activeTab === "privacy" && styles.activeTabText,
+            ]}
+          >
+            Privacy Policy
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[
+            styles.tabButton,
+            activeTab === "terms" && styles.activeTabButton,
+          ]}
+          onPress={() => setActiveTab("terms")}
+        >
+          <Text
+            style={[
+              styles.tabText,
+              activeTab === "terms" && styles.activeTabText,
+            ]}
+          >
+            Terms of Use
+          </Text>
+        </TouchableOpacity>
+      </View>
+
       <ScrollView style={styles.contentContainer}>
-        <View>
-          <Text style={styles.mainTopic}>Privacy Policy</Text>
-          <SectionCard title="1. Introduction">
-            <Text style={styles.sectionText}>
-              Welcome to ATG Healthcare. This Privacy Policy explains how we
-              collect, use, and protect your personal information when you use
-              our healthcare management application.
-            </Text>
-          </SectionCard>
-
-          <SectionCard title="2. Data We Collect">
-            <Text style={styles.sectionText}>
-              We collect the following types of data:
-            </Text>
-            <BulletPoint bold="Personal Information">
-              Name, contact details, profile information.
-            </BulletPoint>
-            <BulletPoint bold="Health-Related Data">
-              Care plans, medication history, appointment details.
-            </BulletPoint>
-            <BulletPoint bold="Usage Data">
-              Device information, interactions with the app.
-            </BulletPoint>
-          </SectionCard>
-
-          <SectionCard title="3. How We Use Your Data">
-            <Text style={styles.sectionText}>We use your data to:</Text>
-            <BulletPoint>
-              Facilitate care plan and medication management.
-            </BulletPoint>
-            <BulletPoint>Schedule and manage appointments.</BulletPoint>
-            <BulletPoint>
-              Enhance app security and user authentication.
-            </BulletPoint>
-            <BulletPoint>
-              Improve user experience and app functionality.
-            </BulletPoint>
-          </SectionCard>
-
-          <SectionCard title="4. Data Sharing">
-            <Text style={styles.sectionText}>
-              Your data may be shared with:
-            </Text>
-            <BulletPoint bold="Healthcare Providers">
-              To provide medical guidance.
-            </BulletPoint>
-            <BulletPoint bold="AWS Cognito">
-              For secure authentication and access management.
-            </BulletPoint>
-            <BulletPoint bold="Third-Party Integrations">
-              Such as Calendly for appointment scheduling.
-            </BulletPoint>
-          </SectionCard>
-
-          <SectionCard title="5. Your Rights">
-            <BulletPoint bold="Access & Update">
-              You can view and update your profile details.
-            </BulletPoint>
-            <BulletPoint bold="Deletion">
-              Request deletion of your account and associated data.
-            </BulletPoint>
-            <BulletPoint bold="Opt-out">
-              You can opt out of non-essential data collection.
-            </BulletPoint>
-          </SectionCard>
-
-          <SectionCard title="6. Data Security">
-            <Text style={styles.sectionText}>
-              We implement strong encryption, access controls, and secure
-              authentication mechanisms to protect your data.
-            </Text>
-          </SectionCard>
-
-          <SectionCard title="7. Policy Updates">
-            <Text style={styles.sectionText}>
-              We may update this Privacy Policy, and changes will be
-              communicated within the app.
-            </Text>
-          </SectionCard>
-
-          <Text style={styles.mainTopic}>Terms</Text>
-          <SectionCard title="1. Introduction">
-            <Text style={styles.sectionText}>
-              These Terms of Use govern your access and use of ATG Healthcare's
-              mobile application. By using the app, you agree to abide by these
-              terms.
-            </Text>
-          </SectionCard>
-
-          <SectionCard title="2. User Responsibilities">
-            <BulletPoint>
-              You must provide{" "}
-              <Text style={styles.boldText}>accurate and complete</Text>{" "}
-              information.
-            </BulletPoint>
-            <BulletPoint>
-              The app is for{" "}
-              <Text style={styles.boldText}>
-                personal healthcare management only
+        {activeTab === "privacy" ? (
+          <View>
+            <SectionCard title="1. Introduction">
+              <Text style={styles.sectionText}>
+                Welcome to ATG Healthcare. This Privacy Policy explains how we collect, use, and protect your personal information when you use our healthcare management application.
               </Text>
-              .
-            </BulletPoint>
-            <BulletPoint>
-              You are responsible for keeping your account and login credentials
-              secure.
-            </BulletPoint>
-          </SectionCard>
+            </SectionCard>
 
-          <SectionCard title="3. Limitations of Use">
-            <BulletPoint>
-              You must <Text style={styles.boldText}>not misuse</Text> the app
-              or attempt unauthorized access.
-            </BulletPoint>
-            <BulletPoint>
-              The app{" "}
-              <Text style={styles.boldText}>
-                does not provide medical advice
+            <SectionCard title="2. Data We Collect">
+              <Text style={styles.sectionText}>
+                We collect the following types of data:
               </Text>
-              —always consult a licensed professional.
-            </BulletPoint>
-            <BulletPoint>
-              We reserve the right to{" "}
-              <Text style={styles.boldText}>suspend or terminate</Text> accounts
-              that violate our policies.
-            </BulletPoint>
-          </SectionCard>
+              <BulletPoint bold="Personal Information">
+                Name, contact details, profile information.
+              </BulletPoint>
+              <BulletPoint bold="Health-Related Data">
+                Care plans, medication history, appointment details.
+              </BulletPoint>
+              <BulletPoint bold="Usage Data">
+                Device information, interactions with the app.
+              </BulletPoint>
+            </SectionCard>
 
-          <SectionCard title="4. Intellectual Property">
-            <Text style={styles.sectionText}>
-              All content, logos, and trademarks in the app belong to ATG
-              Healthcare and cannot be used without permission.
-            </Text>
-          </SectionCard>
+            <SectionCard title="3. How We Use Your Data">
+              <Text style={styles.sectionText}>
+                We use your data to:
+              </Text>
+              <BulletPoint>
+                Facilitate care plan and medication management.
+              </BulletPoint>
+              <BulletPoint>
+                Schedule and manage appointments.
+              </BulletPoint>
+              <BulletPoint>
+                Enhance app security and user authentication.
+              </BulletPoint>
+              <BulletPoint>
+                Improve user experience and app functionality.
+              </BulletPoint>
+            </SectionCard>
 
-          <SectionCard title="5. Disclaimers & Liability">
-            <BulletPoint>
-              The app provides{" "}
-              <Text style={styles.boldText}>healthcare management tools</Text>{" "}
-              but does not replace professional medical care.
-            </BulletPoint>
-            <BulletPoint>
-              We are <Text style={styles.boldText}>not liable</Text> for any
-              loss or misuse of data due to user negligence.
-            </BulletPoint>
-          </SectionCard>
+            <SectionCard title="4. Data Sharing">
+              <Text style={styles.sectionText}>
+                Your data may be shared with:
+              </Text>
+              <BulletPoint bold="Healthcare Providers">
+                To provide medical guidance.
+              </BulletPoint>
+              <BulletPoint bold="AWS Cognito">
+                For secure authentication and access management.
+              </BulletPoint>
+              <BulletPoint bold="Third-Party Integrations">
+                Such as Calendly for appointment scheduling.
+              </BulletPoint>
+            </SectionCard>
 
-          <SectionCard title="6. Modifications & Updates">
-            <Text style={styles.sectionText}>
-              We may update these terms periodically, and continued use of the
-              app constitutes agreement to the changes.
-            </Text>
-          </SectionCard>
+            <SectionCard title="5. Your Rights">
+              <BulletPoint bold="Access & Update">
+                You can view and update your profile details.
+              </BulletPoint>
+              <BulletPoint bold="Deletion">
+                Request deletion of your account and associated data.
+              </BulletPoint>
+              <BulletPoint bold="Opt-out">
+                You can opt out of non-essential data collection.
+              </BulletPoint>
+            </SectionCard>
 
-          <SectionCard title="7. Contact Information">
-            <Text style={styles.sectionText}>
-              For any questions, contact us at support@atghealthcare.com
-            </Text>
-          </SectionCard>
-        </View>
+            <SectionCard title="6. Data Security">
+              <Text style={styles.sectionText}>
+                We implement strong encryption, access controls, and secure authentication mechanisms to protect your data.
+              </Text>
+            </SectionCard>
+
+            <SectionCard title="7. Policy Updates">
+              <Text style={styles.sectionText}>
+                We may update this Privacy Policy, and changes will be communicated within the app.
+              </Text>
+            </SectionCard>
+          </View>
+        ) : (
+          <View>
+            <SectionCard title="1. Introduction">
+              <Text style={styles.sectionText}>
+                These Terms of Use govern your access and use of ATG Healthcare's mobile application. By using the app, you agree to abide by these terms.
+              </Text>
+            </SectionCard>
+
+            <SectionCard title="2. User Responsibilities">
+              <BulletPoint>
+                You must provide <Text style={styles.boldText}>accurate and complete</Text> information.
+              </BulletPoint>
+              <BulletPoint>
+                The app is for <Text style={styles.boldText}>personal healthcare management only</Text>.
+              </BulletPoint>
+              <BulletPoint>
+                You are responsible for keeping your account and login credentials secure.
+              </BulletPoint>
+            </SectionCard>
+
+            <SectionCard title="3. Limitations of Use">
+              <BulletPoint>
+                You must <Text style={styles.boldText}>not misuse</Text> the app or attempt unauthorized access.
+              </BulletPoint>
+              <BulletPoint>
+                The app <Text style={styles.boldText}>does not provide medical advice</Text>—always consult a licensed professional.
+              </BulletPoint>
+              <BulletPoint>
+                We reserve the right to <Text style={styles.boldText}>suspend or terminate</Text> accounts that violate our policies.
+              </BulletPoint>
+            </SectionCard>
+
+            <SectionCard title="4. Intellectual Property">
+              <Text style={styles.sectionText}>
+                All content, logos, and trademarks in the app belong to ATG Healthcare and cannot be used without permission.
+              </Text>
+            </SectionCard>
+
+            <SectionCard title="5. Disclaimers & Liability">
+              <BulletPoint>
+                The app provides <Text style={styles.boldText}>healthcare management tools</Text> but does not replace professional medical care.
+              </BulletPoint>
+              <BulletPoint>
+                We are <Text style={styles.boldText}>not liable</Text> for any loss or misuse of data due to user negligence.
+              </BulletPoint>
+            </SectionCard>
+
+            <SectionCard title="6. Modifications & Updates">
+              <Text style={styles.sectionText}>
+                We may update these terms periodically, and continued use of the app constitutes agreement to the changes.
+              </Text>
+            </SectionCard>
+
+            <SectionCard title="7. Contact Information">
+              <Text style={styles.sectionText}>
+                For any questions, contact us at support@atghealthcare.com
+              </Text>
+            </SectionCard>
+          </View>
+        )}
         <View style={styles.bottomPadding} />
       </ScrollView>
     </View>
@@ -247,14 +265,38 @@ const styles = StyleSheet.create({
     marginLeft: 30,
     flex: 1,
   },
+  tabContainer: {
+    flexDirection: "row",
+    borderBottomWidth: 1,
+    borderBottomColor: "#E0E0E0",
+    backgroundColor: "#FFFFFF",
+    elevation: 2,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+  },
+  tabButton: {
+    flex: 1,
+    paddingVertical: 15,
+    alignItems: "center",
+  },
+  activeTabButton: {
+    borderBottomWidth: 3,
+    borderBottomColor: "#09D1C7",
+  },
+  tabText: {
+    fontSize: 16,
+    color: "#666",
+    fontWeight: "500",
+  },
+  activeTabText: {
+    color: "#09D1C7",
+    fontWeight: "700",
+  },
   contentContainer: {
     flex: 1,
     padding: 16,
-  },
-  mainTopic: {
-    fontSize: 18,
-    fontWeight: "bold",
-    paddingBottom: 8,
   },
   sectionCard: {
     backgroundColor: "#FFFFFF",
@@ -286,7 +328,7 @@ const styles = StyleSheet.create({
   },
   bulletSymbol: {
     fontSize: 15,
-    color: "#09D1C7",
+    color: "#1D7AC8",
     marginRight: 8,
     width: 10,
   },
