@@ -14,6 +14,7 @@ import {
 import ProfileScreenC from "./screens/ProfileScreens/ProfileScreenC";
 import ProfileScreenCN from "./screens/ProfileScreens/ProfileScreenCN";
 import PasswordReset from "./screens/ProfileScreens/PasswordReset";
+import ContactUs from "./screens/ProfileScreens/ContactUs";
 import TermsAndPrivacy from "./screens/ProfileScreens/TermsAndPrivacy";
 import ReadinessQuestionnaire from "./screens/ReadinessQuestionnaire";
 import AppointmentScheduling from "./screens/AppointmentScheduling";
@@ -33,7 +34,7 @@ const Stack = createStackNavigator();
 const AppNavigator = () => {
   return (
     <Stack.Navigator
-      initialRouteName="Welcome"
+      initialRouteName="ContactUs"
       screenOptions={{ headerShown: false, gestureEnabled: false }}
     >
       <Stack.Screen name="Welcome" component={WelcomeScreen} />
@@ -49,6 +50,7 @@ const AppNavigator = () => {
       <Stack.Screen name="ProfileC" component={ProfileScreenC} />
       <Stack.Screen name="ProfileCN" component={ProfileScreenCN} />
       <Stack.Screen name="PWDReset" component={PasswordReset} />
+      <Stack.Screen name="ContactUs" component={ContactUs} />
       <Stack.Screen name="TermsPrivacy" component={TermsAndPrivacy} />
       <Stack.Screen name="Readiness" component={ReadinessQuestionnaire} />
       <Stack.Screen
