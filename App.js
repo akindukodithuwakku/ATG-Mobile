@@ -5,10 +5,16 @@ import { createStackNavigator } from "@react-navigation/stack";
 // Import screens
 import WelcomeScreen from "./screens/WelcomeScreen";
 import LoginScreen from "./screens/LoginScreen";
-import {SignUpScreen, VerificationSentScreen} from "./screens/SignupScreen";
-import {ForgotPasswordScreen, ResetCodeSentScreen, ResetPasswordScreen} from "./screens/ForgotPWordScreen";
+import { SignUpScreen, VerificationSentScreen } from "./screens/SignupScreen";
+import {
+  ForgotPasswordScreen,
+  ResetCodeSentScreen,
+  ResetPasswordScreen,
+} from "./screens/ForgotPWordScreen";
 import ProfileScreenC from "./screens/ProfileScreens/ProfileScreenC";
 import ProfileScreenCN from "./screens/ProfileScreens/ProfileScreenCN";
+import PasswordReset from "./screens/ProfileScreens/PasswordReset";
+import TermsAndPrivacy from "./screens/ProfileScreens/TermsAndPrivacy";
 import ReadinessQuestionnaire from "./screens/ReadinessQuestionnaire";
 import AppointmentScheduling from "./screens/AppointmentScheduling";
 import Appointments from "./screens/Appointments";
@@ -27,18 +33,23 @@ const Stack = createStackNavigator();
 const AppNavigator = () => {
   return (
     <Stack.Navigator
-      initialRouteName="ForgotPWD"
+      initialRouteName="Welcome"
       screenOptions={{ headerShown: false, gestureEnabled: false }}
     >
       <Stack.Screen name="Welcome" component={WelcomeScreen} />
       <Stack.Screen name="Login" component={LoginScreen} />
       <Stack.Screen name="Signup" component={SignUpScreen} />
-      <Stack.Screen name="VerificationSent" component={VerificationSentScreen} />
+      <Stack.Screen
+        name="VerificationSent"
+        component={VerificationSentScreen}
+      />
       <Stack.Screen name="ForgotPWD" component={ForgotPasswordScreen} />
       <Stack.Screen name="ForgotPWDCode" component={ResetCodeSentScreen} />
       <Stack.Screen name="ForgotPWDReset" component={ResetPasswordScreen} />
       <Stack.Screen name="ProfileC" component={ProfileScreenC} />
       <Stack.Screen name="ProfileCN" component={ProfileScreenCN} />
+      <Stack.Screen name="PWDReset" component={PasswordReset} />
+      <Stack.Screen name="TermsPrivacy" component={TermsAndPrivacy} />
       <Stack.Screen name="Readiness" component={ReadinessQuestionnaire} />
       <Stack.Screen
         name="AppointmentScheduling"
