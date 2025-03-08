@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import {
   View,
   Text,
@@ -9,6 +9,7 @@ import {
   Platform,
   Modal,
 } from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import SideNavigationCN from "../../Components/SideNavigationCN";
 import BottomNavigationCN from "../../Components/BottomNavigationCN";
 import { Ionicons, MaterialIcons, Feather } from "@expo/vector-icons";
@@ -17,6 +18,39 @@ import { LinearGradient } from "expo-linear-gradient";
 const ProfileScreenCN = ({ navigation }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [profileData, setProfileData] = useState({
+    fullName: "Trevin Perera",
+    profileImage: null,
+  });
+  const defaultImage = require("../../assets/ChatAvatar.png");
+
+  // Load profile data when screen focuses
+  useEffect(() => {
+    const loadProfileData = async () => {
+      try {
+        const storedProfileData = await AsyncStorage.getItem('userProfile');
+        if (storedProfileData !== null) {
+          const userData = JSON.parse(storedProfileData);
+          setProfileData({
+            fullName: userData.fullName,
+            profileImage: userData.profileImage,
+          });
+        }
+      } catch (error) {
+        console.error('Error loading profile data:', error);
+      }
+    };
+
+    loadProfileData();
+
+    // Focus listener to reload data when returning to screen
+    const unsubscribe = navigation.addListener('focus', () => {
+      loadProfileData();
+    });
+
+    // Clean up the listener when component unmounts
+    return unsubscribe;
+  }, [navigation]);
 
   const toggleMenu = useCallback(() => {
     setIsMenuOpen(!isMenuOpen);
@@ -43,12 +77,12 @@ const ProfileScreenCN = ({ navigation }) => {
     {
       title: "Privacy Policy",
       icon: <MaterialIcons name="privacy-tip" size={24} color="#0C6478" />,
-      route: "PrivacyPolicy",
+      route: "TermsPrivacy",
     },
     {
       title: "Password Reset",
       icon: <MaterialIcons name="lock-reset" size={24} color="#0C6478" />,
-      route: "PasswordReset",
+      route: "PWDReset",
     },
     {
       title: "Contact Us",
@@ -97,8 +131,8 @@ const ProfileScreenCN = ({ navigation }) => {
         {/* Profile Section */}
         <View style={styles.profileSection}>
           <View style={styles.profileImageContainer}>
-            <Image
-              source={require("../../assets/ChatAvatar.png")}
+          <Image
+              source={profileData.profileImage ? { uri: profileData.profileImage } : defaultImage}
               style={styles.profileImage}
             />
             <TouchableOpacity
@@ -108,7 +142,7 @@ const ProfileScreenCN = ({ navigation }) => {
               <Feather name="edit" size={20} color="#0C6478" />
             </TouchableOpacity>
           </View>
-          <Text style={styles.profileName}>Jane Doe</Text>
+          <Text style={styles.profileName}>{profileData.fullName}</Text>
         </View>
       </LinearGradient>
 
