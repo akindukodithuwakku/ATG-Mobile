@@ -66,6 +66,28 @@ const ProfileScreenC = ({ navigation }) => {
     }
   };
 
+  const clearAppointmentData = async () => {
+    try {
+      await AsyncStorage.removeItem("appointmentDateTime");
+      await AsyncStorage.removeItem("hasAppointment");
+
+      setShowClearDataModal(false);
+      setClearDataConfirmText("");
+
+      Alert.alert(
+        "Appointment Data Cleared",
+        "Your appointment data has been successfully cleared.",
+        [{ text: "OK" }]
+      );
+    } catch (error) {
+      Alert.alert(
+        "Error",
+        "Failed to clear appointment data. Please try again.",
+        [{ text: "OK" }]
+      );
+    }
+  };
+
   const menuItems = [
     {
       title: "Profile",
@@ -75,12 +97,12 @@ const ProfileScreenC = ({ navigation }) => {
     {
       title: "Privacy Policy",
       icon: <MaterialIcons name="privacy-tip" size={24} color="#0C6478" />,
-      route: "PrivacyPolicy",
+      route: "TermsPrivacy",
     },
     {
       title: "Password Reset",
       icon: <MaterialIcons name="lock-reset" size={24} color="#0C6478" />,
-      route: "PasswordReset",
+      route: "PWDReset",
     },
     {
       title: "Contact Us",
