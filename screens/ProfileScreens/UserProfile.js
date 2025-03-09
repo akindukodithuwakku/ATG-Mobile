@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   View,
   Text,
@@ -12,8 +12,11 @@ import {
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons, Feather } from "@expo/vector-icons";
+import { useAutomaticLogout } from "../../screens/AutoLogout";
+import { useFocusEffect } from "@react-navigation/native";
 
 const UserProfile = ({ navigation }) => {
+  const { resetTimer } = useAutomaticLogout();
   const [profileData, setProfileData] = useState({
     fullName: "Trevin Perera",
     email: "trevin.perera@gmail.com",
@@ -22,32 +25,30 @@ const UserProfile = ({ navigation }) => {
     bio: "Software developer.",
     profileImage: null,
   });
-  
+
   const defaultImage = require("../../assets/ChatAvatar.png");
 
-  useEffect(() => {
-    const loadProfileData = async () => {
-      try {
-        const storedProfileData = await AsyncStorage.getItem('userProfile');
-        if (storedProfileData !== null) {
-          setProfileData(JSON.parse(storedProfileData));
-        }
-      } catch (error) {
-        console.error('Error loading profile data:', error);
+  const loadProfileData = useCallback(async () => {
+    try {
+      const storedProfileData = await AsyncStorage.getItem("userProfile");
+      if (storedProfileData !== null) {
+        setProfileData(JSON.parse(storedProfileData));
       }
-    };
+    } catch (error) {
+      console.error("Error loading profile data:", error);
+    }
+  }, []);
 
-    // Load data when component mounts
-    loadProfileData();
-
-    // Add a focus listener to reload data when returning to this screen
-    const unsubscribe = navigation.addListener('focus', () => {
+  useFocusEffect(
+    useCallback(() => {
+      resetTimer();
       loadProfileData();
-    });
+    }, [loadProfileData])
+  );
 
-    // Clean up the listener when component unmounts
-    return unsubscribe;
-  }, [navigation]);
+  const handleUserInteraction = useCallback(() => {
+    resetTimer();
+  }, []);
 
   const detailItems = [
     {
@@ -86,7 +87,10 @@ const UserProfile = ({ navigation }) => {
       >
         <View style={styles.header}>
           <TouchableOpacity
-            onPress={() => navigation.goBack()}
+            onPress={() => {
+              resetTimer();
+              navigation.goBack();
+            }}
             style={styles.backButton}
           >
             <Ionicons name="chevron-back" size={28} color="#FFFFFF" />
@@ -94,7 +98,10 @@ const UserProfile = ({ navigation }) => {
           <Text style={styles.headerText}>User Profile</Text>
           <TouchableOpacity
             style={styles.headerEditButton}
-            onPress={() => navigation.navigate("EditProfile")}
+            onPress={() => {
+              resetTimer();
+              navigation.navigate("EditProfile");
+            }}
           >
             <Feather name="edit-2" size={24} color="#fff" />
           </TouchableOpacity>
@@ -105,12 +112,18 @@ const UserProfile = ({ navigation }) => {
         style={styles.scrollContainer}
         contentContainerStyle={styles.contentContainer}
         showsVerticalScrollIndicator={false}
+        onScrollBeginDrag={handleUserInteraction}
+        onTouchStart={handleUserInteraction}
       >
         {/* Profile Header */}
         <View style={styles.profileHeader}>
           <View style={styles.profileImageContainer}>
             <Image
-              source={profileData.profileImage ? { uri: profileData.profileImage } : defaultImage}
+              source={
+                profileData.profileImage
+                  ? { uri: profileData.profileImage }
+                  : defaultImage
+              }
               style={styles.profileImage}
             />
           </View>
@@ -120,7 +133,7 @@ const UserProfile = ({ navigation }) => {
         {/* Profile Details */}
         <View style={styles.detailsContainer}>
           <Text style={styles.sectionTitle}>Personal Information</Text>
-          
+
           {detailItems.map((item, index) => (
             <View key={index} style={styles.detailItem}>
               <View style={styles.detailIconContainer}>
