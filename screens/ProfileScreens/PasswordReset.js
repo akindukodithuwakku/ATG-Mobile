@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useCallback } from "react";
 import {
   View,
   Text,
@@ -14,8 +14,11 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
+import { useFocusEffect } from "@react-navigation/native";
+import { useAutomaticLogout } from "../../screens/AutoLogout";
 
 const PasswordReset = ({ navigation }) => {
+  const { resetTimer } = useAutomaticLogout();
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -24,6 +27,18 @@ const PasswordReset = ({ navigation }) => {
   const [confirmPasswordVisible, setConfirmPasswordVisible] = useState(false);
   const [errors, setErrors] = useState({});
   const [isLoading, setIsLoading] = useState(false);
+
+  // Reset timer when screen comes into focus
+  useFocusEffect(
+    React.useCallback(() => {
+      resetTimer();
+    }, [])
+  );
+
+  // Handle user interactions to reset the timer
+  const handleUserInteraction = useCallback(() => {
+    resetTimer();
+  }, [resetTimer]);
 
   // Form validation
   const validateForm = () => {
@@ -56,6 +71,7 @@ const PasswordReset = ({ navigation }) => {
   };
 
   const handleResetPassword = async () => {
+    resetTimer();
     if (validateForm()) {
       setIsLoading(true);
       // Backend password reset actions would be added here
@@ -66,7 +82,10 @@ const PasswordReset = ({ navigation }) => {
         Alert.alert("Success", "Your password has been reset successfully!", [
           {
             text: "OK",
-            onPress: () => navigation.goBack(),
+            onPress: () => {
+              resetTimer();
+              navigation.goBack();
+            },
           },
         ]);
       }, 1500);
@@ -74,6 +93,7 @@ const PasswordReset = ({ navigation }) => {
   };
 
   const confirmForgotPassword = () => {
+    resetTimer();
     Alert.alert(
       "Forgot Password",
       "This will log you out and redirect to the password recovery screen. Continue?",
@@ -81,6 +101,7 @@ const PasswordReset = ({ navigation }) => {
         {
           text: "Cancel",
           style: "cancel",
+          onPress: () => resetTimer(),
         },
         {
           text: "Continue",
@@ -96,7 +117,12 @@ const PasswordReset = ({ navigation }) => {
   };
 
   return (
-    <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+    <TouchableWithoutFeedback
+      onPress={() => {
+        Keyboard.dismiss();
+        handleUserInteraction();
+      }}
+    >
       <View style={styles.container}>
         <StatusBar
           barStyle="light-content"
@@ -110,7 +136,10 @@ const PasswordReset = ({ navigation }) => {
         >
           <View style={styles.header}>
             <TouchableOpacity
-              onPress={() => navigation.goBack()}
+              onPress={() => {
+                resetTimer();
+                navigation.goBack();
+              }}
               style={styles.backButton}
             >
               <Text style={styles.backButtonText}>{"<"}</Text>
@@ -124,6 +153,8 @@ const PasswordReset = ({ navigation }) => {
           contentContainerStyle={styles.formContentContainer}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
+          onScrollBeginDrag={handleUserInteraction}
+          onTouchStart={handleUserInteraction}
         >
           <View style={styles.form}>
             <View style={styles.titleContainer}>
@@ -141,6 +172,7 @@ const PasswordReset = ({ navigation }) => {
                 placeholder="Enter current password"
                 value={currentPassword}
                 onChangeText={(text) => {
+                  resetTimer();
                   setCurrentPassword(text);
                   if (errors.currentPassword) {
                     setErrors({ ...errors, currentPassword: null });
@@ -150,9 +182,10 @@ const PasswordReset = ({ navigation }) => {
               />
               <TouchableOpacity
                 style={styles.eyeIcon}
-                onPress={() =>
-                  setCurrentPasswordVisible(!currentPasswordVisible)
-                }
+                onPress={() => {
+                  resetTimer();
+                  setCurrentPasswordVisible(!currentPasswordVisible);
+                }}
               >
                 <Ionicons
                   name={currentPasswordVisible ? "eye-off" : "eye"}
@@ -181,6 +214,7 @@ const PasswordReset = ({ navigation }) => {
                 placeholder="Enter new password"
                 value={newPassword}
                 onChangeText={(text) => {
+                  resetTimer();
                   setNewPassword(text);
                   if (errors.newPassword) {
                     setErrors({ ...errors, newPassword: null });
@@ -190,7 +224,10 @@ const PasswordReset = ({ navigation }) => {
               />
               <TouchableOpacity
                 style={styles.eyeIcon}
-                onPress={() => setNewPasswordVisible(!newPasswordVisible)}
+                onPress={() => {
+                  resetTimer();
+                  setNewPasswordVisible(!newPasswordVisible);
+                }}
               >
                 <Ionicons
                   name={newPasswordVisible ? "eye-off" : "eye"}
@@ -211,6 +248,7 @@ const PasswordReset = ({ navigation }) => {
                 placeholder="Confirm new password"
                 value={confirmPassword}
                 onChangeText={(text) => {
+                  resetTimer();
                   setConfirmPassword(text);
                   if (errors.confirmPassword) {
                     setErrors({ ...errors, confirmPassword: null });
@@ -220,9 +258,10 @@ const PasswordReset = ({ navigation }) => {
               />
               <TouchableOpacity
                 style={styles.eyeIcon}
-                onPress={() =>
-                  setConfirmPasswordVisible(!confirmPasswordVisible)
-                }
+                onPress={() => {
+                  resetTimer();
+                  setConfirmPasswordVisible(!confirmPasswordVisible);
+                }}
               >
                 <Ionicons
                   name={confirmPasswordVisible ? "eye-off" : "eye"}
