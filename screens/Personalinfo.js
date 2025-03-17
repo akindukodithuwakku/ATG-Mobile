@@ -24,6 +24,7 @@ const ErrorIcon = () => (
 );
 
 const PersonalInfo = ({ navigation }) => {
+  const [userName, setUserName] = useState("");
   const [fullName, setFullName] = useState("");
   const [dateOfBirth, setDateOfBirth] = useState("");
   const [contactNumber, setContactNumber] = useState("");
@@ -54,6 +55,7 @@ const PersonalInfo = ({ navigation }) => {
 
   const validateForm = () => {
     const newErrors = {};
+    if (!userName) newErrors.userName = "Username cannot be empty";
     if (!fullName) newErrors.fullName = "Full Name cannot be empty";
     if (!dateOfBirth) newErrors.dateOfBirth = "Date of Birth cannot be empty";
     if (!contactNumber) newErrors.contactNumber = "Contact Number cannot be empty";
@@ -67,6 +69,7 @@ const PersonalInfo = ({ navigation }) => {
   const handleContinue = () => {
     if (validateForm()) {
       const personalInfoData = {
+        userName,
         fullName,
         dateOfBirth,
         contactNumber,
@@ -109,6 +112,25 @@ const PersonalInfo = ({ navigation }) => {
       <ScrollView contentContainerStyle={styles.scrollContainer}>
         {/* Form Fields */}
         <View style={styles.formContainer}>
+
+          {/* Username Field */}
+    <Text style={styles.label}>Username</Text>
+    <View style={styles.inputContainer}>
+      <TextInput
+        style={styles.input}
+        placeholder="Enter your username"
+        placeholderTextColor="#B3E5FC"
+        value={userName}
+        onChangeText={handleInputChange(setUserName, "userName")}
+      />
+      {errors.userName}
+    </View>
+    {errors.userName && (
+      <View style={styles.errorContainer}>
+        <ErrorIcon />
+        <Text style={styles.error}>{errors.userName}</Text>
+      </View>
+    )}
           <Text style={styles.label}>Full Name</Text>
           <View style={styles.inputContainer}>
             <TextInput
