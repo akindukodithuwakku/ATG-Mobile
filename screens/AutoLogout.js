@@ -28,8 +28,8 @@ export const LogoutProvider = ({ children }) => {
 
     const checkInactivity = () => {
       const timeSinceLastActivity = Date.now() - lastActivity;
-      // 10 seconds for testing
-      if (isTimerActive && timeSinceLastActivity > 10000) {
+      // 15 seconds for testing
+      if (isTimerActive && timeSinceLastActivity > 15000) {
         setIsTimerActive(false);
         autoLogoutOccurred.current = true;
       }
@@ -99,8 +99,8 @@ export const useAutomaticLogout = () => {
 
   // Return early if context is not available
   if (!context) {
-    console.warn("useAutomaticLogout must be used within a LogoutProvider");
-    return { resetTimer: () => {} }; // Return dummy function
+    console.warn("Missing LogoutProvider in component hierarchy");
+    return { resetTimer: () => {} };
   }
 
   useEffect(() => {
@@ -121,7 +121,7 @@ export const useAutomaticLogout = () => {
 // Automatic Logout Screen
 export const AutomaticLogoutScreen = ({ navigation }) => {
   const { resetTimer } = useContext(LogoutContext);
-  const [timeLeft, setTimeLeft] = useState(5);
+  const [timeLeft, setTimeLeft] = useState(8);
 
   useEffect(() => {
     const timer = setInterval(() => {
