@@ -13,6 +13,8 @@ import {
 } from "./screens/ForgotPWordScreen";
 import ProfileScreenC from "./screens/ProfileScreens/ProfileScreenC";
 import ProfileScreenCN from "./screens/ProfileScreens/ProfileScreenCN";
+import EditProfile from "./screens/ProfileScreens/EditProfile";
+import UserProfile from "./screens/ProfileScreens/UserProfile";
 import PasswordReset from "./screens/ProfileScreens/PasswordReset";
 import ContactUs from "./screens/ProfileScreens/ContactUs";
 import TermsAndPrivacy from "./screens/ProfileScreens/TermsAndPrivacy";
@@ -34,7 +36,7 @@ const Stack = createStackNavigator();
 const AppNavigator = () => {
   return (
     <Stack.Navigator
-      initialRouteName="ContactUs"
+      initialRouteName="ProfileC"
       screenOptions={{ headerShown: false, gestureEnabled: false }}
     >
       <Stack.Screen name="Welcome" component={WelcomeScreen} />
@@ -49,6 +51,8 @@ const AppNavigator = () => {
       <Stack.Screen name="ForgotPWDReset" component={ResetPasswordScreen} />
       <Stack.Screen name="ProfileC" component={ProfileScreenC} />
       <Stack.Screen name="ProfileCN" component={ProfileScreenCN} />
+      <Stack.Screen name="EditProfile" component={EditProfile} />
+      <Stack.Screen name="UserProfile" component={UserProfile} />
       <Stack.Screen name="PWDReset" component={PasswordReset} />
       <Stack.Screen name="ContactUs" component={ContactUs} />
       <Stack.Screen name="TermsPrivacy" component={TermsAndPrivacy} />
