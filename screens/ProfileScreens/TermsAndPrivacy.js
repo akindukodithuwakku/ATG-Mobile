@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useCallback } from "react";
 import {
   View,
   Text,
@@ -10,6 +10,8 @@ import {
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
+import { useAutomaticLogout } from "../../screens/AutoLogout";
+import { useFocusEffect } from "@react-navigation/native";
 
 const SectionCard = ({ title, children }) => {
   return (
@@ -33,7 +35,18 @@ const BulletPoint = ({ bold, children }) => {
 };
 
 const TermsAndPrivacy = ({ navigation }) => {
+  const { resetTimer } = useAutomaticLogout();
   const [activeTab, setActiveTab] = useState("privacy"); // "privacy" or "terms"
+
+  useFocusEffect(
+    useCallback(() => {
+      resetTimer();
+    }, [])
+  );
+
+  const handleUserInteraction = useCallback(() => {
+    resetTimer();
+  }, []);
 
   return (
     <View style={styles.container}>
@@ -49,7 +62,10 @@ const TermsAndPrivacy = ({ navigation }) => {
       >
         <View style={styles.header}>
           <TouchableOpacity
-            onPress={() => navigation.goBack()}
+            onPress={() => {
+              resetTimer();
+              navigation.goBack();
+            }}
             style={styles.backButton}
           >
             <Ionicons name="chevron-back" size={28} color="#FFFFFF" />
@@ -64,7 +80,10 @@ const TermsAndPrivacy = ({ navigation }) => {
             styles.tabButton,
             activeTab === "privacy" && styles.activeTabButton,
           ]}
-          onPress={() => setActiveTab("privacy")}
+          onPress={() => {
+            resetTimer();
+            setActiveTab("privacy");
+          }}
         >
           <Text
             style={[
@@ -80,7 +99,10 @@ const TermsAndPrivacy = ({ navigation }) => {
             styles.tabButton,
             activeTab === "terms" && styles.activeTabButton,
           ]}
-          onPress={() => setActiveTab("terms")}
+          onPress={() => {
+            resetTimer();
+            setActiveTab("terms");
+          }}
         >
           <Text
             style={[
@@ -93,7 +115,12 @@ const TermsAndPrivacy = ({ navigation }) => {
         </TouchableOpacity>
       </View>
 
-      <ScrollView style={styles.contentContainer}>
+      <ScrollView
+        style={styles.contentContainer}
+        showsVerticalScrollIndicator={false}
+        onScrollBeginDrag={handleUserInteraction}
+        onTouchStart={handleUserInteraction}
+      >
         {activeTab === "privacy" ? (
           <View>
             <SectionCard title="1. Introduction">
