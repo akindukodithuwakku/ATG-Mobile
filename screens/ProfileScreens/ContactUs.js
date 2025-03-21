@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useCallback } from "react";
 import {
   View,
   Text,
@@ -7,42 +7,46 @@ import {
   Platform,
   StatusBar,
   ScrollView,
-  Linking
+  Linking,
 } from "react-native";
 import { Ionicons, MaterialIcons, Feather } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
+import { useAutomaticLogout } from "../../screens/AutoLogout";
+import { useFocusEffect } from "@react-navigation/native";
 
 const ContactUs = ({ navigation }) => {
+  const { resetTimer } = useAutomaticLogout();
+
+  useFocusEffect(
+    useCallback(() => {
+      resetTimer();
+    }, [])
+  );
+
+  const handleUserInteraction = useCallback(() => {
+    resetTimer();
+  }, []);
+
   const contactOptions = [
     {
       icon: <MaterialIcons name="email" size={24} color="#09D1C7" />,
       title: "Email",
-      details: [
-        "support@atghealthcare.com",
-        "info@atghealthcare.com"
-      ]
+      details: ["support@atghealthcare.com", "info@atghealthcare.com"],
     },
     {
       icon: <Feather name="phone" size={24} color="#09D1C7" />,
       title: "Phone",
-      details: [
-        "+44-734-954-0462",
-        "+44-734-632-0462"
-      ]
+      details: ["+44-734-954-0462", "+44-734-632-0462"],
     },
     {
       icon: <Feather name="map-pin" size={24} color="#09D1C7" />,
       title: "Address",
-      details: [
-        "62 SHELTON STREET",
-        "LONDON, COVENT GARDEN",
-        "UNITED KINGDOM"
-      ]
-    }
+      details: ["62 SHELTON STREET", "LONDON, COVENT GARDEN", "UNITED KINGDOM"],
+    },
   ];
 
   const handleContactMethod = (method, detail) => {
-    switch(method) {
+    switch (method) {
       case "Email":
         Linking.openURL(`mailto:${detail}`);
         break;
@@ -66,19 +70,24 @@ const ContactUs = ({ navigation }) => {
       >
         <View style={styles.header}>
           <TouchableOpacity
-            onPress={() => navigation.goBack()}
+            onPress={() => {
+              resetTimer();
+              navigation.goBack();
+            }}
             style={styles.backButton}
           >
-            <Text style={styles.backButtonText}>{"<"}</Text>
+            <Ionicons name="chevron-back" size={28} color="#FFFFFF" />
           </TouchableOpacity>
           <Text style={styles.headerText}>Contact Us</Text>
         </View>
       </LinearGradient>
 
       <ScrollView
-        style={styles.scrollView}
+        style={styles.scrollContainer}
         contentContainerStyle={styles.contentContainer}
         showsVerticalScrollIndicator={false}
+        onScrollBeginDrag={handleUserInteraction}
+        onTouchStart={handleUserInteraction}
       >
         <View style={styles.titleContainer}>
           <Text style={styles.title}>Get In Touch</Text>
@@ -97,15 +106,14 @@ const ContactUs = ({ navigation }) => {
               <TouchableOpacity
                 key={detailIndex}
                 style={styles.contactDetailItem}
-                onPress={() => handleContactMethod(section.title, detail)}
+                onPress={() => {
+                  resetTimer();
+                  handleContactMethod(section.title, detail);
+                }}
               >
                 <Text style={styles.contactDetailText}>{detail}</Text>
                 {(section.title === "Email" || section.title === "Phone") && (
-                  <Ionicons 
-                    name="open-outline" 
-                    size={20} 
-                    color="#35AFEA" 
-                  />
+                  <Ionicons name="open-outline" size={20} color="#35AFEA" />
                 )}
               </TouchableOpacity>
             ))}
@@ -114,8 +122,7 @@ const ContactUs = ({ navigation }) => {
 
         <View style={styles.noteContainer}>
           <Text style={styles.noteText}>
-            Our support team is available Monday to Friday, 
-            9 AM to 6 PM EST
+            Our support team is available Monday to Friday, 9 AM to 6 PM EST
           </Text>
         </View>
       </ScrollView>
@@ -152,7 +159,7 @@ const styles = StyleSheet.create({
     color: "#fff",
     marginRight: 40,
   },
-  scrollView: {
+  scrollContainer: {
     flex: 1,
   },
   contentContainer: {
@@ -215,7 +222,7 @@ const styles = StyleSheet.create({
     textAlign: "center",
     color: "#666",
     fontSize: 14,
-  }
+  },
 });
 
 export default ContactUs;
