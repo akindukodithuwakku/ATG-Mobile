@@ -142,7 +142,7 @@ const PasswordReset = ({ navigation }) => {
               }}
               style={styles.backButton}
             >
-              <Text style={styles.backButtonText}>{"<"}</Text>
+              <Ionicons name="chevron-back" size={28} color="#FFFFFF" />
             </TouchableOpacity>
             <Text style={styles.headerText}>Reset Password</Text>
           </View>
@@ -310,11 +310,6 @@ const styles = StyleSheet.create({
   },
   backButton: {
     padding: 10,
-  },
-  backButtonText: {
-    fontSize: 28,
-    color: "#ffffff",
-    fontWeight: "bold",
   },
   headerText: {
     flex: 1,
