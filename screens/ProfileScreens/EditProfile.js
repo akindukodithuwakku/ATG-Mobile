@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   View,
   Text,
@@ -13,12 +13,15 @@ import {
   Alert,
   Image,
 } from "react-native";
-import { Feather } from "@expo/vector-icons";
+import { Ionicons, Feather } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import * as ImagePicker from "expo-image-picker";
+import { useAutomaticLogout } from "../../screens/AutoLogout";
+import { useFocusEffect } from "@react-navigation/native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const EditProfile = ({ navigation }) => {
+  const { resetTimer } = useAutomaticLogout();
   const [profileData, setProfileData] = useState({
     fullName: "Trevin Perera",
     email: "trevin.perera@gmail.com",
@@ -32,6 +35,18 @@ const EditProfile = ({ navigation }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [newImage, setNewImage] = useState(null);
   const defaultImage = require("../../assets/ChatAvatar.png"); // Default image fallback
+
+  // Reset timer when screen comes into focus
+  useFocusEffect(
+    React.useCallback(() => {
+      resetTimer();
+    }, [])
+  );
+
+  // Handle user interactions to reset the timer
+  const handleUserInteraction = useCallback(() => {
+    resetTimer();
+  }, [resetTimer]);
 
   // Load profile data from AsyncStorage on component mount
   useEffect(() => {
@@ -130,6 +145,7 @@ const EditProfile = ({ navigation }) => {
 
   // Handle save profile
   const handleSaveProfile = async () => {
+    resetTimer();
     if (validateForm()) {
       setIsLoading(true);
 
@@ -164,54 +180,66 @@ const EditProfile = ({ navigation }) => {
   };
 
   return (
-    <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-      <View style={styles.container}>
-        <StatusBar
-          barStyle="light-content"
-          backgroundColor="transparent"
-          translucent
-        />
+    <View style={styles.container}>
+      <StatusBar
+        barStyle="light-content"
+        backgroundColor="transparent"
+        translucent
+      />
 
-        <LinearGradient
-          colors={["#09D1C7", "#35AFEA"]}
-          style={styles.headerGradient}
-        >
-          <View style={styles.header}>
-            <TouchableOpacity
-              onPress={() => navigation.goBack()}
-              style={styles.backButton}
-            >
-              <Text style={styles.backButtonText}>{"<"}</Text>
-            </TouchableOpacity>
-            <Text style={styles.headerText}>Edit Profile</Text>
-          </View>
-        </LinearGradient>
+      <LinearGradient
+        colors={["#09D1C7", "#35AFEA"]}
+        style={styles.headerGradient}
+      >
+        <View style={styles.header}>
+          <TouchableOpacity
+            onPress={() => {
+              resetTimer();
+              navigation.goBack();
+            }}
+            style={styles.backButton}
+          >
+            <Ionicons name="chevron-back" size={28} color="#FFFFFF" />
+          </TouchableOpacity>
+          <Text style={styles.headerText}>Edit Profile</Text>
+        </View>
+      </LinearGradient>
 
-        <ScrollView
-          style={styles.formScrollView}
-          contentContainerStyle={styles.formContentContainer}
-          showsVerticalScrollIndicator={false}
-          keyboardShouldPersistTaps="handled"
-        >
+      <ScrollView
+        style={styles.formScrollView}
+        contentContainerStyle={styles.formContentContainer}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+        onScroll={handleUserInteraction}
+      >
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
           <View style={styles.form}>
             {/* Profile Image Section */}
-            <View style={styles.imageContainer}>
-              <Image
-                source={
-                  newImage
-                    ? { uri: newImage }
-                    : profileData.profileImage
-                    ? { uri: profileData.profileImage }
-                    : defaultImage
-                }
-                style={styles.profileImage}
-              />
-              <TouchableOpacity style={styles.cameraIcon} onPress={pickImage}>
-                <View style={styles.iconCircle}>
-                  <Feather name="camera" size={22} color="#0C6478" />
-                </View>
-              </TouchableOpacity>
-            </View>
+            <TouchableWithoutFeedback onPress={handleUserInteraction}>
+              <View style={styles.imageContainer}>
+                <Image
+                  source={
+                    newImage
+                      ? { uri: newImage }
+                      : profileData.profileImage
+                      ? { uri: profileData.profileImage }
+                      : defaultImage
+                  }
+                  style={styles.profileImage}
+                />
+                <TouchableOpacity
+                  style={styles.cameraIcon}
+                  onPress={() => {
+                    resetTimer();
+                    pickImage(); 
+                  }}
+                >
+                  <View style={styles.iconCircle}>
+                    <Feather name="camera" size={22} color="#0C6478" />
+                  </View>
+                </TouchableOpacity>
+              </View>
+            </TouchableWithoutFeedback>
 
             {/* Form Fields */}
             <Text style={styles.inputLabel}>Full Name</Text>
@@ -221,6 +249,7 @@ const EditProfile = ({ navigation }) => {
                 placeholder="Enter your full name"
                 value={profileData.fullName}
                 onChangeText={(text) => handleChange("fullName", text)}
+                onFocus={handleUserInteraction}
               />
             </View>
             {errors.fullName && (
@@ -236,6 +265,7 @@ const EditProfile = ({ navigation }) => {
                 onChangeText={(text) => handleChange("email", text)}
                 keyboardType="email-address"
                 autoCapitalize="none"
+                onFocus={handleUserInteraction}
               />
             </View>
             {errors.email && (
@@ -250,6 +280,7 @@ const EditProfile = ({ navigation }) => {
                 value={profileData.phone}
                 onChangeText={(text) => handleChange("phone", text)}
                 keyboardType="phone-pad"
+                onFocus={handleUserInteraction}
               />
             </View>
             {errors.phone && (
@@ -263,6 +294,7 @@ const EditProfile = ({ navigation }) => {
                 placeholder="Enter your address"
                 value={profileData.address}
                 onChangeText={(text) => handleChange("address", text)}
+                onFocus={handleUserInteraction}
               />
             </View>
 
@@ -276,6 +308,7 @@ const EditProfile = ({ navigation }) => {
                 multiline={true}
                 numberOfLines={4}
                 textAlignVertical="top"
+                onFocus={handleUserInteraction}
               />
             </View>
 
@@ -294,9 +327,9 @@ const EditProfile = ({ navigation }) => {
               </LinearGradient>
             </TouchableOpacity>
           </View>
-        </ScrollView>
-      </View>
-    </TouchableWithoutFeedback>
+        </TouchableWithoutFeedback>
+      </ScrollView>
+    </View>
   );
 };
 
@@ -315,11 +348,6 @@ const styles = StyleSheet.create({
   },
   backButton: {
     padding: 10,
-  },
-  backButtonText: {
-    fontSize: 28,
-    color: "#ffffff",
-    fontWeight: "bold",
   },
   headerText: {
     flex: 1,
