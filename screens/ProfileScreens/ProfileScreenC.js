@@ -16,22 +16,42 @@ import SideNavigationClient from "../../Components/SideNavigationClient";
 import BottomNavigationClient from "../../Components/BottomNavigationClient";
 import { Ionicons, MaterialIcons, Feather } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
+import { useAutomaticLogout } from "../../screens/AutoLogout";
+import { useFocusEffect } from "@react-navigation/native";
 
 const ProfileScreenC = ({ navigation }) => {
+  const { resetTimer } = useAutomaticLogout();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [showClearDataModal, setShowClearDataModal] = useState(false);
   const [clearDataConfirmText, setClearDataConfirmText] = useState("");
 
+  // Reset timer and modal states when screen comes into focus
+  useFocusEffect(
+    React.useCallback(() => {
+      resetTimer();
+      setShowLogoutModal(false);
+      setShowClearDataModal(false);
+      setClearDataConfirmText("");
+    }, [])
+  );
+
+  // Handle user interactions to reset the timer
+  const handleUserInteraction = useCallback(() => {
+    resetTimer();
+  }, [resetTimer]);
+
   const toggleMenu = useCallback(() => {
+    resetTimer();
     setIsMenuOpen(!isMenuOpen);
-  }, [isMenuOpen]);
+  }, [isMenuOpen, resetTimer]);
 
   const handleLogout = () => {
     setShowLogoutModal(true);
   };
 
   const confirmLogout = () => {
+    resetTimer();
     setShowLogoutModal(false);
     navigation.reset({
       index: 0,
@@ -44,6 +64,7 @@ const ProfileScreenC = ({ navigation }) => {
   };
 
   const clearStorage = async () => {
+    resetTimer();
     try {
       await AsyncStorage.clear();
       console.log("AsyncStorage has been cleared!");
@@ -67,6 +88,7 @@ const ProfileScreenC = ({ navigation }) => {
   };
 
   const clearAppointmentData = async () => {
+    resetTimer();
     try {
       await AsyncStorage.removeItem("appointmentDateTime");
       await AsyncStorage.removeItem("hasAppointment");
@@ -122,6 +144,7 @@ const ProfileScreenC = ({ navigation }) => {
   ];
 
   const handleMenuItemPress = (item) => {
+    resetTimer();
     if (item.isLogout) {
       handleLogout();
     } else if (item.isClearData) {
@@ -164,7 +187,10 @@ const ProfileScreenC = ({ navigation }) => {
             />
             <TouchableOpacity
               style={styles.editButton}
-              onPress={() => navigation.navigate("EditProfile")}
+              onPress={() => {
+                resetTimer();
+                navigation.navigate("EditProfile");
+              }}
             >
               <Feather name="edit" size={20} color="#0C6478" />
             </TouchableOpacity>
@@ -177,6 +203,7 @@ const ProfileScreenC = ({ navigation }) => {
         style={styles.scrollView}
         contentContainerStyle={styles.scrollViewContent}
         showsVerticalScrollIndicator={false}
+        onScroll={handleUserInteraction}
       >
         {/* Menu Items */}
         <View style={styles.menuContainer}>
@@ -228,7 +255,10 @@ const ProfileScreenC = ({ navigation }) => {
             <View style={styles.modalButtons}>
               <TouchableOpacity
                 style={[styles.modalButton, styles.cancelButton]}
-                onPress={() => setShowLogoutModal(false)}
+                onPress={() => {
+                  resetTimer();
+                  setShowLogoutModal(false);
+                }}
               >
                 <Text style={styles.cancelButtonText}>Cancel</Text>
               </TouchableOpacity>
@@ -279,18 +309,20 @@ const ProfileScreenC = ({ navigation }) => {
                 <TouchableOpacity
                   key={index}
                   style={styles.keypadButton}
-                  onPress={() =>
-                    setClearDataConfirmText(clearDataConfirmText + letter)
-                  }
+                  onPress={() => {
+                    resetTimer();
+                    setClearDataConfirmText(clearDataConfirmText + letter);
+                  }}
                 >
                   <Text style={styles.keypadButtonText}>{letter}</Text>
                 </TouchableOpacity>
               ))}
               <TouchableOpacity
                 style={styles.keypadButton}
-                onPress={() =>
-                  setClearDataConfirmText(clearDataConfirmText.slice(0, -1))
-                }
+                onPress={() => {
+                  resetTimer();
+                  setClearDataConfirmText(clearDataConfirmText.slice(0, -1));
+                }}
               >
                 <Feather name="delete" size={24} color="#333" />
               </TouchableOpacity>
@@ -299,6 +331,7 @@ const ProfileScreenC = ({ navigation }) => {
               <TouchableOpacity
                 style={[styles.modalButton, styles.cancelButton]}
                 onPress={() => {
+                  resetTimer();
                   setShowClearDataModal(false);
                   setClearDataConfirmText("");
                 }}
