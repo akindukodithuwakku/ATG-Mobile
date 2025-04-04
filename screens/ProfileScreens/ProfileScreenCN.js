@@ -7,6 +7,7 @@ import {
   StatusBar,
   Image,
   Platform,
+  ScrollView,
   Modal,
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -14,8 +15,11 @@ import SideNavigationCN from "../../Components/SideNavigationCN";
 import BottomNavigationCN from "../../Components/BottomNavigationCN";
 import { Ionicons, MaterialIcons, Feather } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
+import { useAutomaticLogout } from "../../screens/AutoLogout";
+import { useFocusEffect } from "@react-navigation/native";
 
 const ProfileScreenCN = ({ navigation }) => {
+  const { resetTimer } = useAutomaticLogout();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [profileData, setProfileData] = useState({
@@ -24,11 +28,24 @@ const ProfileScreenCN = ({ navigation }) => {
   });
   const defaultImage = require("../../assets/ChatAvatar.png");
 
+  // Reset timer and modal states when screen comes into focus
+  useFocusEffect(
+    React.useCallback(() => {
+      resetTimer();
+      setShowLogoutModal(false);
+    }, [])
+  );
+
+  // Handle user interactions to reset the timer
+  const handleUserInteraction = useCallback(() => {
+    resetTimer();
+  }, [resetTimer]);
+
   // Load profile data when screen focuses
   useEffect(() => {
     const loadProfileData = async () => {
       try {
-        const storedProfileData = await AsyncStorage.getItem('userProfile');
+        const storedProfileData = await AsyncStorage.getItem("userProfile");
         if (storedProfileData !== null) {
           const userData = JSON.parse(storedProfileData);
           setProfileData({
@@ -37,14 +54,14 @@ const ProfileScreenCN = ({ navigation }) => {
           });
         }
       } catch (error) {
-        console.error('Error loading profile data:', error);
+        console.error("Error loading profile data:", error);
       }
     };
 
     loadProfileData();
 
     // Focus listener to reload data when returning to screen
-    const unsubscribe = navigation.addListener('focus', () => {
+    const unsubscribe = navigation.addListener("focus", () => {
       loadProfileData();
     });
 
@@ -53,14 +70,16 @@ const ProfileScreenCN = ({ navigation }) => {
   }, [navigation]);
 
   const toggleMenu = useCallback(() => {
+    resetTimer();
     setIsMenuOpen(!isMenuOpen);
-  }, [isMenuOpen]);
+  }, [isMenuOpen, resetTimer]);
 
   const handleLogout = () => {
     setShowLogoutModal(true);
   };
 
   const confirmLogout = () => {
+    resetTimer();
     setShowLogoutModal(false);
     navigation.reset({
       index: 0,
@@ -97,6 +116,7 @@ const ProfileScreenCN = ({ navigation }) => {
   ];
 
   const handleMenuItemPress = (item) => {
+    resetTimer();
     if (item.isLogout) {
       handleLogout();
     } else {
@@ -129,15 +149,25 @@ const ProfileScreenCN = ({ navigation }) => {
         </View>
 
         {/* Profile Section */}
-        <View style={styles.profileSection}>
+        <View
+          style={styles.profileSection}
+          onTouchStart={handleUserInteraction}
+        >
           <View style={styles.profileImageContainer}>
-          <Image
-              source={profileData.profileImage ? { uri: profileData.profileImage } : defaultImage}
+            <Image
+              source={
+                profileData.profileImage
+                  ? { uri: profileData.profileImage }
+                  : defaultImage
+              }
               style={styles.profileImage}
             />
             <TouchableOpacity
               style={styles.editButton}
-              onPress={() => navigation.navigate("EditProfile")}
+              onPress={() => {
+                resetTimer();
+                navigation.navigate("EditProfile");
+              }}
             >
               <Feather name="edit" size={20} color="#0C6478" />
             </TouchableOpacity>
@@ -146,36 +176,44 @@ const ProfileScreenCN = ({ navigation }) => {
         </View>
       </LinearGradient>
 
-      {/* Menu Items */}
-      <View style={styles.menuContainer}>
-        {menuItems.map((item, index) => (
-          <TouchableOpacity
-            key={index}
-            style={styles.menuItem}
-            onPress={() => handleMenuItemPress(item)}
-            activeOpacity={0.7}
-          >
-            <View style={styles.menuItemLeft}>
-              {item.icon}
-              <Text
-                style={[
-                  styles.menuItemText,
-                  item.route === "Logout" && styles.logoutText,
-                ]}
-              >
-                {item.title}
-              </Text>
-            </View>
-            <View style={styles.menuItemRight}>
-              <Feather
-                name="chevron-right"
-                size={24}
-                color={item.route === "Logout" ? "#ff4757" : "#35AFEA"}
-              />
-            </View>
-          </TouchableOpacity>
-        ))}
-      </View>
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollViewContent}
+        showsVerticalScrollIndicator={false}
+        onScroll={handleUserInteraction}
+        onTouchStart={handleUserInteraction}
+      >
+        {/* Menu Items */}
+        <View style={styles.menuContainer}>
+          {menuItems.map((item, index) => (
+            <TouchableOpacity
+              key={index}
+              style={styles.menuItem}
+              onPress={() => handleMenuItemPress(item)}
+              activeOpacity={0.7}
+            >
+              <View style={styles.menuItemLeft}>
+                {item.icon}
+                <Text
+                  style={[
+                    styles.menuItemText,
+                    item.route === "Logout" && styles.logoutText,
+                  ]}
+                >
+                  {item.title}
+                </Text>
+              </View>
+              <View style={styles.menuItemRight}>
+                <Feather
+                  name="chevron-right"
+                  size={24}
+                  color={item.route === "Logout" ? "#ff4757" : "#35AFEA"}
+                />
+              </View>
+            </TouchableOpacity>
+          ))}
+        </View>
+      </ScrollView>
 
       {/* Logout Confirmation Modal */}
       <Modal
@@ -192,7 +230,10 @@ const ProfileScreenCN = ({ navigation }) => {
             <View style={styles.modalButtons}>
               <TouchableOpacity
                 style={[styles.modalButton, styles.cancelButton]}
-                onPress={() => setShowLogoutModal(false)}
+                onPress={() => {
+                  resetTimer();
+                  setShowLogoutModal(false);
+                }}
               >
                 <Text style={styles.cancelButtonText}>Cancel</Text>
               </TouchableOpacity>
@@ -286,6 +327,12 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     color: "#fff",
     marginTop: 10,
+  },
+  scrollView: {
+    flex: 1,
+  },
+  scrollViewContent: {
+    flexGrow: 1,
   },
   menuContainer: {
     padding: 15,
