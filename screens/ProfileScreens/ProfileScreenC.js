@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import {
   View,
   Text,
@@ -25,6 +25,11 @@ const ProfileScreenC = ({ navigation }) => {
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [showClearDataModal, setShowClearDataModal] = useState(false);
   const [clearDataConfirmText, setClearDataConfirmText] = useState("");
+  const [profileData, setProfileData] = useState({
+    fullName: "Jane Doe",
+    profileImage: null,
+  });
+  const defaultImage = require("../../assets/ChatAvatar.png");
 
   // Reset timer and modal states when screen comes into focus
   useFocusEffect(
@@ -40,6 +45,34 @@ const ProfileScreenC = ({ navigation }) => {
   const handleUserInteraction = useCallback(() => {
     resetTimer();
   }, [resetTimer]);
+
+  // Load profile data when screen focuses
+  useEffect(() => {
+    const loadProfileData = async () => {
+      try {
+        const storedProfileData = await AsyncStorage.getItem("userProfile");
+        if (storedProfileData !== null) {
+          const userData = JSON.parse(storedProfileData);
+          setProfileData({
+            fullName: userData.fullName,
+            profileImage: userData.profileImage,
+          });
+        }
+      } catch (error) {
+        console.error("Error loading profile data:", error);
+      }
+    };
+
+    loadProfileData();
+
+    // Focus listener to reload data when returning to screen
+    const unsubscribe = navigation.addListener("focus", () => {
+      loadProfileData();
+    });
+
+    // Clean up the listener when component unmounts
+    return unsubscribe;
+  }, [navigation]);
 
   const toggleMenu = useCallback(() => {
     resetTimer();
@@ -179,10 +212,17 @@ const ProfileScreenC = ({ navigation }) => {
         </View>
 
         {/* Profile Section */}
-        <View style={styles.profileSection}>
+        <View
+          style={styles.profileSection}
+          onTouchStart={handleUserInteraction}
+        >
           <View style={styles.profileImageContainer}>
             <Image
-              source={require("../../assets/ChatAvatar.png")}
+              source={
+                profileData.profileImage
+                  ? { uri: profileData.profileImage }
+                  : defaultImage
+              }
               style={styles.profileImage}
             />
             <TouchableOpacity
@@ -195,7 +235,7 @@ const ProfileScreenC = ({ navigation }) => {
               <Feather name="edit" size={20} color="#0C6478" />
             </TouchableOpacity>
           </View>
-          <Text style={styles.profileName}>Jane Doe</Text>
+          <Text style={styles.profileName}>{profileData.fullName}</Text>
         </View>
       </LinearGradient>
 
@@ -204,6 +244,7 @@ const ProfileScreenC = ({ navigation }) => {
         contentContainerStyle={styles.scrollViewContent}
         showsVerticalScrollIndicator={false}
         onScroll={handleUserInteraction}
+        onTouchStart={handleUserInteraction}
       >
         {/* Menu Items */}
         <View style={styles.menuContainer}>
