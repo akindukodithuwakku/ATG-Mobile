@@ -12,9 +12,11 @@ import {
   ScrollView,
   Modal,
   useColorScheme,
+  Alert,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
+import { signUp, confirmSignUp, resendSignUpCode } from "aws-amplify/auth";
 
 export const SignUpScreen = ({ navigation }) => {
   const [username, setUsername] = useState("");
@@ -68,18 +70,40 @@ export const SignUpScreen = ({ navigation }) => {
       setIsLoading(true);
 
       try {
-        // Simulate API call
-        await new Promise((resolve) => setTimeout(resolve, 1500));
+        // Sign up the user with Cognito
+        console.log(`${username} ${email} ${password}`);
+
+        const signUpResponse = await signUp({
+          username: username,
+          password: password,
+          options: {
+            userAttributes: {
+              email: email,
+              preferred_username: username,
+            },
+          },
+        });
+        console.log("User signed up successfully:", signUpResponse);
 
         // Navigate to verification screen on success
         setIsLoading(false);
         navigation.reset({
           index: 0,
-          routes: [{ name: "VerificationSent" }],
+          routes: [
+            {
+              name: "VerificationSent",
+              params: { username: username },
+            },
+          ],
         });
       } catch (error) {
         setIsLoading(false);
-        Alert.alert("Error", "Something went wrong. Please try again.");
+        if (error.code === "UsernameExistsException") {
+          Alert.alert("Error", "This email is already registered.");
+        } else {
+          console.log(`error: ${error}`);
+          Alert.alert("Error", "Something went wrong. Please try again.");
+        }
       }
     }
   };
@@ -430,8 +454,78 @@ export const SignUpScreen = ({ navigation }) => {
 };
 
 // Verification Sent Screen Component
-export const VerificationSentScreen = ({ navigation }) => {
+export const VerificationSentScreen = ({ route, navigation }) => {
+  const [verificationCode, setVerificationCode] = useState("");
+  const [isVerifying, setIsVerifying] = useState(false);
   const scheme = useColorScheme();
+  const [error, setError] = useState("");
+
+  // Get email from navigation params
+  const { username = "" } = route.params || {};
+
+  const handleVerifyEmail = async () => {
+    if (!verificationCode.trim()) {
+      setError("Please enter the verification code");
+      return;
+    }
+
+    // Check explicitly if username is empty or undefined
+    if (!username || username.trim() === "") {
+      console.log("Username is empty or undefined");
+      setError("Username is missing. Please start over.");
+      Alert.alert("Error", "Username is missing. Please start over.");
+      return;
+    }
+
+    setIsVerifying(true);
+
+    try {
+      // Make sure username is trimmed to not have any whitespaces
+      const trimmedUsername = username.trim();
+      
+      // Explicit log to check username right before confirmation
+      console.log(`About to confirm signup for username: '${trimmedUsername}'`);
+      
+      await confirmSignUp({
+        username: trimmedUsername,
+        confirmationCode: verificationCode.trim()
+      });
+
+      setIsVerifying(false);
+
+      navigation.reset({
+        index: 0,
+        routes: [{ name: "NotificationsCN" }],
+      });
+    } catch (error) {
+      console.log(`verifyResponse: ${error}`);
+      setIsVerifying(false);
+      Alert.alert("Failed to verify email. Please try again.");
+    }
+  };
+
+  const handleResendCode = async () => {
+    if (!username || username.trim() === "") {
+      console.log("Username is empty for resend");
+      setError("Username is missing. Please start over.");
+      Alert.alert("Error", "Username is missing. Please start over.");
+      return;
+    }
+
+    try {
+      await resendSignUpCode({
+        username: username
+      });
+      Alert.alert(
+        "Success",
+        "A new verification code has been sent to your email."
+      );
+    } catch (error) {
+      console.log(`resendSignUp: ${error}`);
+      Alert.alert("Failed to resend code. Please try again.");
+    }
+  };
+
   return (
     <View style={styles.container}>
       <StatusBar
@@ -449,9 +543,22 @@ export const VerificationSentScreen = ({ navigation }) => {
 
         <Text style={styles.verificationTitle}>Verification Email Sent!</Text>
         <Text style={styles.verificationText}>
-          Please check your email inbox and click on the verification link to
-          continue your account setup.
+          Please check your email inbox for a verification code to continue your
+          account setup.
         </Text>
+
+        {/* Verification code input */}
+        <View style={styles.form}>
+          <Text style={styles.inputLabel}>Verification Code</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Enter verification code"
+            value={verificationCode}
+            onChangeText={setVerificationCode}
+            keyboardType="number-pad"
+          />
+          {error ? <Text style={styles.errorText}>{error}</Text> : null}
+        </View>
 
         <Text style={styles.noteText}>
           You must verify your email and complete the care intake form to
@@ -461,21 +568,24 @@ export const VerificationSentScreen = ({ navigation }) => {
         <View style={styles.actionsContainer}>
           <TouchableOpacity
             style={styles.primaryButton}
-            onPress={() => {
-              navigation.reset({
-                index: 0,
-                routes: [{ name: "CareIntakeForm" }],
-              });
-            }}
+            onPress={handleVerifyEmail}
+            disabled={isVerifying}
           >
             <LinearGradient
               colors={["#09D1C7", "#35AFEA"]}
               style={styles.gradientButton}
             >
               <Text style={styles.primaryButtonText}>
-                Continue to Care Intake Form
+                {isVerifying ? "Verifying..." : "Verify & Continue"}
               </Text>
             </LinearGradient>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.secondaryButton}
+            onPress={handleResendCode}
+          >
+            <Text style={styles.secondaryButtonText}>Resend Code</Text>
           </TouchableOpacity>
 
           <View style={styles.alternativeActions}>
