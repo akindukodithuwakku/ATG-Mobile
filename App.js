@@ -2,6 +2,13 @@ import React from "react";
 import { NavigationContainer } from "@react-navigation/native";
 import { createStackNavigator } from "@react-navigation/stack";
 
+
+import { Amplify } from "aws-amplify";
+import awsConfig from "./aws-config";
+
+// Initialize AWS Amplify
+Amplify.configure(awsConfig);
+
 // Import screens
 import WelcomeScreen from "./screens/WelcomeScreen";
 import LoginScreen from "./screens/LoginScreen";
@@ -36,7 +43,7 @@ const Stack = createStackNavigator();
 const AppNavigator = () => {
   return (
     <Stack.Navigator
-      initialRouteName="ProfileC"
+      initialRouteName="Welcome"
       screenOptions={{ headerShown: false, gestureEnabled: false }}
     >
       <Stack.Screen name="Welcome" component={WelcomeScreen} />
