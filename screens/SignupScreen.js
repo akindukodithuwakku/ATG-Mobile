@@ -98,11 +98,24 @@ export const SignUpScreen = ({ navigation }) => {
         });
       } catch (error) {
         setIsLoading(false);
-        if (error.code === "UsernameExistsException") {
-          Alert.alert("Error", "This email is already registered.");
+        console.log(`error:`, error); // Log the full error object to see its structure
+
+        // Access the error name or message to determine the type of error
+        if (
+          error.name === "UsernameExistsException" ||
+          error.message?.includes("User already exists")
+        ) {
+          Alert.alert("Error", "This username is already registered.");
+        } else if (
+          error.name === "InvalidPasswordException" ||
+          error.message?.includes("Password did not conform")
+        ) {
+          Alert.alert(
+            "Error",
+            "Password must have letter, number and symbol characters."
+          );
         } else {
-          console.log(`error: ${error}`);
-          Alert.alert("Error", "Something went wrong. Please try again.");
+          Alert.alert("Error", error.message || "An unknown error occurred");
         }
       }
     }
@@ -482,13 +495,13 @@ export const VerificationSentScreen = ({ route, navigation }) => {
     try {
       // Make sure username is trimmed to not have any whitespaces
       const trimmedUsername = username.trim();
-      
+
       // Explicit log to check username right before confirmation
       console.log(`About to confirm signup for username: '${trimmedUsername}'`);
-      
+
       await confirmSignUp({
         username: trimmedUsername,
-        confirmationCode: verificationCode.trim()
+        confirmationCode: verificationCode.trim(),
       });
 
       setIsVerifying(false);
@@ -514,7 +527,7 @@ export const VerificationSentScreen = ({ route, navigation }) => {
 
     try {
       await resendSignUpCode({
-        username: username
+        username: username,
       });
       Alert.alert(
         "Success",
