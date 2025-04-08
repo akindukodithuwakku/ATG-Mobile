@@ -2,7 +2,6 @@ import React from "react";
 import { NavigationContainer } from "@react-navigation/native";
 import { createStackNavigator } from "@react-navigation/stack";
 
-
 import { Amplify } from "aws-amplify";
 import awsConfig from "./aws-config";
 
