@@ -511,9 +511,31 @@ export const VerificationSentScreen = ({ route, navigation }) => {
         routes: [{ name: "NotificationsCN" }],
       });
     } catch (error) {
-      console.log(`verifyResponse: ${error}`);
       setIsVerifying(false);
-      Alert.alert("Failed to verify email. Please try again.");
+      console.log(`verifyResponse: ${error}`);
+
+      // Check for specific error types
+      if (error.name === "AliasExistsException") {
+        Alert.alert(
+          "Alias Exists",
+          "The email is already registered. Please try with a different email."
+        );
+      } else if (error.name === "ExpiredCodeException") {
+        Alert.alert(
+          "Expired Code",
+          "The verification code has expired. Please request a new one."
+        );
+      } else if (error.name === "CodeMismatchException") {
+        Alert.alert(
+          "Invalid Code",
+          "The verification code is incorrect. Please try again."
+        );
+      } else {
+        Alert.alert(
+          "Failed to verify email",
+          "An unknown error occurred. Please try again."
+        );
+      }
     }
   };
 
