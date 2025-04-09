@@ -38,6 +38,13 @@ export const SignUpScreen = ({ navigation }) => {
     if (!username.trim()) {
       errorTexts.username = "Username is required";
       isValid = false;
+    } else if (username.length < 4) {
+      errorTexts.username = "Username must be at least 4 characters";
+      isValid = false;
+    } else if (!/^[a-zA-Z0-9_.]+$/.test(username)) {
+      errorTexts.username =
+        "Username can only contain letters, numbers, and _.";
+      isValid = false;
     }
 
     if (!email.trim()) {
@@ -304,7 +311,7 @@ export const SignUpScreen = ({ navigation }) => {
               onPress={() => navigation.goBack()}
               style={styles.backButton}
             >
-              <Text style={styles.backButtonText}>{"<"}</Text>
+              <Ionicons name="chevron-back" size={28} color="#FFFFFF" />
             </TouchableOpacity>
             <Text style={styles.headerText}>Sign Up</Text>
           </View>
@@ -472,8 +479,9 @@ export const VerificationSentScreen = ({ route, navigation }) => {
   const [isVerifying, setIsVerifying] = useState(false);
   const scheme = useColorScheme();
   const [error, setError] = useState("");
+  const [isResending, setIsResending] = useState(false);
 
-  // Get email from navigation params
+  // Get username from navigation params
   const { username = "" } = route.params || {};
 
   const handleVerifyEmail = async () => {
@@ -547,6 +555,8 @@ export const VerificationSentScreen = ({ route, navigation }) => {
       return;
     }
 
+    setIsResending(true);
+
     try {
       await resendSignUpCode({
         username: username,
@@ -558,100 +568,111 @@ export const VerificationSentScreen = ({ route, navigation }) => {
     } catch (error) {
       console.log(`resendSignUp: ${error}`);
       Alert.alert("Failed to resend code. Please try again.");
+    } finally {
+      setIsResending(false); // Clear loading state
     }
   };
 
   return (
-    <View style={styles.container}>
-      <StatusBar
-        barStyle={scheme === "dark" ? "light-content" : "dark-content"}
-        translucent={true}
-        backgroundColor={scheme === "dark" ? "black" : "transparent"}
-      />
+    <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+      <View style={styles.container}>
+        <StatusBar
+          barStyle={scheme === "dark" ? "light-content" : "dark-content"}
+          translucent={true}
+          backgroundColor={scheme === "dark" ? "black" : "transparent"}
+        />
 
-      {/* Content */}
-      <View style={styles.verificationContainer}>
-        {/* Email icon */}
-        <View style={styles.iconContainer}>
-          <Ionicons name="mail-outline" size={70} color="#35AFEA" />
-        </View>
+        {/* Content */}
+        <View style={styles.verificationContainer}>
+          {/* Email icon */}
+          <View style={styles.iconContainer}>
+            <Ionicons name="mail-outline" size={70} color="#35AFEA" />
+          </View>
 
-        <Text style={styles.verificationTitle}>Verification Email Sent!</Text>
-        <Text style={styles.verificationText}>
-          Please check your email inbox for a verification code to continue your
-          account setup.
-        </Text>
+          <Text style={styles.verificationTitle}>Verification Email Sent!</Text>
+          <Text style={styles.verificationText}>
+            Please check your email inbox for a verification code to continue
+            your account setup.
+          </Text>
 
-        {/* Verification code input */}
-        <View style={styles.form}>
-          <Text style={styles.inputLabel}>Verification Code</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Enter verification code"
-            value={verificationCode}
-            onChangeText={setVerificationCode}
-            keyboardType="number-pad"
-          />
-          {error ? <Text style={styles.errorText}>{error}</Text> : null}
-        </View>
+          {/* Verification code input */}
+          <View style={styles.verificationForm}>
+            <Text style={styles.verifyInputLabel}>Verification Code</Text>
+            <TextInput
+              style={styles.verifyInput}
+              placeholder="Enter verification code"
+              value={verificationCode}
+              onChangeText={(text) => {
+                setVerificationCode(text);
+                // Clear error when user starts typing
+                if (error) setError("");
+              }}
+              keyboardType="number-pad"
+            />
+            {error ? <Text style={styles.errorText}>{error}</Text> : null}
+          </View>
 
-        <Text style={styles.noteText}>
-          You must verify your email and complete the care intake form to
-          finalize your registration.
-        </Text>
+          <Text style={styles.noteText}>
+            You must verify your email and complete the care intake form to
+            finalize your registration.
+          </Text>
 
-        <View style={styles.actionsContainer}>
-          <TouchableOpacity
-            style={styles.primaryButton}
-            onPress={handleVerifyEmail}
-            disabled={isVerifying}
-          >
-            <LinearGradient
-              colors={["#09D1C7", "#35AFEA"]}
-              style={styles.gradientButton}
+          <View style={styles.actionsContainer}>
+            <TouchableOpacity
+              style={styles.primaryButton}
+              onPress={handleVerifyEmail}
+              disabled={isVerifying}
             >
-              <Text style={styles.primaryButtonText}>
-                {isVerifying ? "Verifying..." : "Verify & Continue"}
+              <LinearGradient
+                colors={["#09D1C7", "#35AFEA"]}
+                style={styles.gradientButton}
+              >
+                <Text style={styles.primaryButtonText}>
+                  {isVerifying ? "Verifying..." : "Verify & Continue"}
+                </Text>
+              </LinearGradient>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.secondaryButton}
+              onPress={handleResendCode}
+              disabled={isResending}
+            >
+              <Text style={styles.secondaryButtonText}>
+                {isResending ? "Sending..." : "Resend Code"}
               </Text>
-            </LinearGradient>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={styles.secondaryButton}
-            onPress={handleResendCode}
-          >
-            <Text style={styles.secondaryButtonText}>Resend Code</Text>
-          </TouchableOpacity>
-
-          <View style={styles.alternativeActions}>
-            <TouchableOpacity
-              style={styles.textButton}
-              onPress={() => {
-                // Functionality to clear any partial registration data will be added later.
-                navigation.reset({
-                  index: 0,
-                  routes: [{ name: "Welcome" }],
-                });
-              }}
-            >
-              <Text style={styles.textButtonText}>Start Over</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity
-              style={styles.textButton}
-              onPress={() => {
-                navigation.reset({
-                  index: 0,
-                  routes: [{ name: "Login" }],
-                });
-              }}
-            >
-              <Text style={styles.textButtonText}>Go to Login</Text>
-            </TouchableOpacity>
+            <View style={styles.alternativeActions}>
+              <TouchableOpacity
+                style={styles.textButton}
+                onPress={() => {
+                  // Functionality to clear any partial registration data will be added later.
+                  navigation.reset({
+                    index: 0,
+                    routes: [{ name: "Welcome" }],
+                  });
+                }}
+              >
+                <Text style={styles.textButtonText}>Start Over</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.textButton}
+                onPress={() => {
+                  navigation.reset({
+                    index: 0,
+                    routes: [{ name: "Login" }],
+                  });
+                }}
+              >
+                <Text style={styles.textButtonText}>Go to Login</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
       </View>
-    </View>
+    </TouchableWithoutFeedback>
   );
 };
 
@@ -670,11 +691,6 @@ const styles = StyleSheet.create({
   },
   backButton: {
     padding: 10,
-  },
-  backButtonText: {
-    fontSize: 28,
-    color: "#ffffff",
-    fontWeight: "bold",
   },
   headerText: {
     flex: 1,
@@ -698,7 +714,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "bold",
     marginBottom: 8,
-    marginTop: 15,
   },
   input: {
     height: 50,
@@ -707,6 +722,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 15,
     backgroundColor: "#E9F6FE",
     fontSize: 16,
+    marginBottom: 10,
   },
   passwordContainer: {
     flexDirection: "row",
@@ -714,6 +730,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderRadius: 10,
     backgroundColor: "#E9F6FE",
+    marginBottom: 10,
   },
   passwordInput: {
     flex: 1,
@@ -861,7 +878,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#F5F5F5",
     justifyContent: "center",
     alignItems: "center",
-    marginBottom: 30,
+    marginBottom: 20,
   },
   verificationTitle: {
     fontSize: 24,
@@ -874,14 +891,32 @@ const styles = StyleSheet.create({
     textAlign: "center",
     color: "#666",
     lineHeight: 24,
-    marginBottom: 20,
+  },
+  verificationForm: {
+    width: "100%",
+    padding: 20,
+    paddingBottom: 25,
+  },
+  verifyInputLabel: {
+    fontSize: 18,
+    fontWeight: "bold",
+    marginBottom: 8,
+    textAlign: "center",
+  },
+  verifyInput: {
+    height: 50,
+    borderWidth: 1,
+    borderRadius: 10,
+    paddingHorizontal: 15,
+    backgroundColor: "#E9F6FE",
+    fontSize: 16,
   },
   noteText: {
     fontSize: 14,
     textAlign: "center",
     color: "#888",
     fontStyle: "italic",
-    marginBottom: 30,
+    marginBottom: 20,
   },
   actionsContainer: {
     width: "100%",
@@ -901,6 +936,22 @@ const styles = StyleSheet.create({
   },
   primaryButtonText: {
     color: "#fff",
+    fontSize: 16,
+    fontWeight: "bold",
+  },
+  secondaryButton: {
+    width: "100%",
+    height: 50,
+    borderRadius: 25,
+    borderWidth: 1,
+    borderColor: "#35AFEA",
+    justifyContent: "center",
+    alignItems: "center",
+    marginTop: 15,
+    backgroundColor: "transparent",
+  },
+  secondaryButtonText: {
+    color: "#35AFEA",
     fontSize: 16,
     fontWeight: "bold",
   },
