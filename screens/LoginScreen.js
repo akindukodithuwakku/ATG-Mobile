@@ -15,7 +15,10 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useResetTimerOnLogin } from "./AutoLogout";
-import { signIn } from "aws-amplify/auth";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+
+const API_ENDPOINT =
+  "https://uqzl6jyqvg.execute-api.ap-south-1.amazonaws.com/dev/signIn";
 
 const LoginScreen = ({ navigation }) => {
   const [username, setUsername] = useState("");
@@ -50,64 +53,106 @@ const LoginScreen = ({ navigation }) => {
       setIsLoading(true);
 
       try {
-        console.log("Attempting to sign in with username:", username.trim());
-        // Attempt to sign in with AWS Amplify
-        const signInResponse = await signIn({
-          username: username.trim(),
-          password,
-          options: {
-            authFlowType: "USER_PASSWORD_AUTH",
-          },
-        });
-        console.log("User signed in successfully:", signInResponse);
+        console.log("Calling login API with username:", username.trim());
 
+        // Calling the Lambda function through API Gateway
+        const response = await fetch(API_ENDPOINT, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            username: username.trim(),
+            password: password,
+          }),
+        });
+
+        const data = await response.json();
+        const parsedBody = JSON.parse(data.body);
+        const statusCode = data.statusCode;
+
+        console.log("API response status:", statusCode);
+
+        if (statusCode !== 200) {
+          // Handle different error scenarios based on status code and error code in body
+          switch (statusCode) {
+            case 401: // NotAuthorizedException
+              Alert.alert("Login Failed", "Incorrect username or password");
+              break;
+            case 403: // UserNotConfirmedException
+              Alert.alert(
+                "Account Not Verified",
+                "Please verify your account first",
+                [
+                  {
+                    text: "OK",
+                    onPress: () =>
+                      navigation.reset({
+                        index: 0,
+                        routes: [
+                          {
+                            name: "VerificationSent",
+                            params: { username: username },
+                          },
+                        ],
+                      }),
+                  },
+                ]
+              );
+              break;
+            case 404: // UserNotFoundException
+              Alert.alert("Login Failed", "User does not exist");
+              break;
+            case 400: // InvalidParameterException
+              Alert.alert(
+                "Invalid Input",
+                parsedBody.message || "Please check your input"
+              );
+              break;
+            case 500:
+            default:
+              Alert.alert(
+                "Login Error",
+                parsedBody.message || "An unexpected error occurred"
+              );
+          }
+          return;
+        }
+
+        console.log("Login successful");
+
+        // Store the tokens in AsyncStorage
+        if (parsedBody.tokens) {
+          await AsyncStorage.setItem(
+            "accessToken",
+            parsedBody.tokens.accessToken
+          );
+          await AsyncStorage.setItem(
+            "refreshToken",
+            parsedBody.tokens.refreshToken
+          );
+          await AsyncStorage.setItem(
+            "tokenExpiry",
+            (Date.now() + parsedBody.tokens.expiresIn * 1000).toString()
+          );
+        }
+
+        const accessToken = await AsyncStorage.getItem("accessToken");
+
+        console.log("accessToken:", accessToken);
+
+        // Navigate to dashboard
         navigation.reset({
           index: 0,
           routes: [{ name: "ClientDashboard" }],
         });
       } catch (error) {
-        console.error("Login error:", error);
-        console.error("Error name:", error.name);
-        console.error("Error code:", error.code);
-        console.error("Error message:", error.message);
-        console.error("Full error object:", JSON.stringify(error, null, 2));
-
-        // Handle different error scenarios
-        if (
-          error.name === "NotAuthorizedException" ||
-          error.message?.includes("Incorrect username or password")
-        ) {
-          Alert.alert("Login Failed", "Incorrect username or password");
-        } else if (
-          error.name === "UserNotConfirmedException" ||
-          error.message?.includes("User is not confirmed")
-        ) {
-          Alert.alert(
-            "Account Not Verified",
-            "Please verify your account first",
-            [
-              {
-                text: "OK",
-                onPress: () =>
-                  navigation.reset({
-                    index: 0,
-                    routes: [
-                      {
-                        name: "VerificationSent",
-                        params: { username: username },
-                      },
-                    ],
-                  }),
-              },
-            ]
-          );
-        } else {
-          Alert.alert(
-            "Login Error",
-            error.message || "An unknown error occurred"
-          );
-        }
-
+        console.error("Login request error:", error);
+        Alert.alert(
+          "Connection Error",
+          "Unable to connect to the server. Please check your internet connection and try again."
+        );
+      } finally {
         setIsLoading(false);
       }
     }
@@ -131,7 +176,7 @@ const LoginScreen = ({ navigation }) => {
               onPress={() => navigation.goBack()}
               style={styles.backButton}
             >
-              <Text style={styles.backButtonText}>{"<"}</Text>
+              <Ionicons name="chevron-back" size={28} color="#FFFFFF" />
             </TouchableOpacity>
             <Text style={styles.headerText}>Log In</Text>
           </View>
@@ -251,11 +296,6 @@ const styles = StyleSheet.create({
   },
   backButton: {
     padding: 10,
-  },
-  backButtonText: {
-    fontSize: 28,
-    color: "#ffffff",
-    fontWeight: "bold",
   },
   headerText: {
     flex: 1,
