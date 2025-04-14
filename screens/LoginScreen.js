@@ -10,13 +10,15 @@ import {
   Platform,
   StatusBar,
   ScrollView,
+  Alert,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useResetTimerOnLogin } from "./AutoLogout";
+import { signIn } from "aws-amplify/auth";
 
 const LoginScreen = ({ navigation }) => {
-  const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [passwordVisible, setPasswordVisible] = useState(false);
   const [errors, setErrors] = useState({});
@@ -29,11 +31,8 @@ const LoginScreen = ({ navigation }) => {
     let errorTexts = {};
     let isValid = true;
 
-    if (!email.trim()) {
-      errorTexts.email = "Email is required";
-      isValid = false;
-    } else if (!/\S+@\S+\.\S+/.test(email)) {
-      errorTexts.email = "Email is invalid";
+    if (!username.trim()) {
+      errorTexts.username = "Username is required";
       isValid = false;
     }
 
@@ -49,16 +48,68 @@ const LoginScreen = ({ navigation }) => {
   const handleLogin = async () => {
     if (validateForm()) {
       setIsLoading(true);
-      // Backend authentication actions need to be added here.
 
-      // Simulating process with a timeout, roll based access need to be done
-      setTimeout(() => {
-        setIsLoading(false);
+      try {
+        console.log("Attempting to sign in with username:", username.trim());
+        // Attempt to sign in with AWS Amplify
+        const signInResponse = await signIn({
+          username: username.trim(),
+          password,
+          options: {
+            authFlowType: "USER_PASSWORD_AUTH",
+          },
+        });
+        console.log("User signed in successfully:", signInResponse);
+
         navigation.reset({
           index: 0,
-          routes: [{ name: "CNDashboard" }],
+          routes: [{ name: "ClientDashboard" }],
         });
-      }, 1500);
+      } catch (error) {
+        console.error("Login error:", error);
+        console.error("Error name:", error.name);
+        console.error("Error code:", error.code);
+        console.error("Error message:", error.message);
+        console.error("Full error object:", JSON.stringify(error, null, 2));
+
+        // Handle different error scenarios
+        if (
+          error.name === "NotAuthorizedException" ||
+          error.message?.includes("Incorrect username or password")
+        ) {
+          Alert.alert("Login Failed", "Incorrect username or password");
+        } else if (
+          error.name === "UserNotConfirmedException" ||
+          error.message?.includes("User is not confirmed")
+        ) {
+          Alert.alert(
+            "Account Not Verified",
+            "Please verify your account first",
+            [
+              {
+                text: "OK",
+                onPress: () =>
+                  navigation.reset({
+                    index: 0,
+                    routes: [
+                      {
+                        name: "VerificationSent",
+                        params: { username: username },
+                      },
+                    ],
+                  }),
+              },
+            ]
+          );
+        } else {
+          Alert.alert(
+            "Login Error",
+            error.message || "An unknown error occurred"
+          );
+        }
+
+        setIsLoading(false);
+      }
     }
   };
 
@@ -100,23 +151,22 @@ const LoginScreen = ({ navigation }) => {
               </Text>
             </View>
 
-            {/* Email Field */}
-            <Text style={styles.inputLabel}>Email</Text>
+            {/* Username Field */}
+            <Text style={styles.inputLabel}>Username</Text>
             <TextInput
               style={styles.input}
-              placeholder="Email"
-              value={email}
+              placeholder="Username"
+              value={username}
               onChangeText={(text) => {
-                setEmail(text);
-                if (errors.email) {
-                  setErrors({ ...errors, email: null });
+                setUsername(text);
+                if (errors.username) {
+                  setErrors({ ...errors, username: null });
                 }
               }}
-              keyboardType="email-address"
               autoCapitalize="none"
             />
-            {errors.email && (
-              <Text style={styles.errorText}>{errors.email}</Text>
+            {errors.username && (
+              <Text style={styles.errorText}>{errors.username}</Text>
             )}
 
             {/* Password Field */}
