@@ -22,6 +22,7 @@ const ProfileScreenCN = ({ navigation }) => {
   const { resetTimer } = useAutomaticLogout();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [profileData, setProfileData] = useState({
     fullName: "Trevin Perera",
     profileImage: null,
@@ -74,17 +75,123 @@ const ProfileScreenCN = ({ navigation }) => {
     setIsMenuOpen(!isMenuOpen);
   }, [isMenuOpen, resetTimer]);
 
-  const handleLogout = () => {
+  const showLogout = () => {
     setShowLogoutModal(true);
   };
 
-  const confirmLogout = () => {
-    resetTimer();
-    setShowLogoutModal(false);
+  const handleLogout = async (navigation) => {
+    try {
+      setIsLoading(true);
+
+      // Get the access token from AsyncStorage
+      const accessToken = await AsyncStorage.getItem("accessToken");
+
+      if (!accessToken) {
+        Alert.alert("Error", "No access token found in async storage.");
+        welcomeNavigation();
+        return;
+      }
+
+      // Call the logout API endpoint
+      const response = await fetch(API_ENDPOINT, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          accessToken: accessToken,
+        }),
+      });
+
+      const data = await response.json();
+      const parsedBody = JSON.parse(data.body);
+      const statusCode = data.statusCode;
+
+      console.log("Logout response status:", statusCode);
+
+      // Handle response based on status code
+      switch (statusCode) {
+        case 200:
+          // Successful logout
+          console.log("Successfully logged out");
+          await clearAuthData();
+          welcomeNavigation();
+          break;
+
+        case 401: // NotAuthorizedException
+          // Token is invalid/expired, user needs to login again anyway
+          console.log("Token invalid or expired");
+          Alert.alert(
+            "Session Expired",
+            "Your session has expired. Please login again."
+          );
+          await clearAuthData();
+          welcomeNavigation();
+          break;
+
+        case 400: // InvalidParameterException
+          Alert.alert(
+            "Error",
+            parsedBody.message || "Invalid request parameters"
+          );
+          break;
+
+        case 404: // ResourceNotFoundException
+          Alert.alert("Error", "User account not found");
+          break;
+
+        case 429: // TooManyRequestsException
+          Alert.alert("Too many requests. Please try again later.");
+          break;
+
+        case 500: // InternalErrorException or UnknownError
+        default:
+          Alert.alert(
+            "Error",
+            parsedBody.message ||
+              "An unknown error occurred. Please try again later."
+          );
+      }
+    } catch (error) {
+      console.error("Logout request error:", error);
+      Alert.alert(
+        "Connection Error",
+        "Unable to connect to the server. Please check your internet connection and try again."
+      );
+    } finally {
+      setShowLogoutModal(false);
+      setIsLoading(false);
+    }
+  };
+
+  const clearAuthData = async () => {
+    try {
+      // Remove all auth-related items from storage
+      const keysToRemove = [
+        "accessToken",
+        "refreshToken",
+        "tokenExpiry",
+        "userData",
+      ];
+      await Promise.all(
+        keysToRemove.map((key) => AsyncStorage.removeItem(key))
+      );
+      console.log("Auth data cleared from storage");
+    } catch (error) {
+      console.error("Error clearing auth data:", error);
+    }
+  };
+
+  const welcomeNavigation = () => {
     navigation.reset({
       index: 0,
       routes: [{ name: "Welcome" }],
     });
+  };
+
+  const confirmLogout = () => {
+    resetTimer();
+    handleLogout();
   };
 
   const menuItems = [
@@ -118,7 +225,7 @@ const ProfileScreenCN = ({ navigation }) => {
   const handleMenuItemPress = (item) => {
     resetTimer();
     if (item.isLogout) {
-      handleLogout();
+      showLogout();
     } else {
       navigation.navigate(item.route);
     }
@@ -241,7 +348,9 @@ const ProfileScreenCN = ({ navigation }) => {
                 style={[styles.modalButton, styles.logoutButton]}
                 onPress={confirmLogout}
               >
-                <Text style={styles.logoutButtonText}>Yes, Logout</Text>
+                <Text style={styles.logoutButtonText}>
+                  {isLoading ? "Logging Out..." : "Yes, Logout"}
+                </Text>
               </TouchableOpacity>
             </View>
           </View>
