@@ -1,5 +1,3 @@
-import { Amplify } from "aws-amplify";
-
 import {
   REACT_APP_REGION,
   REACT_APP_USER_POOL_ID,
@@ -21,7 +19,5 @@ console.log(`process.env.REACT_APP_USER_POOL_ID: ${REACT_APP_USER_POOL_ID}`);
 console.log(
   `process.env.REACT_APP_USER_POOL_CLIENT_ID: ${REACT_APP_USER_POOL_CLIENT_ID}`
 );
-
-Amplify.configure(awsConfig);
 
 export default awsConfig;
