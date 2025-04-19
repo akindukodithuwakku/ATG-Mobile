@@ -342,7 +342,7 @@ export const ResetCodeSentScreen = ({ navigation, route }) => {
 
 // Enter code and reset password screen
 export const ResetPasswordScreen = ({ navigation, route }) => {
-  const { email } = route.params || { email: "" };
+  const { username } = route.params || { username: "" };
   const [verificationCode, setVerificationCode] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -361,15 +361,21 @@ export const ResetPasswordScreen = ({ navigation, route }) => {
       isValid = false;
     }
 
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,}$/;
+
     if (!newPassword) {
       errorTexts.newPassword = "New password is required";
       isValid = false;
-    } else if (newPassword.length < 8) {
-      errorTexts.newPassword = "Password must be at least 8 characters";
+    } else if (!passwordRegex.test(newPassword)) {
+      errorTexts.newPassword =
+        "Password must be at least 8 characters long, include uppercase, lowercase, number, and special character";
       isValid = false;
     }
 
-    if (newPassword !== confirmPassword) {
+    if (newPassword && !confirmPassword) {
+      errorTexts.confirmPassword = "Please confirm your password";
+      isValid = false;
+    } else if (newPassword !== confirmPassword) {
       errorTexts.confirmPassword = "Passwords do not match";
       isValid = false;
     }
@@ -383,35 +389,91 @@ export const ResetPasswordScreen = ({ navigation, route }) => {
       setIsLoading(true);
 
       try {
-        // AWS Cognito requests would be added here
-        // await Auth.forgotPasswordSubmit(email, verificationCode, newPassword);
+        // Calling the Lambda function through API Gateway
+        const response = await fetch(`${API_ENDPOINT}/confirmForgotPWD`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            username: username.trim(),
+            code: verificationCode.trim(),
+            password: newPassword,
+          }),
+        });
 
-        // Simulation with a timeout for testing
-        setTimeout(() => {
-          setIsLoading(false);
-          Alert.alert("Success", "Your password has been reset successfully!", [
-            {
-              text: "OK",
-              onPress: () =>
-                navigation.reset({
-                  index: 0,
-                  routes: [{ name: "Login" }],
-                }),
-            },
-          ]);
-        }, 1500);
-      } catch (error) {
-        setIsLoading(false);
-        if (error.code === "CodeMismatchException") {
-          setErrors({ verificationCode: "Invalid verification code" });
-        } else if (error.code === "ExpiredCodeException") {
-          setErrors({
-            verificationCode:
-              "Verification code has expired. Please request a new one.",
-          });
-        } else {
-          Alert.alert("Error", "Something went wrong. Please try again later.");
+        const data = await response.json();
+        const parsedBody = JSON.parse(data.body);
+        const statusCode = data.statusCode;
+
+        console.log("API response status:", statusCode);
+
+        switch (statusCode) {
+          case 200:
+            // Success
+            console.log(parsedBody.message);
+            Alert.alert(
+              "Success",
+              "Your password has been reset successfully!",
+              [
+                {
+                  text: "OK",
+                  onPress: () =>
+                    navigation.reset({
+                      index: 0,
+                      routes: [{ name: "Login" }],
+                    }),
+                },
+              ]
+            );
+            break;
+
+          case 400:
+            // CodeMismatchException
+            Alert.alert(
+              "Error",
+              parsedBody.message || "Invalid verification code."
+            );
+            break;
+
+          case 410:
+            // ExpiredCodeException
+            Alert.alert(
+              "Error",
+              parsedBody.message ||
+                "Verification code has expired. Please request a new one."
+            );
+            break;
+
+          case 404:
+            // Required parameters not passed. InvalidParameterException
+            Alert.alert(
+              "Error",
+              parsedBody.message ||
+                "Username, confirmation code, and new password are required."
+            );
+            break;
+
+          case 429: // TooManyRequestsException
+            Alert.alert("Too many requests. Please try again later.");
+            break;
+
+          case 500: // UnknownError
+          default:
+            Alert.alert(
+              "Error",
+              parsedBody.message ||
+                "An unknown error occurred. Please try again later."
+            );
         }
+      } catch (error) {
+        console.error("Request error:", error);
+        Alert.alert(
+          "Connection Error",
+          "Unable to connect to the server. Please check your internet connection and try again."
+        );
+      } finally {
+        setIsLoading(false);
       }
     }
   };
@@ -450,9 +512,9 @@ export const ResetPasswordScreen = ({ navigation, route }) => {
             <View style={styles.instructionContainer}>
               <Text style={styles.instructionTitle}>Create New Password</Text>
               <Text style={styles.instructionText}>
-                Enter the verification code sent to{" "}
-                <Text style={styles.boldText}>{email}</Text> and create a new
-                password.
+                Enter the verification code sent to the email associated with
+                account <Text style={styles.boldText}>{username}</Text> and
+                create a new password.
               </Text>
             </View>
 
