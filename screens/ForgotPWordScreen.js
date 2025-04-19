@@ -16,9 +16,12 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 
+const API_ENDPOINT =
+  "https://uqzl6jyqvg.execute-api.ap-south-1.amazonaws.com/dev/mobile";
+
 // Forgot Password Initial Screen
 export const ForgotPasswordScreen = ({ navigation }) => {
-  const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
   const [errors, setErrors] = useState({});
   const [isLoading, setIsLoading] = useState(false);
 
@@ -27,11 +30,8 @@ export const ForgotPasswordScreen = ({ navigation }) => {
     let errorTexts = {};
     let isValid = true;
 
-    if (!email.trim()) {
-      errorTexts.email = "Email is required";
-      isValid = false;
-    } else if (!/\S+@\S+\.\S+/.test(email)) {
-      errorTexts.email = "Email is invalid";
+    if (!username.trim()) {
+      errorTexts.username = "Username is required";
       isValid = false;
     }
 
@@ -44,22 +44,68 @@ export const ForgotPasswordScreen = ({ navigation }) => {
       setIsLoading(true);
 
       try {
-        // Requests to AWS Cognito will be added here
-        // await Auth.forgotPassword(email);
-        // Upon success navigation to verification code sent screen, if caught error catch block
+        console.log(
+          "Calling initiate forgot password API with username:",
+          username.trim()
+        );
 
-        // Simulating the navigation with a timeout (Success path)
-        setTimeout(() => {
-          setIsLoading(false);
-          navigation.navigate("ForgotPWDCode", { email });
-        }, 1500);
-      } catch (error) {
-        setIsLoading(false);
-        if (error.code === "UserNotFoundException") {
-          setErrors({ email: "No account found with this email" });
-        } else {
-          Alert.alert("Error", "Something went wrong. Please try again later.");
+        // Calling the Lambda function through API Gateway
+        const response = await fetch(`${API_ENDPOINT}/initiateForgotPWD`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            username: username.trim(),
+          }),
+        });
+
+        const data = await response.json();
+        const parsedBody = JSON.parse(data.body);
+        const statusCode = data.statusCode;
+
+        console.log("API response status:", statusCode);
+
+        switch (statusCode) {
+          case 200:
+            // Success
+            console.log(parsedBody.message);
+            navigation.navigate("ForgotPWDCode", { username: username.trim() });
+            break;
+
+          case 400:
+            // InvalidParameterException
+            Alert.alert(
+              "Error",
+              parsedBody.message || "Invalid request parameters."
+            );
+            break;
+
+          case 404:
+            // Username not passed
+            Alert.alert("Error", parsedBody.message || "Username is required.");
+            break;
+
+          case 429: // TooManyRequestsException
+            Alert.alert("Too many requests. Please try again later.");
+            break;
+
+          case 500: // UnknownError
+          default:
+            Alert.alert(
+              "Error",
+              parsedBody.message ||
+                "An unknown error occurred. Please try again later."
+            );
         }
+      } catch (error) {
+        console.error("Request error:", error);
+        Alert.alert(
+          "Connection Error",
+          "Unable to connect to the server. Please check your internet connection and try again."
+        );
+      } finally {
+        setIsLoading(false);
       }
     }
   };
@@ -98,27 +144,27 @@ export const ForgotPasswordScreen = ({ navigation }) => {
             <View style={styles.instructionContainer}>
               <Text style={styles.instructionTitle}>Reset Your Password</Text>
               <Text style={styles.instructionText}>
-                Enter your email address below. A verification code will be sent
-                to your email to reset your password.
+                Enter your username address below. A verification code will be sent
+                to associated email to reset your password.
               </Text>
             </View>
 
-            {/* Email Field */}
-            <Text style={styles.inputLabel}>Email</Text>
+            {/* Username Field */}
+            <Text style={styles.inputLabel}>Username</Text>
             <TextInput
               style={styles.input}
-              placeholder="Enter your email address"
-              value={email}
+              placeholder="Enter your username"
+              value={username}
               onChangeText={(text) => {
-                setEmail(text);
-                if (errors.email) {
-                  setErrors({ ...errors, email: null });
+                setUsername(text);
+                if (errors.username) {
+                  setErrors({ ...errors, username: null });
                 }
               }}
               autoCapitalize="none"
             />
-            {errors.email && (
-              <Text style={styles.errorText}>{errors.email}</Text>
+            {errors.username && (
+              <Text style={styles.errorText}>{errors.username}</Text>
             )}
 
             <TouchableOpacity
