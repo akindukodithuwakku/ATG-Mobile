@@ -144,8 +144,8 @@ export const ForgotPasswordScreen = ({ navigation }) => {
             <View style={styles.instructionContainer}>
               <Text style={styles.instructionTitle}>Reset Your Password</Text>
               <Text style={styles.instructionText}>
-                Enter your username address below. A verification code will be sent
-                to associated email to reset your password.
+                Enter your username below. A verification code will be sent to
+                associated email to reset your password.
               </Text>
             </View>
 
@@ -198,8 +198,76 @@ export const ForgotPasswordScreen = ({ navigation }) => {
 
 // Reset Code Sent Verification Screen
 export const ResetCodeSentScreen = ({ navigation, route }) => {
-  const { email } = route.params || { email: "" };
+  const { username } = route.params || { username: "" };
   const scheme = useColorScheme();
+  const [isResending, setIsResending] = useState(false);
+
+  const handleResendCode = async () => {
+    setIsResending(true);
+    try {
+      // Calling the Lambda function through API Gateway
+      const response = await fetch(`${API_ENDPOINT}/initiateForgotPWD`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          username: username.trim(),
+        }),
+      });
+
+      const data = await response.json();
+      const parsedBody = JSON.parse(data.body);
+      const statusCode = data.statusCode;
+
+      console.log("API response status:", statusCode);
+
+      switch (statusCode) {
+        case 200:
+          // Success
+          console.log(parsedBody.message);
+          Alert.alert(
+            "Success",
+            "A new verification code has been sent to your email."
+          );
+          break;
+
+        case 400:
+          // InvalidParameterException
+          Alert.alert(
+            "Error",
+            parsedBody.message || "Invalid request parameters."
+          );
+          break;
+
+        case 404:
+          // Username not passed
+          Alert.alert("Error", parsedBody.message || "Username is required.");
+          break;
+
+        case 429: // TooManyRequestsException
+          Alert.alert("Too many requests. Please try again later.");
+          break;
+
+        case 500: // UnknownError
+        default:
+          Alert.alert(
+            "Error",
+            parsedBody.message ||
+              "An unknown error occurred. Please try again later."
+          );
+      }
+    } catch (error) {
+      console.error("Request error:", error);
+      Alert.alert(
+        "Connection Error",
+        error.message ||
+          "Something went wrong. Please check your internet connection and try again later."
+      );
+    } finally {
+      setIsResending(false);
+    }
+  };
 
   return (
     <View style={styles.container}>
@@ -216,8 +284,8 @@ export const ResetCodeSentScreen = ({ navigation, route }) => {
 
         <Text style={styles.verificationTitle}>Verification Code Sent!</Text>
         <Text style={styles.verificationText}>
-          We've sent a verification code to{" "}
-          <Text style={styles.boldText}>{email}</Text>. Please check your email
+          We've sent a verification code to your email associated with account{" "}
+          <Text style={styles.boldText}>{username}</Text>. Please check your
           inbox and use the code to reset your password.
         </Text>
 
@@ -230,7 +298,7 @@ export const ResetCodeSentScreen = ({ navigation, route }) => {
           <TouchableOpacity
             style={styles.primaryButton}
             onPress={() => {
-              navigation.navigate("ForgotPWDReset", { email });
+              navigation.navigate("ForgotPWDReset", { username });
             }}
           >
             <LinearGradient
@@ -246,20 +314,12 @@ export const ResetCodeSentScreen = ({ navigation, route }) => {
           <View style={styles.alternativeActions}>
             <TouchableOpacity
               style={styles.textButton}
-              onPress={() => {
-                // navigation.goBack();
-                try {
-                  // Requests to AWS Cognito
-                  // await Auth.forgotPassword(email);
-                } catch (error) {
-                  Alert.alert(
-                    "Error",
-                    "Something went wrong. Please try again later."
-                  );
-                }
-              }}
+              onPress={handleResendCode}
+              disabled={isResending}
             >
-              <Text style={styles.textButtonText}>Resend Code</Text>
+              <Text style={styles.textButtonText}>
+                {isResending ? "Resending..." : "Resend Code"}
+              </Text>
             </TouchableOpacity>
 
             <TouchableOpacity
