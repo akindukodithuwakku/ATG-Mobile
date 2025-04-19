@@ -16,7 +16,7 @@ def lambda_handler(event, context):
     
     if not username:
         return {
-            'statusCode': 400,
+            'statusCode': 404,
             'body': json.dumps({
                 'success': False,
                 'message': 'Username is required',
@@ -54,6 +54,16 @@ def lambda_handler(event, context):
                 'success': False,
                 'message': str(e),
                 'code': 'InvalidParameterException'
+            })
+        }
+    except client.exceptions.TooManyRequestsException:
+        print("Signout failed: Too many requests.")
+        return {
+            'statusCode': 429,
+            'body': json.dumps({
+                'success': False,
+                'message': 'Too many requests, please try again later',
+                'code': 'TooManyRequestsException'
             })
         }
     except Exception as e:

@@ -18,7 +18,7 @@ def lambda_handler(event, context):
     
     if not username or not confirmation_code or not new_password:
         return {
-            'statusCode': 400,
+            'statusCode': 404,
             'body': json.dumps({
                 'success': False,
                 'message': 'Username, confirmation code, and new password are required',
