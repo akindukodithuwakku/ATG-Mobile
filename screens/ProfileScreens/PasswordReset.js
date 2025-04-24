@@ -16,6 +16,10 @@ import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useFocusEffect } from "@react-navigation/native";
 import { useAutomaticLogout } from "../../screens/AutoLogout";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+
+const API_ENDPOINT =
+  "https://uqzl6jyqvg.execute-api.ap-south-1.amazonaws.com/dev/mobile";
 
 const PasswordReset = ({ navigation }) => {
   const { resetTimer } = useAutomaticLogout();
@@ -50,11 +54,14 @@ const PasswordReset = ({ navigation }) => {
       isValid = false;
     }
 
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,}$/;
+
     if (!newPassword) {
       errorTexts.newPassword = "New password is required";
       isValid = false;
-    } else if (newPassword.length < 8) {
-      errorTexts.newPassword = "Password must be at least 8 characters";
+    } else if (!passwordRegex.test(newPassword)) {
+      errorTexts.newPassword =
+        "Password must be at least 8 characters long, include uppercase, lowercase, number, and special character";
       isValid = false;
     }
 
@@ -74,21 +81,96 @@ const PasswordReset = ({ navigation }) => {
     resetTimer();
     if (validateForm()) {
       setIsLoading(true);
-      // Backend password reset actions would be added here
 
-      // Simulating process with a timeout
-      setTimeout(() => {
-        setIsLoading(false);
-        Alert.alert("Success", "Your password has been reset successfully!", [
-          {
-            text: "OK",
-            onPress: () => {
-              resetTimer();
-              navigation.goBack();
-            },
+      try {
+        // Get the access token from storage
+        const accessToken = await AsyncStorage.getItem("accessToken");
+
+        if (!accessToken) {
+          Alert.alert("Error", "No access token found in async storage.");
+          navigation.reset({
+            index: 0,
+            routes: [{ name: "Welcome" }],
+          });
+          return;
+        }
+
+        // Call the Lambda function through API Gateway
+        const response = await fetch(`${API_ENDPOINT}/passwordReset`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
           },
-        ]);
-      }, 1500);
+          body: JSON.stringify({
+            previous_password: currentPassword,
+            new_password: newPassword,
+            access_token: accessToken,
+          }),
+        });
+
+        const data = await response.json();
+        const parsedBody = JSON.parse(data.body);
+        const statusCode = data.statusCode;
+
+        console.log("API response status:", statusCode);
+
+        switch (statusCode) {
+          case 200:
+            // Success
+            console.log(parsedBody.message);
+            Alert.alert(
+              "Success",
+              "Your password has been reset successfully!",
+              [
+                {
+                  text: "OK",
+                  onPress: () => {
+                    resetTimer();
+                    navigation.goBack();
+                  },
+                },
+              ]
+            );
+            break;
+
+          case 401: // NotAuthorizedException
+            Alert.alert(
+              "Error",
+              parsedBody.message ||
+                "Invalid Access Token, Access Token has been revoked, or Incorrect previous password."
+            );
+            break;
+
+          case 400: // InvalidPasswordException
+            Alert.alert(
+              "Error",
+              parsedBody.message || "Password doesn't match the policy."
+            );
+            break;
+
+          case 404: // InvalidParameterException
+            Alert.alert(
+              "Error",
+              parsedBody.message || "All fields are required."
+            );
+            break;
+
+          case 500:
+          default:
+            Alert.alert(
+              "Login Error",
+              parsedBody.message || "An unexpected error occurred"
+            );
+        }
+      } catch (error) {
+        console.error("Login request error:", error);
+        Alert.alert(
+          "Connection Error",
+          "Unable to connect to the server. Please check your internet connection and try again."
+        );
+      } finally {
+        setIsLoading(false);
+      }
     }
   };
 
