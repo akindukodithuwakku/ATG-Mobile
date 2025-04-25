@@ -36,6 +36,21 @@ def lambda_handler(event, context):
                 'PASSWORD': password
             }
         )
+        print("Response:", response)
+    
+        # Check if NEW_PASSWORD_REQUIRED challenge is returned
+        if 'ChallengeName' in response and response['ChallengeName'] == 'NEW_PASSWORD_REQUIRED':
+            print("Temp login ChallengeName:", response['ChallengeName'])
+            print("Session:", response['Session'])
+            return {
+                'statusCode': 202,  # Using 202 as a distinct status code
+                'body': json.dumps({
+                    'success': True,
+                    'requiresNewPassword': True,
+                    'session': response['Session'],
+                    'message': 'Temporary password detected, password change required'
+                })
+        }
 
         # Extract the tokens from the response
         id_token = response['AuthenticationResult']['IdToken']
