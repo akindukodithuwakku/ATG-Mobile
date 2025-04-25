@@ -16,6 +16,8 @@ import { Ionicons } from "@expo/vector-icons";
 import { SafeAreaView } from "react-native-safe-area-context"; // Import SafeAreaView
 import SideNavigationCN from "../Components/SideNavigationCN";
 import BottomNavigationCN from "../Components/BottomNavigationCN";
+import { database } from "../firebaseConfig.js"; // 👈 Adjust this path if firebaseConfig.js is elsewhere
+import { ref, onValue, push } from "firebase/database";
 
 const ChatScreen = ({ navigation }) => {
   const [messages, setMessages] = useState([]);
@@ -31,36 +33,38 @@ const ChatScreen = ({ navigation }) => {
 
   // Load initial messages
   useEffect(() => {
-    setMessages([
-      {
-        id: 1,
-        text: "Hello! How can I assist you today?",
-        sender: "Support Agent",
-        avatar: "https://i.pravatar.cc/150?img=1", // Profile photo URL
-        isUser: false, // Indicates if the message is from the user
-      },
-    ]);
+    const messagesRef = ref(database, "messages");
+    
+    const unsubscribe = onValue(messagesRef, (snapshot) => {
+      const data = snapshot.val();
+      if (data) {
+        const parsedMessages = Object.keys(data).map((key) => ({
+          id: key,
+          ...data[key],
+        }));
+        setMessages(parsedMessages);
+      }
+    });
+  
+    return () => unsubscribe();
   }, []);
 
   // Handle sending new messages
   const handleSend = () => {
     if (inputText.trim() === "") return;
-
+  
     const newMessage = {
-      id: messages.length + 1,
       text: inputText,
       sender: "You",
-      avatar: "https://i.pravatar.cc/150?img=2", // Current user's profile photo
-      isUser: true, // Indicates if the message is from the user
+      avatar: "https://i.pravatar.cc/150?img=2",
+      isUser: true,
+      timestamp: Date.now(), // optional, for sorting later
     };
-
-    setMessages((prevMessages) => [...prevMessages, newMessage]);
+  
+    const messagesRef = ref(database, "messages");
+    push(messagesRef, newMessage);
+  
     setInputText(""); // Clear the input field
-
-    // Scroll to the bottom after sending a message
-    if (scrollViewRef.current) {
-      scrollViewRef.current.scrollToEnd({ animated: true });
-    }
   };
 
   return (
