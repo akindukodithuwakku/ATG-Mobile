@@ -67,13 +67,17 @@ const LoginScreen = ({ navigation }) => {
           }),
         });
 
+        await AsyncStorage.setItem("appUser", username);
+        const appUser = await AsyncStorage.getItem("appUser");
+        console.log("appUser:", appUser);
+
         const data = await response.json();
         const parsedBody = JSON.parse(data.body);
         const statusCode = data.statusCode;
 
         console.log("API response status:", statusCode);
 
-        if (statusCode !== 200) {
+        if (statusCode !== 200 && statusCode !== 202) {
           // Handle different error scenarios based on status code and error code in body
           switch (statusCode) {
             case 401: // NotAuthorizedException
@@ -119,33 +123,54 @@ const LoginScreen = ({ navigation }) => {
           return;
         }
 
-        console.log("Login successful");
+        if (statusCode == 200) {
+          console.log("Login successful");
 
-        // Store the tokens in AsyncStorage
-        if (parsedBody.tokens) {
-          await AsyncStorage.setItem(
-            "accessToken",
-            parsedBody.tokens.accessToken
-          );
-          await AsyncStorage.setItem(
-            "refreshToken",
-            parsedBody.tokens.refreshToken
-          );
-          await AsyncStorage.setItem(
-            "tokenExpiry",
-            (Date.now() + parsedBody.tokens.expiresIn * 1000).toString()
-          );
+          // Store the tokens in AsyncStorage
+          if (parsedBody.tokens) {
+            await AsyncStorage.setItem(
+              "accessToken",
+              parsedBody.tokens.accessToken
+            );
+            await AsyncStorage.setItem(
+              "refreshToken",
+              parsedBody.tokens.refreshToken
+            );
+            await AsyncStorage.setItem(
+              "tokenExpiry",
+              (Date.now() + parsedBody.tokens.expiresIn * 1000).toString()
+            );
+          }
+
+          const accessToken = await AsyncStorage.getItem("accessToken");
+          console.log("accessToken:", accessToken);
+
+          // Navigate to dashboard
+          navigation.reset({
+            index: 0,
+            routes: [{ name: "ClientDashboard" }],
+          });
+        } else if (statusCode == 202) {
+          console.log("CN temp login!");
+
+          // Store sessionString of temp CN in AsyncStorage
+          if (parsedBody.session) {
+            await AsyncStorage.setItem("sessionString", parsedBody.session);
+          }
+          
+          // A state to identify as the user(CN) is currently directed to a temporary password reset stage 
+          // to check at auto logout feature
+          await AsyncStorage.setItem("TempPWDChange", "true");
+
+          const sessionString = await AsyncStorage.getItem("sessionString");
+          console.log("sessionString:", sessionString);
+
+          // Navigate to password reset screen for forced password change
+          navigation.reset({
+            index: 0,
+            routes: [{ name: "PWDReset" }],
+          });
         }
-
-        const accessToken = await AsyncStorage.getItem("accessToken");
-
-        console.log("accessToken:", accessToken);
-
-        // Navigate to dashboard
-        navigation.reset({
-          index: 0,
-          routes: [{ name: "ClientDashboard" }],
-        });
       } catch (error) {
         console.error("Login request error:", error);
         Alert.alert(
