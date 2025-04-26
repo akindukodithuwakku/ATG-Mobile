@@ -19,7 +19,17 @@ import BottomNavigationCN from "../Components/BottomNavigationCN";
 import { database } from "../firebaseConfig.js"; // 👈 Adjust this path if firebaseConfig.js is elsewhere
 import { ref, onValue, push } from "firebase/database";
 
-const ChatScreen = ({ navigation }) => {
+const ChatScreen = ({ navigation, route }) => {
+  const { userId } = route.params; // <-- Receive userId from LoginScreen
+  
+  const currentUser = {
+    id: userId,
+    name: userId === "user1" ? "Caretaker John" : "Caregiver Mary",
+    avatar: userId === "user1" 
+      ? "https://i.pravatar.cc/150?img=2" 
+      : "https://i.pravatar.cc/150?img=3",
+  };
+  
   const [messages, setMessages] = useState([]);
   const [inputText, setInputText] = useState("");
   const [isMenuOpen, setIsMenuOpen] = useState(false);
