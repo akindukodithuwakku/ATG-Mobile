@@ -85,9 +85,14 @@ const PasswordReset = ({ navigation }) => {
       try {
         // Get the access token from storage
         const accessToken = await AsyncStorage.getItem("accessToken");
+        const sessionString = await AsyncStorage.getItem("sessionString");
+        const appUser = await AsyncStorage.getItem("appUser");
 
-        if (!accessToken) {
-          Alert.alert("Error", "No access token found in async storage.");
+        if (!(accessToken || sessionString)) {
+          Alert.alert(
+            "Error",
+            "No access token or session string found in async storage."
+          );
           navigation.reset({
             index: 0,
             routes: [{ name: "Welcome" }],
@@ -95,72 +100,168 @@ const PasswordReset = ({ navigation }) => {
           return;
         }
 
-        // Call the Lambda function through API Gateway
-        const response = await fetch(`${API_ENDPOINT}/passwordReset`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            previous_password: currentPassword,
-            new_password: newPassword,
-            access_token: accessToken,
-          }),
-        });
+        if (accessToken) {
+          // Call the password reset Lambda function through API Gateway
+          const response = await fetch(`${API_ENDPOINT}/passwordReset`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              previous_password: currentPassword,
+              new_password: newPassword,
+              access_token: accessToken,
+            }),
+          });
 
-        const data = await response.json();
-        const parsedBody = JSON.parse(data.body);
-        const statusCode = data.statusCode;
+          const data = await response.json();
+          const parsedBody = JSON.parse(data.body);
+          const statusCode = data.statusCode;
 
-        console.log("API response status:", statusCode);
+          console.log("API response status:", statusCode);
 
-        switch (statusCode) {
-          case 200:
-            // Success
-            console.log(parsedBody.message);
-            Alert.alert(
-              "Success",
-              "Your password has been reset successfully!",
-              [
-                {
-                  text: "OK",
-                  onPress: () => {
-                    resetTimer();
-                    navigation.goBack();
+          switch (statusCode) {
+            case 200:
+              // Success
+              console.log(parsedBody.message);
+              Alert.alert(
+                "Success",
+                "Your password has been reset successfully!",
+                [
+                  {
+                    text: "OK",
+                    onPress: () => {
+                      resetTimer();
+                      navigation.goBack();
+                    },
                   },
-                },
-              ]
-            );
-            break;
+                ]
+              );
+              break;
 
-          case 401: // NotAuthorizedException
-            Alert.alert(
-              "Error",
-              parsedBody.message ||
-                "Invalid Access Token, Access Token has been revoked, or Incorrect previous password."
-            );
-            break;
+            case 401: // NotAuthorizedException
+              Alert.alert(
+                "Error",
+                parsedBody.message ||
+                  "Invalid Access Token, Access Token has been revoked, or Incorrect previous password."
+              );
+              break;
 
-          case 400: // InvalidPasswordException
-            Alert.alert(
-              "Error",
-              parsedBody.message || "Password doesn't match the policy."
-            );
-            break;
+            case 400: // InvalidPasswordException
+              Alert.alert(
+                "Error",
+                parsedBody.message || "Password doesn't match the policy."
+              );
+              break;
 
-          case 404: // InvalidParameterException
-            Alert.alert(
-              "Error",
-              parsedBody.message || "All fields are required."
-            );
-            break;
+            case 404: // InvalidParameterException
+              Alert.alert(
+                "Error",
+                parsedBody.message || "All fields are required."
+              );
+              break;
 
-          case 500:
-          default:
-            Alert.alert(
-              "Login Error",
-              parsedBody.message || "An unexpected error occurred"
-            );
+            case 500:
+            default:
+              Alert.alert(
+                "Login Error",
+                parsedBody.message || "An unexpected error occurred"
+              );
+          }
+        } else if (sessionString) {
+          // Call the temp password reset Lambda function through API Gateway
+          const response = await fetch(`${API_ENDPOINT}/tempPWDReset`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              username: appUser.trim(),
+              new_password: newPassword,
+              session: sessionString,
+            }),
+          });
+
+          const data = await response.json();
+          const parsedBody = JSON.parse(data.body);
+          const statusCode = data.statusCode;
+
+          console.log("API response status:", statusCode);
+
+          switch (statusCode) {
+            case 200:
+              // Success
+              console.log(parsedBody.message);
+
+              // Store the tokens in AsyncStorage
+              if (parsedBody.tokens) {
+                await AsyncStorage.setItem(
+                  "accessToken",
+                  parsedBody.tokens.accessToken
+                );
+                await AsyncStorage.setItem(
+                  "refreshToken",
+                  parsedBody.tokens.refreshToken
+                );
+                await AsyncStorage.setItem(
+                  "tokenExpiry",
+                  (Date.now() + parsedBody.tokens.expiresIn * 1000).toString()
+                );
+              }
+              
+              await AsyncStorage.removeItem("sessionString");
+              await AsyncStorage.setItem("TempPWDChange", "false");
+
+              const accessToken = await AsyncStorage.getItem("accessToken");
+              console.log("accessToken:", accessToken);
+
+              Alert.alert(
+                "Success",
+                "Your password changed successfully and user authenticated!",
+                [
+                  {
+                    text: "OK",
+                    onPress: () => {
+                      resetTimer();
+                      navigation.reset({
+                        index: 0,
+                        routes: [{ name: "CNDashboard" }],
+                      });
+                    },
+                  },
+                ]
+              );
+              break;
+
+            case 401: // NotAuthorizedException
+              Alert.alert(
+                "Error",
+                parsedBody.message ||
+                  "Invalid temporary password or session expired."
+              );
+              break;
+
+            case 400: // InvalidPasswordException
+              Alert.alert(
+                "Error",
+                parsedBody.message || "Password doesn't match the policy."
+              );
+              break;
+
+            case 404: // InvalidParameterException
+              Alert.alert(
+                "Error",
+                parsedBody.message || "New password is required."
+              );
+              break;
+
+            case 500:
+            default:
+              Alert.alert(
+                "Login Error",
+                parsedBody.message || "An unexpected error occurred"
+              );
+          }
         }
       } catch (error) {
         console.error("Login request error:", error);
