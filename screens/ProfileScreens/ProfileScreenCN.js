@@ -18,6 +18,9 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useAutomaticLogout } from "../../screens/AutoLogout";
 import { useFocusEffect } from "@react-navigation/native";
 
+const API_ENDPOINT =
+  "https://uqzl6jyqvg.execute-api.ap-south-1.amazonaws.com/dev/signOut";
+
 const ProfileScreenCN = ({ navigation }) => {
   const { resetTimer } = useAutomaticLogout();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
