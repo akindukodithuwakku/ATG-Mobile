@@ -31,7 +31,7 @@ const SideNavigationCN = ({ navigation, onClose }) => {
     {
       name: "Appointments",
       icon: "calendar-outline",
-      route: "Appointments",
+      route: "AppointmentHandling",
     },
     {
       name: "Notifications",

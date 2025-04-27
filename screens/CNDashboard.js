@@ -165,7 +165,7 @@ const CNDashboard = ({ navigation }) => {
 
           <TouchableOpacity
             style={styles.card}
-            onPress={() => navigateToScreen("Appointments")}
+            onPress={() => navigateToScreen("AppointmentHandling")}
           >
             <LinearGradient
               colors={["#1FA2FF", "#12D8FA"]}
