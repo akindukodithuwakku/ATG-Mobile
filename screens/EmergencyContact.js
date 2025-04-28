@@ -76,16 +76,18 @@ const EmergencyContact = ({ navigation }) => {
     return isValid;
   };
   const handleContinue = () => {
-    if (validateForm()) {
-      saveData(); // Save data before navigating
-      const emergencyContactData = {
+    const emergencyContactData = {
         contactName,
         contactNumber,
         relationship,
-      };
-      navigation.navigate("CareIntakeReview", { emergencyContactData }); // Pass data to the review screen
-    }
-  };
+    };
+    navigation.navigate("CareIntakeReview", {
+        personalInfoData: route.params.personalInfoData,
+        healthData: route.params.healthData,
+        careNeedsData: route.params.careNeedsData,
+        emergencyContactData,
+    });
+};
 
   return (
     <KeyboardAvoidingView 

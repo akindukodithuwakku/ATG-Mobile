@@ -1,4 +1,4 @@
-//personal information form
+// PersonalInfo.js
 import React, { useState } from "react";
 import {
   View,
@@ -48,7 +48,6 @@ const PersonalInfo = ({ navigation }) => {
     setShowDatePicker(true);
   };
 
-  // Function to close the side navigation
   const closeSideNav = () => {
     setIsSideNavVisible(false);
   };
@@ -63,7 +62,7 @@ const PersonalInfo = ({ navigation }) => {
     if (!isMale && !isFemale) newErrors.gender = "Please select a gender";
 
     setErrors(newErrors);
-    return Object.keys(newErrors).length === 0; // Return true if no errors
+    return Object.keys(newErrors).length === 0;
   };
 
   const handleContinue = () => {
@@ -74,13 +73,12 @@ const PersonalInfo = ({ navigation }) => {
         dateOfBirth,
         contactNumber,
         homeAddress,
-        gender: isMale ? "Male" : "Female", // Determine gender based on the selected switch
+        gender: isMale ? "Male" : "Female",
       };
-      navigation.navigate("HealthConditions", { personalInfoData }); // Pass data to the next screen
+      navigation.navigate("HealthConditions", { personalInfoData });
     }
   };
 
-  // Clear error when user starts typing
   const handleInputChange = (setter, field) => (text) => {
     setter(text);
     if (errors[field]) {
@@ -92,11 +90,10 @@ const PersonalInfo = ({ navigation }) => {
     <View style={styles.container}>
       <StatusBar
         barStyle={scheme === "dark" ? "light-content" : "dark-content"}
-        translucent={true}
+        translucent
         backgroundColor={scheme === "dark" ? "black" : "transparent"}
       />
 
-      {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => setIsSideNavVisible(!isSideNavVisible)}>
           <Ionicons name="menu" size={28} color="white" />
@@ -104,33 +101,31 @@ const PersonalInfo = ({ navigation }) => {
         <Text style={styles.headerText}>Personal Information</Text>
       </View>
 
-      {/* Side Navigation */}
       {isSideNavVisible && (
         <SideNavigationClient navigation={navigation} onClose={closeSideNav} />
       )}
 
       <ScrollView contentContainerStyle={styles.scrollContainer}>
-        {/* Form Fields */}
         <View style={styles.formContainer}>
+          {/* Username */}
+          <Text style={styles.label}>Username</Text>
+          <View style={styles.inputContainer}>
+            <TextInput
+              style={styles.input}
+              placeholder="Enter your username"
+              placeholderTextColor="#B3E5FC"
+              value={userName}
+              onChangeText={handleInputChange(setUserName, "userName")}
+            />
+          </View>
+          {errors.userName && (
+            <View style={styles.errorContainer}>
+              <ErrorIcon />
+              <Text style={styles.error}>{errors.userName}</Text>
+            </View>
+          )}
 
-          {/* Username Field */}
-    <Text style={styles.label}>Username</Text>
-    <View style={styles.inputContainer}>
-      <TextInput
-        style={styles.input}
-        placeholder="Enter your username"
-        placeholderTextColor="#B3E5FC"
-        value={userName}
-        onChangeText={handleInputChange(setUserName, "userName")}
-      />
-      {errors.userName}
-    </View>
-    {errors.userName && (
-      <View style={styles.errorContainer}>
-        <ErrorIcon />
-        <Text style={styles.error}>{errors.userName}</Text>
-      </View>
-    )}
+          {/* Full Name */}
           <Text style={styles.label}>Full Name</Text>
           <View style={styles.inputContainer}>
             <TextInput
@@ -140,7 +135,6 @@ const PersonalInfo = ({ navigation }) => {
               value={fullName}
               onChangeText={handleInputChange(setFullName, "fullName")}
             />
-            {errors.fullName}
           </View>
           {errors.fullName && (
             <View style={styles.errorContainer}>
@@ -149,20 +143,14 @@ const PersonalInfo = ({ navigation }) => {
             </View>
           )}
 
-          <Text style={styles.label}>Date Of Birth</Text>
-          <View style={styles.inputContainer}>
-            <TextInput
-              style={styles.input}
-              placeholder="DD / MM / YYYY"
-              placeholderTextColor="#B3E5FC"
-              value={dateOfBirth}
-              onChangeText={handleInputChange(setDateOfBirth, "dateOfBirth")}
-              onFocus={showDatepicker}
-            />
-            <TouchableOpacity onPress={showDatepicker}>
-              <Ionicons name="calendar" size={24} color="#00BCD4" />
-            </TouchableOpacity>
-          </View>
+          {/* Date of Birth */}
+          <Text style={styles.label}>Date of Birth</Text>
+          <TouchableOpacity onPress={showDatepicker} style={[styles.inputContainer, styles.dateInput]}>
+            <Text style={styles.dateText}>
+              {dateOfBirth || "DD / MM / YYYY"}
+            </Text>
+            <Ionicons name="calendar" size={24} color="#00BCD4" />
+          </TouchableOpacity>
           {showDatePicker && (
             <DateTimePicker
               value={new Date()}
@@ -178,6 +166,7 @@ const PersonalInfo = ({ navigation }) => {
             </View>
           )}
 
+          {/* Gender */}
           <Text style={styles.label}>Gender</Text>
           <View style={styles.genderContainer}>
             <View style={styles.genderOption}>
@@ -209,6 +198,7 @@ const PersonalInfo = ({ navigation }) => {
             </View>
           )}
 
+          {/* Contact Number */}
           <Text style={styles.label}>Contact Number</Text>
           <View style={styles.inputContainer}>
             <TextInput
@@ -219,7 +209,6 @@ const PersonalInfo = ({ navigation }) => {
               value={contactNumber}
               onChangeText={handleInputChange(setContactNumber, "contactNumber")}
             />
-            {errors.contactNumber}
           </View>
           {errors.contactNumber && (
             <View style={styles.errorContainer}>
@@ -228,6 +217,7 @@ const PersonalInfo = ({ navigation }) => {
             </View>
           )}
 
+          {/* Home Address */}
           <Text style={styles.label}>Home Address</Text>
           <View style={styles.inputContainer}>
             <TextInput
@@ -240,7 +230,6 @@ const PersonalInfo = ({ navigation }) => {
               numberOfLines={4}
               textAlignVertical="top"
             />
-            {errors.homeAddress}
           </View>
           {errors.homeAddress && (
             <View style={styles.errorContainer}>
@@ -252,10 +241,7 @@ const PersonalInfo = ({ navigation }) => {
       </ScrollView>
 
       {/* Continue Button */}
-      <TouchableOpacity
-        style={styles.continueButton}
-        onPress={handleContinue}
-      >
+      <TouchableOpacity style={styles.continueButton} onPress={handleContinue}>
         <Text style={styles.continueText}>Continue</Text>
       </TouchableOpacity>
 
@@ -307,6 +293,17 @@ const styles = StyleSheet.create({
     padding: 12,
     fontSize: 16,
     flex: 1,
+  },
+  dateInput: {
+    justifyContent: "space-between",
+    paddingHorizontal: 12,
+    backgroundColor: "#E0F7FA",
+    borderRadius: 10,
+    paddingVertical: 12,
+  },
+  dateText: {
+    fontSize: 16,
+    color: "#333",
   },
   textArea: {
     backgroundColor: "#E0F7FA",

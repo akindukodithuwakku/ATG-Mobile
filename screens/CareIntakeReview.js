@@ -1,4 +1,4 @@
-//final review of the care intake form after entering data into the form
+// Final review of the care intake form after entering data into the form
 import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView, StatusBar, KeyboardAvoidingView, Platform, useColorScheme } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -65,21 +65,21 @@ const CareIntakeReview = ({ navigation, route }) => {
       emergencyContactNumber,
       relationship,
     };
-  
+
     try {
       // Replace with your API endpoint
-      const response = await fetch('https://your-api-endpoint.com/submit', {
+      const response = await fetch('https://abc123.execute-api.ap-south-1.amazonaws.com/dev/submit', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(formData),
       });
-  
+
       if (!response.ok) {
         throw new Error('Network response was not ok');
       }
-  
+
       // Clear the form fields
       setFullName('');
       setDateOfBirth('');
@@ -94,9 +94,9 @@ const CareIntakeReview = ({ navigation, route }) => {
       setEmergencyContactName('');
       setEmergencyContactNumber('');
       setRelationship('');
-  
-      // Navigate to a success screen or the same form
-      navigation.navigate('SubmissionSuccess'); // or navigate to the form screen again
+
+      // Navigate to a success screen
+      navigation.navigate('SubmissionSuccess');
     } catch (error) {
       console.error('Error submitting form:', error);
       // Handle error (e.g., show an alert)
@@ -237,7 +237,7 @@ const styles = StyleSheet.create({
   buttonContainer: {
     flexDirection: "row",
     justifyContent: "space-between",
- paddingHorizontal: 20,
+    paddingHorizontal: 20,
     paddingVertical: 65,
     backgroundColor: "#F8FDFF",
   },
