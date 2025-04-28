@@ -142,14 +142,10 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     paddingHorizontal: 15,
+    paddingVertical: 8,
   },
   backButton: {
     padding: 10,
-  },
-  backButtonText: {
-    fontSize: 28,
-    color: "#ffffff",
-    fontWeight: "bold",
   },
   headerText: {
     flex: 1,
