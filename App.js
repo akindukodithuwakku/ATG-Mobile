@@ -28,7 +28,7 @@ export default function App() {
   return (
     <NavigationContainer>
       <Stack.Navigator
-        initialRouteName="ClientDashboard"
+        initialRouteName="Documents"
         screenOptions={{ headerShown: false }}
       >
         <Stack.Screen name="Welcome" component={WelcomeScreen} />

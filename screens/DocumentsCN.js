@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -6,36 +6,64 @@ import {
   TextInput,
   TouchableOpacity,
   StatusBar,
+  ActivityIndicator,
+  Alert,
   useColorScheme,
 } from "react-native";
 import SideNavigationCN from "../Components/SideNavigationCN";
 import BottomNavigationCN from "../Components/BottomNavigationCN";
-import { LinearGradient } from "expo-linear-gradient";
 import { Picker } from "@react-native-picker/picker";
 import { Ionicons } from "@expo/vector-icons";
 
-const documentsData = [
-  { id: '1', name: 'Mikhail Johnson', fileName: 'Prescription_List.jpg', uploadDate: '2024-12-21' },
-  { id: '2', name: 'John Smith', fileName: 'Insurance_Details.docx', uploadDate: '2024-12-22' },
-  { id: '3', name: 'Emily Davis', fileName: 'Medical_Report.pdf', uploadDate: '2024-12-21' },
-];
+// Replace this with your real API URL
+const API_URL = "https://pbhcgeu119.execute-api.<region>.amazonaws.com/UploadDocumentHandler";
 
 const MedicationMgtCN = ({ navigation }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [documentsData, setDocumentsData] = useState([]);
   const [search, setSearch] = useState('');
-  const [sortedBy, setSortedBy] = useState('Client'); // Default sorting criterion
+  const [sortedBy, setSortedBy] = useState('Client');
+  const [loading, setLoading] = useState(false);
   const scheme = useColorScheme();
 
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
   };
 
-  // Filter documents based on search input
+  useEffect(() => {
+    fetchDocuments();
+  }, []);
+
+  const fetchDocuments = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch(API_URL);
+      const data = await response.json();
+      const documents = JSON.parse(data.body);
+      console.log("Fetched Documents:", documents);
+
+      // Mapping to expected format (your frontend expects `name`, `fileName`, `uploadDate`)
+      const formattedDocs = documents.map((doc) => ({
+        id: doc.id.toString(),
+        name: doc.user_id || "Unknown User",
+        fileName: doc.document_url.split("/").pop(), // Extract filename from URL
+        uploadDate: doc.created_at.split("T")[0], // Only date part
+        downloadUrl: doc.document_url, // full URL for download
+      }));
+
+      setDocumentsData(formattedDocs);
+    } catch (error) {
+      console.error("Error fetching documents:", error);
+      Alert.alert("Error", "Failed to load documents. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const filteredDocuments = documentsData.filter((doc) =>
     doc.name.toLowerCase().includes(search.toLowerCase())
   );
 
-  // Sort documents based on the selected criterion
   const sortDocuments = (data) => {
     switch (sortedBy) {
       case 'Client':
@@ -43,16 +71,31 @@ const MedicationMgtCN = ({ navigation }) => {
       case 'File Name':
         return [...data].sort((a, b) => a.fileName.localeCompare(b.fileName));
       case 'Upload Date':
-        return [...data].sort(
-          (a, b) => new Date(a.uploadDate) - new Date(b.uploadDate)
-        );
+        return [...data].sort((a, b) => new Date(a.uploadDate) - new Date(b.uploadDate));
       default:
         return data;
     }
   };
 
-  // Sorted documents
   const sortedDocuments = sortDocuments(filteredDocuments);
+
+  const handleDownloadConfirmation = (fileName, downloadUrl) => {
+    Alert.alert(
+      "Download Confirmation",
+      `Do you want to download ${fileName}?`,
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Yes",
+          onPress: () => {
+            console.log(`Downloading from ${downloadUrl}`);
+            // TODO: Implement file download logic using RNFS or expo-file-system
+          },
+        },
+      ],
+      { cancelable: true }
+    );
+  };
 
   return (
     <View style={styles.container}>
@@ -73,15 +116,8 @@ const MedicationMgtCN = ({ navigation }) => {
           <TouchableOpacity style={styles.overlayBackground} onPress={toggleMenu} />
         </View>
       )}
-      {/* Overlay for Side Navigation */}
-      {isMenuOpen && (
-        <View style={styles.overlay}>
-          <SideNavigationCN navigation={navigation} onClose={toggleMenu} />
-          <TouchableOpacity style={styles.overlayBackground} onPress={toggleMenu} />
-        </View>
-      )}
 
-      {/* Search and Sort Options */}
+      {/* Search and Sort */}
       <View style={styles.searchContainer}>
         <TextInput
           style={styles.searchInput}
@@ -103,29 +139,29 @@ const MedicationMgtCN = ({ navigation }) => {
         </View>
       </View>
 
-      {/* Table Header */}
-      <View style={styles.tableHeader}>
-        <Text style={[styles.columnHeader, { flex: 2 }]}>Client</Text>
-        <Text style={[styles.columnHeader, { flex: 3 }]}>File Name</Text>
-        <Text style={[styles.columnHeader, { flex: 2 }]}>Upload Date</Text>
-      </View>
-
-      {/* Table Rows */}
-      <View style={styles.tableContainer}>
-        {sortedDocuments.map((doc) => (
-          <View key={doc.id} style={styles.tableRow}>
-            <Text style={[styles.cell, { flex: 2 }]} numberOfLines={1}>
-              {doc.name}
-            </Text>
-            <Text style={[styles.cell, { flex: 3 }]} numberOfLines={1}>
-              {doc.fileName}
-            </Text>
-            <Text style={[styles.cell, { flex: 2 }]} numberOfLines={1}>
-              {doc.uploadDate}
-            </Text>
+      {/* Documents Table */}
+      {loading ? (
+        <ActivityIndicator size="large" color="#00AEEF" style={{ marginTop: 20 }} />
+      ) : (
+        <View style={styles.tableContainer}>
+          <View style={styles.tableHeader}>
+            <Text style={[styles.columnHeader, { flex: 2 }]}>Client</Text>
+            <Text style={[styles.columnHeader, { flex: 3 }]}>File Name</Text>
+            <Text style={[styles.columnHeader, { flex: 2 }]}>Upload Date</Text>
           </View>
-        ))}
-      </View>
+          {sortedDocuments.map((doc) => (
+            <TouchableOpacity
+              key={doc.id}
+              style={styles.tableRow}
+              onPress={() => handleDownloadConfirmation(doc.fileName, doc.downloadUrl)}
+            >
+              <Text style={[styles.cell, { flex: 2 }]} numberOfLines={1}>{doc.name}</Text>
+              <Text style={[styles.cell, { flex: 3 }]} numberOfLines={1}>{doc.fileName}</Text>
+              <Text style={[styles.cell, { flex: 2 }]} numberOfLines={1}>{doc.uploadDate}</Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+      )}
 
       {/* Bottom Navigation */}
       <BottomNavigationCN navigation={navigation} />
@@ -133,12 +169,8 @@ const MedicationMgtCN = ({ navigation }) => {
   );
 };
 
-// Styles
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#fff",
-  },
+  container: { flex: 1, backgroundColor: "#fff" },
   header: {
     flexDirection: "row",
     alignItems: "center",
@@ -146,11 +178,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#f8f9fa",
     marginTop: 30,
   },
-  headerText: {
-    fontSize: 20,
-    fontWeight: "bold",
-    marginLeft: 15,
-  },
+  headerText: { fontSize: 20, fontWeight: "bold", marginLeft: 15 },
   searchContainer: {
     flexDirection: "row",
     alignItems: "center",
@@ -165,15 +193,8 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     marginRight: 10,
   },
-  sortContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  sortLabel: {
-    fontSize: 14,
-    fontWeight: "bold",
-    marginRight: 5,
-  },
+  sortContainer: { flexDirection: "row", alignItems: "center" },
+  sortLabel: { fontSize: 14, fontWeight: "bold", marginRight: 5 },
   picker: {
     height: 50,
     width: 150,
@@ -188,15 +209,8 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     paddingHorizontal: 5,
   },
-  columnHeader: {
-    color: "#fff",
-    fontWeight: "bold",
-    textAlign: "center",
-  },
-  tableContainer: {
-    flex: 1,
-    marginTop: 5,
-  },
+  columnHeader: { color: "#fff", fontWeight: "bold", textAlign: "center" },
+  tableContainer: { flex: 1, marginTop: 5 },
   tableRow: {
     flexDirection: "row",
     borderBottomWidth: 1,
@@ -204,23 +218,13 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     paddingHorizontal: 5,
   },
-  cell: {
-    textAlign: "center",
-    fontSize: 14,
-  },
+  cell: { textAlign: "center", fontSize: 14 },
   overlay: {
     position: "absolute",
-    top: 0,
-    left: 0,
-    width: "100%",
-    height: "100%",
-    flexDirection: "row",
-    zIndex: 1,
+    top: 0, left: 0, width: "100%", height: "100%",
+    flexDirection: "row", zIndex: 1,
   },
-  overlayBackground: {
-    flex: 1,
-    backgroundColor: "rgba(0,0,0,0.4)",
-  },
+  overlayBackground: { flex: 1, backgroundColor: "rgba(0,0,0,0.4)" },
 });
 
 export default MedicationMgtCN;
