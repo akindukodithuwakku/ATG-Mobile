@@ -7,23 +7,16 @@ import {
   StatusBar,
   Platform,
 } from "react-native";
-import SideNavigationCN from "../Components/SideNavigationCN";
-import BottomNavigationCN from "../Components/BottomNavigationCN";
 import { WebView } from "react-native-webview";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 
 const Appointments = ({ navigation }) => {
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   // Replace this with the care navigator's calendar URL
   // const calendarUrl = 'https://calendar.google.com/calendar/embed?src=benjaminalec285%40gmail.com';
   const calanderEmail = "benjaminalec285";
   const calendarUrl = `https://calendar.google.com/calendar/embed?src=${calanderEmail}%40gmail.com`;
-
-  const toggleMenu = () => {
-    setIsMenuOpen(!isMenuOpen);
-  };
 
   return (
     <View style={styles.container}>
@@ -38,27 +31,17 @@ const Appointments = ({ navigation }) => {
         style={styles.headerGradient}
       >
         <View style={styles.header}>
-          <TouchableOpacity style={styles.menuButton} onPress={toggleMenu}>
-            <Ionicons
-              name={isMenuOpen ? "close" : "menu"}
-              size={30}
-              color="black"
-            />
+          <TouchableOpacity
+            onPress={() => {
+              navigation.goBack();
+            }}
+            style={styles.backButton}
+          >
+            <Ionicons name="chevron-back" size={28} color="#FFFFFF" />
           </TouchableOpacity>
-          <Text style={styles.headerText}>Appointments</Text>
+          <Text style={styles.headerText}>Google Calender</Text>
         </View>
       </LinearGradient>
-
-      {isMenuOpen && (
-        <View style={styles.overlay}>
-          <SideNavigationCN navigation={navigation} onClose={toggleMenu} />
-          <TouchableOpacity
-            style={styles.overlayBackground}
-            onPress={toggleMenu}
-            activeOpacity={1}
-          />
-        </View>
-      )}
 
       <View style={styles.content}>
         <WebView
@@ -68,8 +51,6 @@ const Appointments = ({ navigation }) => {
           domStorageEnabled={true}
         />
       </View>
-
-      <BottomNavigationCN navigation={navigation} />
     </View>
   );
 };
@@ -85,18 +66,19 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: "row",
     alignItems: "center",
-    padding: 20,
-    paddingTop: 10,
+    paddingHorizontal: 15,
+    paddingVertical: 8,
   },
-  menuButton: {
-    padding: 5,
-    borderRadius: 8,
+  backButton: {
+    padding: 10,
   },
   headerText: {
+    flex: 1,
+    textAlign: "center",
     fontSize: 24,
     fontWeight: "bold",
     color: "#fff",
-    marginLeft: 15,
+    marginRight: 40,
   },
   content: {
     flex: 1,
