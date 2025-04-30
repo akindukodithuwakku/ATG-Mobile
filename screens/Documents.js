@@ -43,7 +43,7 @@ const DocumentUpload = ({ navigation }) => {
 
   const uploadDocument = async (uri, name) => {
     try {
-      const userId = "demo-user-1234"; // Hardcoded for testing
+      const userId = "demo-user-1234"; 
 
       setUploadingFiles((prev) => ({
         ...prev,
@@ -98,7 +98,7 @@ const DocumentUpload = ({ navigation }) => {
         name,
       });
 
-      // Do NOT set Content-Type yourself; RN will add the right boundary.
+     
       xhr.send(formData);
     } catch (error) {
       console.error("Error uploading file:", error);
