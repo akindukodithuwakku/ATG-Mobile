@@ -9,119 +9,129 @@ import {
   ActivityIndicator,
   Alert,
   useColorScheme,
+  FlatList,
 } from "react-native";
 import SideNavigationCN from "../Components/SideNavigationCN";
 import BottomNavigationCN from "../Components/BottomNavigationCN";
 import { Picker } from "@react-native-picker/picker";
 import { Ionicons } from "@expo/vector-icons";
 
-// Replace this with your real API URL
-const API_URL = "https://pbhcgeu119.execute-api.<region>.amazonaws.com/UploadDocumentHandler";
+// ← HTTP API uses $default stage, so /UploadDocumentHandler directly
+const API_URL =
+  "https://pbhcgeu119.execute-api.ap-south-1.amazonaws.com/UploadDocumentHandler";
 
-const MedicationMgtCN = ({ navigation }) => {
+const DocumentsCN = ({ navigation }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [documentsData, setDocumentsData] = useState([]);
-  const [search, setSearch] = useState('');
-  const [sortedBy, setSortedBy] = useState('Client');
+  const [search, setSearch] = useState("");
+  const [sortedBy, setSortedBy] = useState("Client");
   const [loading, setLoading] = useState(false);
   const scheme = useColorScheme();
-
-  const toggleMenu = () => {
-    setIsMenuOpen(!isMenuOpen);
-  };
 
   useEffect(() => {
     fetchDocuments();
   }, []);
 
   const fetchDocuments = async () => {
+    setLoading(true);
     try {
-      setLoading(true);
-      const response = await fetch(API_URL);
-      const data = await response.json();
-      const documents = JSON.parse(data.body);
-      console.log("Fetched Documents:", documents);
+      const res = await fetch(API_URL);
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.message || res.statusText);
+      }
+      const payload = await res.json();
+      // payload might already be an array (HTTP API defaults to JSON array)
+      const docs = Array.isArray(payload) ? payload : payload.body;
+      const list = typeof docs === "string" ? JSON.parse(docs) : docs;
 
-      // Mapping to expected format (your frontend expects `name`, `fileName`, `uploadDate`)
-      const formattedDocs = documents.map((doc) => ({
-        id: doc.id.toString(),
-        name: doc.user_id || "Unknown User",
-        fileName: doc.document_url.split("/").pop(), // Extract filename from URL
-        uploadDate: doc.created_at.split("T")[0], // Only date part
-        downloadUrl: doc.document_url, // full URL for download
+      const formatted = list.map((doc) => ({
+        id: String(doc.id),
+        name: doc.user_name || doc.user_id || "Unknown",
+        fileName: doc.document_url.split("/").pop(),
+        uploadDate: doc.created_at.split("T")[0],
+        downloadUrl: doc.document_url,
       }));
-
-      setDocumentsData(formattedDocs);
-    } catch (error) {
-      console.error("Error fetching documents:", error);
-      Alert.alert("Error", "Failed to load documents. Please try again.");
+      setDocumentsData(formatted);
+    } catch (err) {
+      console.error("Error fetching documents:", err);
+      Alert.alert("Error", err.message);
     } finally {
       setLoading(false);
     }
   };
 
-  const filteredDocuments = documentsData.filter((doc) =>
-    doc.name.toLowerCase().includes(search.toLowerCase())
+  const filtered = documentsData.filter((d) =>
+    d.name.toLowerCase().includes(search.toLowerCase())
   );
-
-  const sortDocuments = (data) => {
+  const sorted = (() => {
     switch (sortedBy) {
-      case 'Client':
-        return [...data].sort((a, b) => a.name.localeCompare(b.name));
-      case 'File Name':
-        return [...data].sort((a, b) => a.fileName.localeCompare(b.fileName));
-      case 'Upload Date':
-        return [...data].sort((a, b) => new Date(a.uploadDate) - new Date(b.uploadDate));
+      case "Client":
+        return filtered.sort((a, b) => a.name.localeCompare(b.name));
+      case "File Name":
+        return filtered.sort((a, b) => a.fileName.localeCompare(b.fileName));
+      case "Upload Date":
+        return filtered.sort(
+          (a, b) => new Date(a.uploadDate) - new Date(b.uploadDate)
+        );
       default:
-        return data;
+        return filtered;
     }
-  };
+  })();
 
-  const sortedDocuments = sortDocuments(filteredDocuments);
-
-  const handleDownloadConfirmation = (fileName, downloadUrl) => {
+  const confirmDownload = (fn, url) => {
     Alert.alert(
-      "Download Confirmation",
-      `Do you want to download ${fileName}?`,
+      "Download?",
+      `Download ${fn}?`,
       [
         { text: "Cancel", style: "cancel" },
-        {
-          text: "Yes",
-          onPress: () => {
-            console.log(`Downloading from ${downloadUrl}`);
-            // TODO: Implement file download logic using RNFS or expo-file-system
-          },
-        },
+        { text: "Yes", onPress: () => console.log("Download:", url) /* implement RNFS here */ },
       ],
       { cancelable: true }
     );
   };
 
+  const renderItem = ({ item }) => (
+    <TouchableOpacity
+      style={styles.tableRow}
+      onPress={() => confirmDownload(item.fileName, item.downloadUrl)}
+    >
+      <Text style={[styles.cell, { flex: 2 }]}>{item.name}</Text>
+      <Text style={[styles.cell, { flex: 3 }]} numberOfLines={1}>
+        {item.fileName}
+      </Text>
+      <Text style={[styles.cell, { flex: 2 }]}>{item.uploadDate}</Text>
+    </TouchableOpacity>
+  );
+
   return (
     <View style={styles.container}>
       <StatusBar
         barStyle={scheme === "dark" ? "light-content" : "dark-content"}
-        translucent={true}
-        backgroundColor={scheme === "dark" ? "black" : "transparent"}
+        translucent
+        backgroundColor="transparent"
       />
       <View style={styles.header}>
-        <TouchableOpacity onPress={toggleMenu}>
-          <Ionicons name={isMenuOpen ? "close" : "menu"} size={30} color="black" />
+        <TouchableOpacity onPress={() => setIsMenuOpen((v) => !v)}>
+          <Ionicons
+            name={isMenuOpen ? "close" : "menu"}
+            size={30}
+            color="black"
+          />
         </TouchableOpacity>
-        <Text style={styles.headerText}>Document Upload</Text>
+        <Text style={styles.headerText}>Documents</Text>
       </View>
       {isMenuOpen && (
         <View style={styles.overlay}>
-          <SideNavigationCN navigation={navigation} onClose={toggleMenu} />
-          <TouchableOpacity style={styles.overlayBackground} onPress={toggleMenu} />
+          <SideNavigationCN navigation={navigation} onClose={() => setIsMenuOpen(false)} />
+          <TouchableOpacity style={styles.overlayBackground} onPress={() => setIsMenuOpen(false)} />
         </View>
       )}
 
-      {/* Search and Sort */}
       <View style={styles.searchContainer}>
         <TextInput
           style={styles.searchInput}
-          placeholder="Search client name"
+          placeholder="Search client"
           value={search}
           onChangeText={setSearch}
         />
@@ -129,7 +139,7 @@ const MedicationMgtCN = ({ navigation }) => {
           <Text style={styles.sortLabel}>Sort By:</Text>
           <Picker
             selectedValue={sortedBy}
-            onValueChange={(value) => setSortedBy(value)}
+            onValueChange={setSortedBy}
             style={styles.picker}
           >
             <Picker.Item label="Client" value="Client" />
@@ -139,9 +149,8 @@ const MedicationMgtCN = ({ navigation }) => {
         </View>
       </View>
 
-      {/* Documents Table */}
       {loading ? (
-        <ActivityIndicator size="large" color="#00AEEF" style={{ marginTop: 20 }} />
+        <ActivityIndicator size="large" color="#00AEEF" />
       ) : (
         <View style={styles.tableContainer}>
           <View style={styles.tableHeader}>
@@ -149,21 +158,14 @@ const MedicationMgtCN = ({ navigation }) => {
             <Text style={[styles.columnHeader, { flex: 3 }]}>File Name</Text>
             <Text style={[styles.columnHeader, { flex: 2 }]}>Upload Date</Text>
           </View>
-          {sortedDocuments.map((doc) => (
-            <TouchableOpacity
-              key={doc.id}
-              style={styles.tableRow}
-              onPress={() => handleDownloadConfirmation(doc.fileName, doc.downloadUrl)}
-            >
-              <Text style={[styles.cell, { flex: 2 }]} numberOfLines={1}>{doc.name}</Text>
-              <Text style={[styles.cell, { flex: 3 }]} numberOfLines={1}>{doc.fileName}</Text>
-              <Text style={[styles.cell, { flex: 2 }]} numberOfLines={1}>{doc.uploadDate}</Text>
-            </TouchableOpacity>
-          ))}
+          <FlatList
+            data={sorted}
+            keyExtractor={(i) => i.id}
+            renderItem={renderItem}
+          />
         </View>
       )}
 
-      {/* Bottom Navigation */}
       <BottomNavigationCN navigation={navigation} />
     </View>
   );
@@ -175,10 +177,20 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     padding: 15,
-    backgroundColor: "#f8f9fa",
     marginTop: 30,
+    backgroundColor: "#f8f9fa",
   },
-  headerText: { fontSize: 20, fontWeight: "bold", marginLeft: 15 },
+  headerText: { fontSize: 20, marginLeft: 15, fontWeight: "bold" },
+  overlay: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    flexDirection: "row",
+    zIndex: 1,
+  },
+  overlayBackground: { flex: 1, backgroundColor: "rgba(0,0,0,0.4)" },
   searchContainer: {
     flexDirection: "row",
     alignItems: "center",
@@ -187,14 +199,14 @@ const styles = StyleSheet.create({
   },
   searchInput: {
     flex: 1,
-    padding: 10,
     borderWidth: 1,
     borderColor: "#ced4da",
     borderRadius: 5,
+    padding: 10,
     marginRight: 10,
   },
   sortContainer: { flexDirection: "row", alignItems: "center" },
-  sortLabel: { fontSize: 14, fontWeight: "bold", marginRight: 5 },
+  sortLabel: { fontWeight: "bold", marginRight: 5 },
   picker: {
     height: 50,
     width: 150,
@@ -203,28 +215,20 @@ const styles = StyleSheet.create({
     borderColor: "#ced4da",
     borderRadius: 5,
   },
+  tableContainer: { flex: 1, marginTop: 5 },
   tableHeader: {
     flexDirection: "row",
     backgroundColor: "#00AEEF",
-    paddingVertical: 10,
-    paddingHorizontal: 5,
+    padding: 10,
   },
-  columnHeader: { color: "#fff", fontWeight: "bold", textAlign: "center" },
-  tableContainer: { flex: 1, marginTop: 5 },
+  columnHeader: { color: "#fff", textAlign: "center", fontWeight: "bold" },
   tableRow: {
     flexDirection: "row",
+    padding: 10,
     borderBottomWidth: 1,
     borderColor: "#ddd",
-    paddingVertical: 10,
-    paddingHorizontal: 5,
   },
-  cell: { textAlign: "center", fontSize: 14 },
-  overlay: {
-    position: "absolute",
-    top: 0, left: 0, width: "100%", height: "100%",
-    flexDirection: "row", zIndex: 1,
-  },
-  overlayBackground: { flex: 1, backgroundColor: "rgba(0,0,0,0.4)" },
+  cell: { flex: 1, textAlign: "center" },
 });
 
-export default MedicationMgtCN;
+export default DocumentsCN;
