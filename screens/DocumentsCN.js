@@ -16,7 +16,7 @@ import BottomNavigationCN from "../Components/BottomNavigationCN";
 import { Picker } from "@react-native-picker/picker";
 import { Ionicons } from "@expo/vector-icons";
 
-// ← HTTP API uses $default stage, so /UploadDocumentHandler directly
+
 const API_URL =
   "https://pbhcgeu119.execute-api.ap-south-1.amazonaws.com/UploadDocumentHandler";
 
@@ -41,7 +41,7 @@ const DocumentsCN = ({ navigation }) => {
         throw new Error(err.message || res.statusText);
       }
       const payload = await res.json();
-      // payload might already be an array (HTTP API defaults to JSON array)
+      
       const docs = Array.isArray(payload) ? payload : payload.body;
       const list = typeof docs === "string" ? JSON.parse(docs) : docs;
 
