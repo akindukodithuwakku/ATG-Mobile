@@ -43,7 +43,7 @@ const DocumentUpload = ({ navigation }) => {
 
   const uploadDocument = async (uri, name) => {
     try {
-      const userId = "demo-user-1234"; // ✅ Hardcoded user ID for testing
+      const userId = "demo-user-1234"; 
 
       setUploadingFiles((prev) => ({
         ...prev,
