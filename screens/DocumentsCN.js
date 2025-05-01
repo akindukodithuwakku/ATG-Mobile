@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import {
   View,
   Text,
@@ -11,14 +11,15 @@ import {
   useColorScheme,
   FlatList,
 } from "react-native";
-import SideNavigationCN from "../Components/SideNavigationCN";
-import BottomNavigationCN from "../Components/BottomNavigationCN";
 import { Picker } from "@react-native-picker/picker";
 import { Ionicons } from "@expo/vector-icons";
+import * as FileSystem from "expo-file-system";
+import * as Sharing from "expo-sharing";
+import SideNavigationCN from "../Components/SideNavigationCN";
+import BottomNavigationCN from "../Components/BottomNavigationCN";
 
-
-const API_URL =
-  "https://pbhcgeu119.execute-api.ap-south-1.amazonaws.com/UploadDocumentHandler";
+const API_URL = "https://pbhcgeu119.execute-api.ap-south-1.amazonaws.com/dev/UploadDocumentHandler";
+const SIGNED_URL_API = "https://pbhcgeu119.execute-api.ap-south-1.amazonaws.com/dev/DocumentDownloadHandler";
 
 const DocumentsCN = ({ navigation }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -36,65 +37,104 @@ const DocumentsCN = ({ navigation }) => {
     setLoading(true);
     try {
       const res = await fetch(API_URL);
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.message || res.statusText);
-      }
-      const payload = await res.json();
-      
-      const docs = Array.isArray(payload) ? payload : payload.body;
+      const json = await res.json();
+      const docs = Array.isArray(json) ? json : json.body;
       const list = typeof docs === "string" ? JSON.parse(docs) : docs;
 
-      const formatted = list.map((doc) => ({
-        id: String(doc.id),
-        name: doc.user_name || doc.user_id || "Unknown",
-        fileName: doc.document_url.split("/").pop(),
-        uploadDate: doc.created_at.split("T")[0],
-        downloadUrl: doc.document_url,
-      }));
+      const formatted = list.map((doc) => {
+        const s3Key = decodeURIComponent(
+          doc.document_url.split("amazonaws.com/")[1].split("?")[0]
+        );
+        return {
+          id: String(doc.id),
+          name: doc.user_name || doc.user_id || "Unknown",
+          fileName: s3Key.split("/").pop(),
+          uploadDate: doc.created_at?.split("T")[0] || "N/A",
+          s3Key,
+        };
+      });
+
       setDocumentsData(formatted);
     } catch (err) {
-      console.error("Error fetching documents:", err);
-      Alert.alert("Error", err.message);
+      console.error("Fetch Error:", err);
+      Alert.alert("Error", "Failed to fetch documents.");
     } finally {
       setLoading(false);
     }
   };
 
-  const filtered = documentsData.filter((d) =>
-    d.name.toLowerCase().includes(search.toLowerCase())
+  const downloadAndSaveFile = async (fileName, s3Key) => {
+    try {
+      const encodedKey = encodeURIComponent(s3Key);
+      const response = await fetch(`${SIGNED_URL_API}?s3Key=${encodedKey}`);
+      const { downloadUrl } = await response.json();
+
+      if (!downloadUrl) throw new Error("Invalid download URL");
+
+      const fileUri = FileSystem.documentDirectory + fileName;
+
+      // Download the file to local file system
+      const { uri } = await FileSystem.downloadAsync(downloadUrl, fileUri);
+
+      // Notify the user that the file has been downloaded
+      Alert.alert("Download Complete", `File saved to: ${uri}`, [
+        {
+          text: "Open",
+          onPress: async () => {
+            try {
+              // Open the downloaded file
+              await Sharing.shareAsync(uri);
+            } catch (err) {
+              console.error("Sharing error:", err);
+              Alert.alert("Error", "Unable to open the file.");
+            }
+          },
+        },
+        {
+          text: "OK", 
+          onPress: () => {
+            // Simply close the alert when "OK" is pressed.
+          },
+        },
+      ]);
+    } catch (err) {
+      console.error("Download error:", err);
+      Alert.alert("Error", "Could not download the file.");
+    }
+  };
+
+  const confirmDownload = (fileName, s3Key) => {
+    Alert.alert("Download", `Download ${fileName}?`, [
+      { text: "Cancel", style: "cancel" },
+      { text: "Yes", onPress: () => downloadAndSaveFile(fileName, s3Key) },
+    ]);
+  };
+
+  const filtered = useMemo(
+    () =>
+      documentsData.filter((doc) =>
+        doc.name.toLowerCase().includes(search.toLowerCase())
+      ),
+    [documentsData, search]
   );
-  const sorted = (() => {
+
+  const sorted = useMemo(() => {
     switch (sortedBy) {
       case "Client":
-        return filtered.sort((a, b) => a.name.localeCompare(b.name));
+        return [...filtered].sort((a, b) => a.name.localeCompare(b.name));
       case "File Name":
-        return filtered.sort((a, b) => a.fileName.localeCompare(b.fileName));
+        return [...filtered].sort((a, b) => a.fileName.localeCompare(b.fileName));
       case "Upload Date":
-        return filtered.sort(
-          (a, b) => new Date(a.uploadDate) - new Date(b.uploadDate)
-        );
+        return [...filtered].sort((a, b) => new Date(a.uploadDate) - new Date(b.uploadDate));
       default:
         return filtered;
     }
-  })();
-
-  const confirmDownload = (fn, url) => {
-    Alert.alert(
-      "Download?",
-      `Download ${fn}?`,
-      [
-        { text: "Cancel", style: "cancel" },
-        { text: "Yes", onPress: () => console.log("Download:", url) /* implement RNFS here */ },
-      ],
-      { cancelable: true }
-    );
-  };
+  }, [filtered, sortedBy]);
 
   const renderItem = ({ item }) => (
     <TouchableOpacity
       style={styles.tableRow}
-      onPress={() => confirmDownload(item.fileName, item.downloadUrl)}
+      onPress={() => confirmDownload(item.fileName, item.s3Key)}
     >
       <Text style={[styles.cell, { flex: 2 }]}>{item.name}</Text>
       <Text style={[styles.cell, { flex: 3 }]} numberOfLines={1}>
@@ -108,23 +148,24 @@ const DocumentsCN = ({ navigation }) => {
     <View style={styles.container}>
       <StatusBar
         barStyle={scheme === "dark" ? "light-content" : "dark-content"}
-        translucent
         backgroundColor="transparent"
+        translucent
       />
+
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => setIsMenuOpen((v) => !v)}>
-          <Ionicons
-            name={isMenuOpen ? "close" : "menu"}
-            size={30}
-            color="black"
-          />
+        <TouchableOpacity onPress={() => setIsMenuOpen(!isMenuOpen)}>
+          <Ionicons name={isMenuOpen ? "close" : "menu"} size={30} color="black" />
         </TouchableOpacity>
         <Text style={styles.headerText}>Documents</Text>
       </View>
+
       {isMenuOpen && (
         <View style={styles.overlay}>
           <SideNavigationCN navigation={navigation} onClose={() => setIsMenuOpen(false)} />
-          <TouchableOpacity style={styles.overlayBackground} onPress={() => setIsMenuOpen(false)} />
+          <TouchableOpacity
+            style={styles.overlayBackground}
+            onPress={() => setIsMenuOpen(false)}
+          />
         </View>
       )}
 
@@ -158,11 +199,7 @@ const DocumentsCN = ({ navigation }) => {
             <Text style={[styles.columnHeader, { flex: 3 }]}>File Name</Text>
             <Text style={[styles.columnHeader, { flex: 2 }]}>Upload Date</Text>
           </View>
-          <FlatList
-            data={sorted}
-            keyExtractor={(i) => i.id}
-            renderItem={renderItem}
-          />
+          <FlatList data={sorted} keyExtractor={(item) => item.id} renderItem={renderItem} />
         </View>
       )}
 
@@ -184,11 +221,11 @@ const styles = StyleSheet.create({
   overlay: {
     position: "absolute",
     top: 0,
+    bottom: 0,
     left: 0,
     right: 0,
-    bottom: 0,
     flexDirection: "row",
-    zIndex: 1,
+    zIndex: 2,
   },
   overlayBackground: { flex: 1, backgroundColor: "rgba(0,0,0,0.4)" },
   searchContainer: {
@@ -221,14 +258,18 @@ const styles = StyleSheet.create({
     backgroundColor: "#00AEEF",
     padding: 10,
   },
-  columnHeader: { color: "#fff", textAlign: "center", fontWeight: "bold" },
+  columnHeader: {
+    color: "#fff",
+    textAlign: "center",
+    fontWeight: "bold",
+  },
   tableRow: {
     flexDirection: "row",
     padding: 10,
     borderBottomWidth: 1,
     borderColor: "#ddd",
   },
-  cell: { flex: 1, textAlign: "center" },
+  cell: { textAlign: "center" },
 });
 
 export default DocumentsCN;
