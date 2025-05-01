@@ -27,6 +27,7 @@ import TermsAndPrivacy from "./screens/ProfileScreens/TermsAndPrivacy";
 import ReadinessQuestionnaire from "./screens/ReadinessQuestionnaire";
 import AppointmentScheduling from "./screens/AppointmentScheduling";
 import Appointments from "./screens/Appointments";
+import HandleAppointmentsCN from "./screens/HandleAppointmentsCN";
 import CarePlanMgtClient from "./screens/CarePlanMgtClient";
 import MedicationMgtClient from "./screens/MedicationMgtClient";
 import CarePlanMgtCN from "./screens/CarePlanMgtCN";
@@ -68,6 +69,7 @@ const AppNavigator = () => {
         component={AppointmentScheduling}
       />
       <Stack.Screen name="Appointments" component={Appointments} />
+      <Stack.Screen name="AppointmentHandling" component={HandleAppointmentsCN} />
       <Stack.Screen name="CarePlanC" component={CarePlanMgtClient} />
       <Stack.Screen name="MedicationC" component={MedicationMgtClient} />
       <Stack.Screen name="CarePlanCN" component={CarePlanMgtCN} />
