@@ -18,6 +18,9 @@ import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { signUp, confirmSignUp, resendSignUpCode } from "aws-amplify/auth";
 
+const API_ENDPOINT =
+  "https://uqzl6jyqvg.execute-api.ap-south-1.amazonaws.com/dev";
+
 export const SignUpScreen = ({ navigation }) => {
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
@@ -91,6 +94,29 @@ export const SignUpScreen = ({ navigation }) => {
           },
         });
         console.log("User signed up successfully:", signUpResponse);
+
+        const createdAt = new Date().toLocaleString("sv-SE", {
+          timeZone: "Asia/Colombo"
+        }).replace(" ", "T");
+
+        const dbCreateUserResponse = await fetch(`${API_ENDPOINT}/dbHandling `, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            action: "create_user",
+            data: {
+              username: username.trim(),
+              email: email,
+              role: 0,
+              status: 0,
+              calendly_name: null,
+              created_at: createdAt,
+            },
+          }),
+        });
+        console.log("User saved into DB:", dbCreateUserResponse);
 
         // Navigate to verification screen on success
         setIsLoading(false);
@@ -501,22 +527,34 @@ export const VerificationSentScreen = ({ route, navigation }) => {
     setIsVerifying(true);
 
     try {
-      // Make sure username is trimmed to not have any whitespaces
-      const trimmedUsername = username.trim();
-
-      // Explicit log to check username right before confirmation
-      console.log(`About to confirm signup for username: '${trimmedUsername}'`);
+      console.log("About to confirm signup for username: ", username.trim());
 
       await confirmSignUp({
-        username: trimmedUsername,
+        username: username.trim(),
         confirmationCode: verificationCode.trim(),
       });
+
+      console.log("Verification complete.");
+
+      const dbConfirmUserResponse = await fetch(`${API_ENDPOINT}/dbHandling `, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          action: "confirmed_client",
+          data: {
+            username: username.trim(),
+          },
+        }),
+      });
+      console.log("User status updated to confirmed:", dbConfirmUserResponse);
 
       setIsVerifying(false);
 
       navigation.reset({
         index: 0,
-        routes: [{ name: "NotificationsCN" }],
+        routes: [{ name: "Welcome" }],
       });
     } catch (error) {
       setIsVerifying(false);
