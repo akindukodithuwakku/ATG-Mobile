@@ -49,6 +49,13 @@ const ClientDashboard = ({ navigation }) => {
     resetTimer();
   }, [resetTimer]);
 
+  // Make a database call and check if the appointment status is active
+  // Save that details to a constant
+  // if(active=="false")
+  // AsyncStorage.removeItem("hasAppointment");
+  // AsyncStorage.removeItem("appointmentDateTime");
+  // delete the note from readiness
+
   // Check for existing appointment on component mount
   useEffect(() => {
     const checkAppointment = async () => {
@@ -71,6 +78,7 @@ const ClientDashboard = ({ navigation }) => {
             // Clear expired appointment
             await AsyncStorage.removeItem("hasAppointment");
             await AsyncStorage.removeItem("appointmentDateTime");
+            // delete the note from readiness
             setHasAppointment(false);
             setAppointmentTime(null);
           }

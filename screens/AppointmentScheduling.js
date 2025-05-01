@@ -16,12 +16,11 @@ import { ScrollView } from "react-native-gesture-handler";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const AppointmentScheduling = ({ navigation }) => {
+  // Database call to retrive the calendly name
   const calanderEmail = "kavindyagamage";
   const calendlyUrl = `https://calendly.com/${calanderEmail}`; // Your Calendly URL
   const webViewRef = useRef(null);
   const [bookingProcessed, setBookingProcessed] = useState(false);
-
-  // JavaScript to inject for capturing the booking response
 
   // JavaScript to inject for capturing the booking response
   const injectedJavaScript = `
@@ -103,6 +102,9 @@ const AppointmentScheduling = ({ navigation }) => {
         localStartTime.toISOString()
       );
       await AsyncStorage.setItem("hasAppointment", "true");
+
+      // Read async to retrieve the note from readiness
+      // Query appointment data to the database (clientName, localStartTime, status, timeStamp, notes (Received and saved from questionnaire))
 
       console.log(
         "Appointment saved to storage:",

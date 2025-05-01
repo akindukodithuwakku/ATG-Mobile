@@ -145,10 +145,17 @@ const LoginScreen = ({ navigation }) => {
           const accessToken = await AsyncStorage.getItem("accessToken");
           console.log("accessToken:", accessToken);
 
+          // Database query to fetch the status of the user and the directing to correct screens has to be modified with a switch statement
+          // case 0: unconfirmed client to verification screen
+          // case 1: confirmed but care intake less client to care intake form
+          // case 2: active client/CN to respective dashboard
+          // case 3: temporary password client will always be identified with the session string, so need of this case
+          // case 4: CNs that need to update the profile page data will get directed to profile screen with a polite alert request to update it
+
           // Navigate to dashboard
           navigation.reset({
             index: 0,
-            routes: [{ name: "ClientDashboard" }],
+            routes: [{ name: "CNDashboard" }],
           });
         } else if (statusCode == 202) {
           console.log("CN temp login!");

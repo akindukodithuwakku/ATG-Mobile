@@ -124,10 +124,12 @@ const ReadinessQuestionnaire = ({ visible, onClose, navigation }) => {
                 </View>
               </View>
             ))}
-
             <Text style={styles.confirmationText}>
               Are you sure you need a consultation?
             </Text>
+
+            {/* Add text field to send a note to the doctor, and save it in async
+            storage. */}
 
             <View style={styles.bottomButtonsContainer}>
               <TouchableOpacity
