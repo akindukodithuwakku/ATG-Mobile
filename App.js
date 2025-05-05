@@ -28,7 +28,7 @@ export default function App() {
   return (
     <NavigationContainer>
       <Stack.Navigator
-        initialRouteName="DocumentsCN"
+        initialRouteName="Documents"
         screenOptions={{ headerShown: false }}eas login
 
       >

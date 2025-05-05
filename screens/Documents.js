@@ -8,6 +8,7 @@ import {
   FlatList,
   ScrollView,
   useColorScheme,
+  Alert,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import * as DocumentPicker from "expo-document-picker";
@@ -22,10 +23,12 @@ const DocumentUpload = ({ navigation }) => {
   const scheme = useColorScheme();
   const scrollViewRef = useRef(null);
 
-  const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
-
   const AWS_BACKEND_URL =
     "https://pbhcgeu119.execute-api.ap-south-1.amazonaws.com/dev/UploadDocumentHandler";
+  const DELETE_DOCUMENT_URL =
+    "https://pbhcgeu119.execute-api.ap-south-1.amazonaws.com/dev/deleteDocument";
+
+  const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
 
   const pickDocument = async () => {
     try {
@@ -43,7 +46,7 @@ const DocumentUpload = ({ navigation }) => {
 
   const uploadDocument = async (uri, name) => {
     try {
-      const userId = "Akindu_01"; 
+      const userId = "Akindu_01";
 
       setUploadingFiles((prev) => ({
         ...prev,
@@ -53,7 +56,6 @@ const DocumentUpload = ({ navigation }) => {
       const xhr = new XMLHttpRequest();
       xhr.open("POST", AWS_BACKEND_URL);
 
-      // **IMPORTANT**: set your headers here
       xhr.setRequestHeader("userid", userId);
       xhr.setRequestHeader("filename", name);
       xhr.setRequestHeader("Accept", "application/json");
@@ -70,8 +72,23 @@ const DocumentUpload = ({ navigation }) => {
 
       xhr.onload = () => {
         if (xhr.status === 200) {
-          setConfirmedFiles((prev) => [...prev, name]);
-          scrollToEnd();
+          try {
+            const responseData = JSON.parse(xhr.responseText);
+            console.log("Upload response:", responseData);
+
+            // Extract needed data from response
+            const documentData = {
+              name,
+              fileUrl: responseData.fileUrl,
+              s3Key: responseData.fileUrl ? 'uploads/' + responseData.fileUrl.split('uploads/')[1] : null,
+              documentId: responseData.documentId
+            };
+            
+            setConfirmedFiles((prev) => [...prev, documentData]);
+            scrollToEnd();
+          } catch (err) {
+            console.error("Failed to parse response:", err);
+          }
         } else {
           console.error("Upload failed:", xhr.responseText);
         }
@@ -98,10 +115,73 @@ const DocumentUpload = ({ navigation }) => {
         name,
       });
 
-     
       xhr.send(formData);
     } catch (error) {
       console.error("Error uploading file:", error);
+    }
+  };
+
+  const removeFile = async (index, fileObj) => {
+    console.log("Attempting to delete file:", fileObj);
+
+    try {
+      // Resolve s3Key
+      let s3Key = fileObj.s3Key;
+      if (!s3Key && fileObj.fileUrl) {
+        const url = decodeURIComponent(fileObj.fileUrl); // decode the whole URL
+        const urlParts = url.split('uploads/');
+        if (urlParts.length > 1) {
+          s3Key = 'uploads/' + urlParts[1].replace(/\+/g, ' ');
+        }
+      }
+      
+
+      console.log("Resolved s3Key:", s3Key);
+
+      // Resolve and validate documentId
+      const documentId = fileObj.documentId;
+      console.log("Resolved documentId:", documentId);
+
+      // Strict validation
+      if (!s3Key || documentId === undefined || documentId === null || documentId === 0) {
+        console.error("Cannot delete: Missing valid s3Key or documentId", { documentId, s3Key });
+        Alert.alert(
+          "Delete Not Allowed",
+          "This file cannot be deleted because it does not have a valid document ID."
+        );
+        return;
+      }
+
+      const payload = {
+        s3Key,
+        documentId: Number(documentId),
+      };
+
+      console.log("Sending delete request with payload:", payload);
+
+      const response = await fetch(DELETE_DOCUMENT_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
+
+      const resText = await response.text();
+      console.log("Delete API response:", response.status, resText);
+
+      if (!response.ok) {
+        console.error("Backend deletion failed:", resText);
+        Alert.alert("Error", "Failed to delete document.");
+        return;
+      }
+
+      Alert.alert("Success", "Document deleted successfully.");
+      setConfirmedFiles((prev) => prev.filter((_, idx) => idx !== index));
+    } catch (error) {
+      console.error("Error deleting document:", error);
+      Alert.alert("Error", "An error occurred while deleting.");
     }
   };
 
@@ -110,8 +190,6 @@ const DocumentUpload = ({ navigation }) => {
   };
 
   const confirmUpload = () => confirmedFiles.length && setIsSuccess(true);
-  const removeFile = (i) =>
-    setConfirmedFiles((prev) => prev.filter((_, idx) => idx !== i));
   const resetUpload = () => {
     setIsSuccess(false);
     setConfirmedFiles([]);
@@ -211,36 +289,33 @@ const DocumentUpload = ({ navigation }) => {
                       size={20}
                       color="#00AEEF"
                     />
-                    <Text style={styles.fileName}>{item}</Text>
+                    <Text style={styles.fileName}>{item.name}</Text>
                     <TouchableOpacity
-                      onPress={() => removeFile(index)}
-                      style={styles.removeIconContainer}
+                      style={styles.removeButton}
+                      onPress={() => removeFile(index, item)}
                     >
-                      <Ionicons name="close" size={20} color="white" />
+                      <Ionicons
+                        name="trash-outline"
+                        size={25}
+                        color="#FF0000"
+                      />
                     </TouchableOpacity>
                   </View>
                 )}
               />
             </>
           )}
-        </ScrollView>
-      )}
 
-      {!isSuccess && (
-        <View style={styles.bottomSection}>
           <TouchableOpacity
-            style={[
-              styles.confirmButton,
-              confirmedFiles.length === 0 && styles.disabledButton,
-            ]}
+            style={styles.confirmButton}
             onPress={confirmUpload}
-            disabled={confirmedFiles.length === 0}
           >
             <Text style={styles.confirmButtonText}>Confirm Upload</Text>
           </TouchableOpacity>
-          <BottomNavigationCN navigation={navigation} />
-        </View>
+        </ScrollView>
       )}
+
+      <BottomNavigationCN />
     </View>
   );
 };
@@ -304,22 +379,41 @@ const styles = StyleSheet.create({
   fileItem: { flexDirection: "row", alignItems: "center", paddingVertical: 10 },
   fileName: { flex: 1, marginLeft: 10 },
   removeIconContainer: {
-    width: 30,
-    height: 30,
-    backgroundColor: "red",
-    borderRadius: 15,
-    alignItems: "center",
-    justifyContent: "center",
+    backgroundColor: "#FF0000",
+    padding: 5,
+    borderRadius: 5,
   },
-  bottomSection: { position: "absolute", bottom: 0, left: 0, right: 0 },
-  confirmButton: { backgroundColor: "#00AEEF", padding: 15, alignItems: "center", borderRadius: 5, margin: 10 },
-  confirmButtonText: { color: "#fff", fontWeight: "bold" },
-  disabledButton: { backgroundColor: "#cccccc" },
-  successContainer: { flex: 1, justifyContent: "center", alignItems: "center" },
+  bottomSection: {
+    padding: 10,
+    justifyContent: "space-between",
+    position: "absolute",
+    bottom: 0,
+    width: "100%",
+    paddingBottom: 30,
+  },
+  confirmButton: {
+    backgroundColor: "#00AEEF",
+    padding: 15,
+    borderRadius: 5,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  disabledButton: { backgroundColor: "#d1d1d1" },
+  confirmButtonText: { color: "#fff", fontSize: 16, fontWeight: "bold" },
+  successContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 20,
+  },
   successTitle: { fontSize: 24, fontWeight: "bold", marginVertical: 10 },
-  successMessage: { fontSize: 16, color: "gray", marginBottom: 20, textAlign: "center" },
-  successButton: { backgroundColor: "#00AEEF", padding: 10, borderRadius: 5 },
-  successButtonText: { color: "white", fontWeight: "bold" },
+  successMessage: { fontSize: 16, textAlign: "center", marginBottom: 30 },
+  successButton: {
+    backgroundColor: "#00AEEF",
+    padding: 10,
+    borderRadius: 5,
+  },
+  successButtonText: { color: "#fff", fontSize: 16, fontWeight: "bold" },
 });
 
 export default DocumentUpload;
