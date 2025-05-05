@@ -9,6 +9,7 @@ import {
   ScrollView,
   useColorScheme,
   Alert,
+  ActivityIndicator,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import * as DocumentPicker from "expo-document-picker";
@@ -19,6 +20,7 @@ const DocumentUpload = ({ navigation }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [uploadingFiles, setUploadingFiles] = useState({});
   const [confirmedFiles, setConfirmedFiles] = useState([]);
+  const [pendingFiles, setPendingFiles] = useState([]);
   const [isSuccess, setIsSuccess] = useState(false);
   const scheme = useColorScheme();
   const scrollViewRef = useRef(null);
@@ -37,114 +39,134 @@ const DocumentUpload = ({ navigation }) => {
       });
       if (!result.canceled) {
         const file = result.assets[0];
-        uploadDocument(file.uri, file.name);
+        setPendingFiles((prev) => [...prev, file]);
       }
     } catch (error) {
       console.error("Error picking document:", error);
     }
   };
 
-  const uploadDocument = async (uri, name) => {
-    try {
-      const userId = "Akindu_01";
+  const uploadDocument = (uri, name) => {
+    return new Promise((resolve, reject) => {
+      try {
+        const userId = "Akindu_01";
+        setUploadingFiles((prev) => ({
+          ...prev,
+          [name]: { progress: 0 },
+        }));
 
-      setUploadingFiles((prev) => ({
-        ...prev,
-        [name]: { progress: 0 },
-      }));
+        const xhr = new XMLHttpRequest();
+        xhr.open("POST", AWS_BACKEND_URL);
+        xhr.setRequestHeader("userid", userId);
+        xhr.setRequestHeader("filename", name);
+        xhr.setRequestHeader("Accept", "application/json");
 
-      const xhr = new XMLHttpRequest();
-      xhr.open("POST", AWS_BACKEND_URL);
-
-      xhr.setRequestHeader("userid", userId);
-      xhr.setRequestHeader("filename", name);
-      xhr.setRequestHeader("Accept", "application/json");
-
-      xhr.upload.onprogress = (event) => {
-        if (event.lengthComputable) {
-          const progress = Math.round((event.loaded / event.total) * 100);
-          setUploadingFiles((prev) => ({
-            ...prev,
-            [name]: { progress },
-          }));
-        }
-      };
-
-      xhr.onload = () => {
-        if (xhr.status === 200) {
-          try {
-            const responseData = JSON.parse(xhr.responseText);
-            console.log("Upload response:", responseData);
-
-            // Extract needed data from response
-            const documentData = {
-              name,
-              fileUrl: responseData.fileUrl,
-              s3Key: responseData.fileUrl ? 'uploads/' + responseData.fileUrl.split('uploads/')[1] : null,
-              documentId: responseData.documentId
-            };
-            
-            setConfirmedFiles((prev) => [...prev, documentData]);
-            scrollToEnd();
-          } catch (err) {
-            console.error("Failed to parse response:", err);
+        xhr.upload.onprogress = (event) => {
+          if (event.lengthComputable) {
+            const progress = Math.round((event.loaded / event.total) * 100);
+            setUploadingFiles((prev) => ({
+              ...prev,
+              [name]: { progress },
+            }));
           }
-        } else {
-          console.error("Upload failed:", xhr.responseText);
-        }
-        setUploadingFiles((prev) => {
-          const u = { ...prev };
-          delete u[name];
-          return u;
+        };
+
+        xhr.onload = () => {
+          if (xhr.status === 200) {
+            try {
+              const responseData = JSON.parse(xhr.responseText);
+              const documentData = {
+                name,
+                fileUrl: responseData.fileUrl,
+                s3Key: responseData.fileUrl
+                  ? "uploads/" + responseData.fileUrl.split("uploads/")[1]
+                  : null,
+                documentId: responseData.documentId,
+              };
+              setConfirmedFiles((prev) => [...prev, documentData]);
+              scrollToEnd();
+              resolve(); // Resolve after successful upload
+            } catch (err) {
+              console.error("Failed to parse response:", err);
+              reject(err);
+            }
+          } else {
+            console.error("Upload failed:", xhr.responseText);
+            reject(new Error("Upload failed"));
+          }
+
+          setUploadingFiles((prev) => {
+            const updated = { ...prev };
+            delete updated[name];
+            return updated;
+          });
+        };
+
+        xhr.onerror = (e) => {
+          console.error("Upload error:", e);
+          reject(e);
+          setUploadingFiles((prev) => {
+            const updated = { ...prev };
+            delete updated[name];
+            return updated;
+          });
+        };
+
+        const formData = new FormData();
+        formData.append("file", {
+          uri,
+          type: "application/pdf",
+          name,
         });
-      };
 
-      xhr.onerror = (e) => {
-        console.error("Upload error:", e);
-        setUploadingFiles((prev) => {
-          const u = { ...prev };
-          delete u[name];
-          return u;
-        });
-      };
+        xhr.send(formData);
+      } catch (error) {
+        console.error("Error uploading file:", error);
+        reject(error);
+      }
+    });
+  };
 
-      const formData = new FormData();
-      formData.append("file", {
-        uri,
-        type: "application/pdf",
-        name,
-      });
+  const confirmUpload = async () => {
+    if (pendingFiles.length === 0) return;
 
-      xhr.send(formData);
+    try {
+      for (const file of pendingFiles) {
+        await uploadDocument(file.uri, file.name);
+      }
+
+      setPendingFiles([]);
+      setIsSuccess(true); // Show success page after upload
     } catch (error) {
-      console.error("Error uploading file:", error);
+      console.error("Upload error:", error);
+      Alert.alert("Upload Failed", "Some files could not be uploaded.");
     }
   };
 
-  const removeFile = async (index, fileObj) => {
-    console.log("Attempting to delete file:", fileObj);
+  const resetUpload = () => {
+    setIsSuccess(false);
+    setPendingFiles([]);
+  };
 
+  const removeFile = async (index, fileObj) => {
     try {
-      // Resolve s3Key
       let s3Key = fileObj.s3Key;
       if (!s3Key && fileObj.fileUrl) {
-        const url = decodeURIComponent(fileObj.fileUrl); // decode the whole URL
-        const urlParts = url.split('uploads/');
+        const url = decodeURIComponent(fileObj.fileUrl);
+        const urlParts = url.split("uploads/");
         if (urlParts.length > 1) {
-          s3Key = 'uploads/' + urlParts[1].replace(/\+/g, ' ');
+          s3Key = "uploads/" + urlParts[1].replace(/\+/g, " ");
         }
       }
-      
 
-      console.log("Resolved s3Key:", s3Key);
-
-      // Resolve and validate documentId
       const documentId = fileObj.documentId;
-      console.log("Resolved documentId:", documentId);
 
-      // Strict validation
-      if (!s3Key || documentId === undefined || documentId === null || documentId === 0) {
-        console.error("Cannot delete: Missing valid s3Key or documentId", { documentId, s3Key });
+      if (
+        !s3Key ||
+        documentId === undefined ||
+        documentId === null ||
+        documentId === 0
+      ) {
         Alert.alert(
           "Delete Not Allowed",
           "This file cannot be deleted because it does not have a valid document ID."
@@ -157,8 +179,6 @@ const DocumentUpload = ({ navigation }) => {
         documentId: Number(documentId),
       };
 
-      console.log("Sending delete request with payload:", payload);
-
       const response = await fetch(DELETE_DOCUMENT_URL, {
         method: "POST",
         headers: {
@@ -168,11 +188,7 @@ const DocumentUpload = ({ navigation }) => {
         body: JSON.stringify(payload),
       });
 
-      const resText = await response.text();
-      console.log("Delete API response:", response.status, resText);
-
       if (!response.ok) {
-        console.error("Backend deletion failed:", resText);
         Alert.alert("Error", "Failed to delete document.");
         return;
       }
@@ -180,19 +196,19 @@ const DocumentUpload = ({ navigation }) => {
       Alert.alert("Success", "Document deleted successfully.");
       setConfirmedFiles((prev) => prev.filter((_, idx) => idx !== index));
     } catch (error) {
-      console.error("Error deleting document:", error);
       Alert.alert("Error", "An error occurred while deleting.");
     }
   };
 
   const scrollToEnd = () => {
-    setTimeout(() => scrollViewRef.current?.scrollToEnd({ animated: true }), 50);
+    setTimeout(
+      () => scrollViewRef.current?.scrollToEnd({ animated: true }),
+      50
+    );
   };
 
-  const confirmUpload = () => confirmedFiles.length && setIsSuccess(true);
-  const resetUpload = () => {
-    setIsSuccess(false);
-    setConfirmedFiles([]);
+  const isUploading = () => {
+    return Object.keys(uploadingFiles).length > 0;
   };
 
   const renderSuccessPage = () => (
@@ -215,10 +231,13 @@ const DocumentUpload = ({ navigation }) => {
         translucent
         backgroundColor={scheme === "dark" ? "black" : "transparent"}
       />
-
       <View style={styles.header}>
         <TouchableOpacity onPress={toggleMenu}>
-          <Ionicons name={isMenuOpen ? "close" : "menu"} size={30} color="black" />
+          <Ionicons
+            name={isMenuOpen ? "close" : "menu"}
+            size={30}
+            color="black"
+          />
         </TouchableOpacity>
         <Text style={styles.headerText}>Document Upload</Text>
       </View>
@@ -256,6 +275,26 @@ const DocumentUpload = ({ navigation }) => {
               You Can Drag And Drop or Click Here To Browse
             </Text>
           </TouchableOpacity>
+
+          {pendingFiles.length > 0 && (
+            <>
+              <Text style={styles.sectionTitle}>Pending Files</Text>
+              <FlatList
+                data={pendingFiles}
+                keyExtractor={(_, i) => i.toString()}
+                renderItem={({ item }) => (
+                  <View style={styles.fileItem}>
+                    <Ionicons
+                      name="document-text-outline"
+                      size={20}
+                      color="#00AEEF"
+                    />
+                    <Text style={styles.fileName}>{item.name}</Text>
+                  </View>
+                )}
+              />
+            </>
+          )}
 
           {Object.entries(uploadingFiles).map(([name, { progress }]) => (
             <View key={name} style={styles.uploadSuccessBox}>
@@ -307,10 +346,22 @@ const DocumentUpload = ({ navigation }) => {
           )}
 
           <TouchableOpacity
-            style={styles.confirmButton}
+            style={[
+              styles.confirmButton,
+              pendingFiles.length === 0 && styles.confirmButtonDisabled,
+              isUploading() && styles.confirmButtonLoading,
+            ]}
             onPress={confirmUpload}
+            disabled={pendingFiles.length === 0 || isUploading()}
           >
-            <Text style={styles.confirmButtonText}>Confirm Upload</Text>
+            {isUploading() ? (
+              <>
+                <ActivityIndicator size="small" color="#fff" />
+                <Text style={styles.confirmButtonText}>Uploading...</Text>
+              </>
+            ) : (
+              <Text style={styles.confirmButtonText}>Confirm Upload</Text>
+            )}
           </TouchableOpacity>
         </ScrollView>
       )}
@@ -350,7 +401,12 @@ const styles = StyleSheet.create({
     padding: 30,
     marginVertical: 10,
   },
-  uploadText: { fontSize: 18, fontWeight: "bold", color: "#00AEEF", marginTop: 10 },
+  uploadText: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "#00AEEF",
+    marginTop: 10,
+  },
   subText: { fontSize: 12, color: "gray", textAlign: "center" },
   uploadSuccessBox: {
     borderWidth: 2,
@@ -375,22 +431,15 @@ const styles = StyleSheet.create({
   },
   progressBar: { height: 8, backgroundColor: "#00AEEF", borderRadius: 5 },
   progressText: { marginLeft: 20, fontSize: 12, color: "#00AEEF" },
-  sectionTitle: { fontSize: 16, fontWeight: "bold", marginTop: 20, marginBottom: 10 },
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: "bold",
+    marginTop: 20,
+    marginBottom: 10,
+  },
   fileItem: { flexDirection: "row", alignItems: "center", paddingVertical: 10 },
   fileName: { flex: 1, marginLeft: 10 },
-  removeIconContainer: {
-    backgroundColor: "#FF0000",
-    padding: 5,
-    borderRadius: 5,
-  },
-  bottomSection: {
-    padding: 10,
-    justifyContent: "space-between",
-    position: "absolute",
-    bottom: 0,
-    width: "100%",
-    paddingBottom: 30,
-  },
+  removeButton: { paddingHorizontal: 8 },
   confirmButton: {
     backgroundColor: "#00AEEF",
     padding: 15,
@@ -398,7 +447,12 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
-  disabledButton: { backgroundColor: "#d1d1d1" },
+  confirmButtonDisabled: {
+    backgroundColor: "#ccc",
+  },
+  confirmButtonLoading: {
+    backgroundColor: "#FFA500",
+  },
   confirmButtonText: { color: "#fff", fontSize: 16, fontWeight: "bold" },
   successContainer: {
     flex: 1,
