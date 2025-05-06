@@ -80,6 +80,44 @@ def lambda_handler(event, context):
                         result = serialize_result(result)
 
                     return response(200, result)
+                
+                elif action == "get_client_cn_calendly":
+                    if "client_name" not in data:
+                        return response(400, {"error": "Missing 'client_name'"})
+                    
+                    sql = """
+                        SELECT u.calendly_name 
+                        FROM users u
+                        WHERE u.username = (
+                            SELECT care_navigator_username 
+                            FROM client_details 
+                            WHERE client_name = %s
+                        )
+                    """
+                    cursor.execute(sql, (data["client_name"],))
+                    result = cursor.fetchone()
+                    
+                    if result and result.get("calendly_name"):
+                        return response(200, {"calendly_name": result["calendly_name"]})
+                    else:
+                        return response(404, {"error": "CN calendly name not found for this client"})
+                
+                elif action == "get_cn_calendly_name":
+                    if "cn_username" not in data:
+                        return response(400, {"error": "Missing 'cn_username'"})
+                    
+                    sql = """
+                        SELECT u.calendly_name 
+                        FROM users u
+                        WHERE u.username =  %s
+                    """
+                    cursor.execute(sql, (data["cn_username"],))
+                    result = cursor.fetchone()
+                    
+                    if result and result.get("calendly_name"):
+                        return response(200, {"calendly_name": result["calendly_name"]})
+                    else:
+                        return response(404, {"error": "Calendly name not found for this care navigator"})
 
                 elif action == "confirmed_client":
                     if "username" not in data:
@@ -115,19 +153,19 @@ def lambda_handler(event, context):
                     return response(200, {"message": "Permanent password created."})
 
                 elif action == "create_appointment":
-                    if "client_name" not in data:
-                        return response(400, {"error": "Missing 'client_name'"})
+                    if "client_username" not in data:
+                        return response(400, {"error": "Missing 'client_username'"})
                     if "local_start_time" not in data:
                         return response(400, {"error": "Missing 'local_start_time'"})
                     if "created_timestamp" not in data:
                         return response(400, {"error": "Missing 'created_timestamp'"})
                     
                     sql = """
-                        INSERT INTO client_appointments (client_name, local_start_time, status, note)
+                        INSERT INTO client_appointments (client_username, local_start_time, status, note, created_timestamp)
                         VALUES (%s, %s, 'active', %s, %s)
                     """
                     cursor.execute(sql, (
-                        data["client_name"], 
+                        data["client_username"], 
                         data["local_start_time"], 
                         data.get("note", ""),  # Optional field (Value or empty)
                         data["created_timestamp"]
@@ -136,8 +174,8 @@ def lambda_handler(event, context):
                     return response(200, {"message": "Appointment created", "appointment_id": cursor.lastrowid})
 
                 elif action == "cancel_appointment":
-                    if "client_name" not in data:
-                        return response(400, {"error": "Missing 'client_name'"})
+                    if "client_username" not in data:
+                        return response(400, {"error": "Missing 'client_username'"})
                     
                     sql = """
                             UPDATE client_appointments 
@@ -146,21 +184,21 @@ def lambda_handler(event, context):
                                 SELECT appointment_id FROM (
                                     SELECT appointment_id 
                                     FROM client_appointments 
-                                    WHERE client_name = %s AND status = 'active'
+                                    WHERE client_username = %s AND status = 'active'
                                     ORDER BY id DESC 
                                     LIMIT 1
                                 ) AS subquery
                             )
                         """
                     cursor.execute(sql, (
-                        data["client_name"],
+                        data["client_username"],
                     ))
                     conn.commit()
                     return response(200, {"message": "Appointment cancelled"})
                 
                 elif action == "complete_appointment":
-                    if "client_name" not in data:
-                        return response(400, {"error": "Missing 'client_name'"})
+                    if "client_username" not in data:
+                        return response(400, {"error": "Missing 'client_username'"})
 
                     sql = """
                         UPDATE client_appointments 
@@ -169,13 +207,13 @@ def lambda_handler(event, context):
                             SELECT appointment_id FROM (
                                 SELECT appointment_id 
                                 FROM client_appointments 
-                                WHERE client_name = %s AND status = 'active'
+                                WHERE client_username = %s AND status = 'active'
                                 ORDER BY id DESC 
                                 LIMIT 1
                             ) AS subquery
                         )
                     """
-                    cursor.execute(sql, (data["client_name"],))
+                    cursor.execute(sql, (data["client_username"],))
                     conn.commit()
                     return response(200, {"message": "Appointment marked as completed"})
 
