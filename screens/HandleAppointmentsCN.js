@@ -68,7 +68,7 @@ const HandleAppointmentsCN = ({ navigation }) => {
   const handleGoToCalendar = () => {
     console.log("Calendar! Navigating to Google Calendar screen.")
     resetTimer();
-    navigation.navigate("Appointments");
+    navigation.navigate("CalendarCN");
   };
 
   return (
