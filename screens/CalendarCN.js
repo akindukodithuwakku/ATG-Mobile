@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from "react";
+import React, { useState, useCallback } from "react";
 import {
   View,
   Text,
@@ -23,10 +23,9 @@ const CalendarCN = ({ navigation }) => {
   const { resetTimer } = useAutomaticLogout();
   const [isLoading, setIsLoading] = useState(true);
   const [calendarError, setCalendarError] = useState(false);
-  const [apiError, setApiError] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
 
   const [cnUsername, setCnUsername] = useState("");
-
   const [calendlyName, setCalendlyName] = useState("");
 
   // Create calendar URL based on the CN's calendly name
@@ -46,10 +45,12 @@ const CalendarCN = ({ navigation }) => {
           if (storedUsername) {
             setCnUsername(storedUsername);
             fetchCalendlyName(storedUsername);
+          } else {
+            showError("User information not found. Please login again.");
           }
         } catch (error) {
           console.error("Error getting username from AsyncStorage:", error);
-          setApiError(true);
+          showError("Failed to retrieve user information.");
         }
       };
 
@@ -57,22 +58,28 @@ const CalendarCN = ({ navigation }) => {
     }, [])
   );
 
+  // Function to show errors with an Alert
+  const showError = (message) => {
+    setErrorMessage(message);
+    setCalendarError(true);
+    setIsLoading(false);
+    Alert.alert("Error", message);
+  };
+
   // Fetch calendly name from database
   const fetchCalendlyName = async (storedUsername) => {
     try {
       resetTimer();
       setIsLoading(true);
-      setApiError(false);
+      setCalendarError(false);
+      setErrorMessage("");
 
-      const nameToUse = storedUsername.trim() || cnUsername.trim();
+      const nameToUse = storedUsername?.trim() || cnUsername?.trim();
 
       if (!nameToUse) {
-        console.error("Username is missing");
-        setApiError(true);
-        setIsLoading(false);
+        showError("Username is missing. Please login again.");
         return;
       }
-      console.log("nameToUse:", nameToUse);
 
       const response = await fetch(`${API_ENDPOINT}/dbHandling`, {
         method: "POST",
@@ -88,18 +95,23 @@ const CalendarCN = ({ navigation }) => {
       });
 
       const result = await response.json();
-      const parsedResult = JSON.parse(result.body);
-      console.log(result);
+      if (!result.body) {
+        throw new Error("Invalid server response format");
+      }
 
-      if (response.ok && parsedResult.calendly_name) {
+      const parsedResult =
+        typeof result.body === "string" ? JSON.parse(result.body) : result.body;
+
+      if (parsedResult.calendly_name) {
         setCalendlyName(parsedResult.calendly_name);
+      } else if (parsedResult.error) {
+        showError(`Calendar error: ${parsedResult.error}`);
       } else {
-        console.error("Error fetching CN calendly name:", parsedResult.error);
-        setApiError(true);
+        showError("Calendar information not found for this user.");
       }
     } catch (error) {
       console.error("Error fetching CN calendly name:", error);
-      setApiError(true);
+      showError(`Failed to load calendar: ${error.message}`);
     } finally {
       setIsLoading(false);
     }
@@ -121,10 +133,12 @@ const CalendarCN = ({ navigation }) => {
     setIsLoading(false);
   };
 
-  const handleLoadError = () => {
+  const handleLoadError = (syntheticEvent) => {
     resetTimer();
     setIsLoading(false);
-    setCalendarError(true);
+    const { nativeEvent } = syntheticEvent;
+    const errorMessage = nativeEvent?.description || "Failed to load calendar";
+    showError(errorMessage);
   };
 
   // JavaScript to inject for better mobile viewing experience
@@ -133,6 +147,32 @@ const CalendarCN = ({ navigation }) => {
     document.querySelector('.gb_Bd.gb_Cd').style.display = 'none';
     true;
   `;
+
+  const renderErrorView = () => (
+    <View style={styles.errorContainer}>
+      <Ionicons name="calendar-outline" size={60} color="#CCCCCC" />
+      <Text style={styles.errorTitle}>Calendar Unavailable</Text>
+      <Text style={styles.errorText}>
+        {errorMessage ||
+          "There was a problem loading the calendar. Please check your internet connection and try again."}
+      </Text>
+      <TouchableOpacity
+        style={styles.retryButton}
+        onPress={() => {
+          resetTimer();
+          setCalendarError(false);
+          fetchCalendlyName(cnUsername);
+        }}
+      >
+        <LinearGradient
+          colors={["#09D1C7", "#35AFEA"]}
+          style={styles.gradientButton}
+        >
+          <Text style={styles.retryButtonText}>Retry</Text>
+        </LinearGradient>
+      </TouchableOpacity>
+    </View>
+  );
 
   return (
     <View style={styles.container} onTouchStart={handleUserInteraction}>
@@ -168,52 +208,8 @@ const CalendarCN = ({ navigation }) => {
           </View>
         )}
 
-        {apiError ? (
-          <View style={styles.errorContainer}>
-            <Ionicons name="person-outline" size={60} color="#CCCCCC" />
-            <Text style={styles.errorTitle}>Calendar Not Available</Text>
-            <Text style={styles.errorText}>
-              Could not find calendar information for this care navigator.
-            </Text>
-            <TouchableOpacity
-              style={styles.retryButton}
-              onPress={() => {
-                resetTimer();
-                fetchCalendlyName();
-              }}
-            >
-              <LinearGradient
-                colors={["#09D1C7", "#35AFEA"]}
-                style={styles.gradientButton}
-              >
-                <Text style={styles.retryButtonText}>Retry</Text>
-              </LinearGradient>
-            </TouchableOpacity>
-          </View>
-        ) : calendarError ? (
-          <View style={styles.errorContainer}>
-            <Ionicons name="calendar-outline" size={60} color="#CCCCCC" />
-            <Text style={styles.errorTitle}>Calendar Unavailable</Text>
-            <Text style={styles.errorText}>
-              There was a problem loading the calendar. Please check your
-              internet connection and try again.
-            </Text>
-            <TouchableOpacity
-              style={styles.retryButton}
-              onPress={() => {
-                resetTimer();
-                setCalendarError(false);
-                setIsLoading(true);
-              }}
-            >
-              <LinearGradient
-                colors={["#09D1C7", "#35AFEA"]}
-                style={styles.gradientButton}
-              >
-                <Text style={styles.retryButtonText}>Retry</Text>
-              </LinearGradient>
-            </TouchableOpacity>
-          </View>
+        {calendarError ? (
+          renderErrorView()
         ) : calendlyName ? (
           <WebView
             source={{ uri: calendarUrl }}
