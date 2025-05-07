@@ -21,12 +21,19 @@ def serialize_result(result):
 def lambda_handler(event, context):
     try:
         body = json.loads(event["body"]) if "body" in event else event
-        print("String body:",body)
 
         action = body.get("action")
         data = body.get("data", {})
+
+        # To be removed
         print("String action:",action)
         print("String data:",data)
+        
+        # Input validation
+        if not action:
+            return response(400, {"error": "Missing required parameter 'action'"})
+        if not data:
+            return response(400, {"error": "Missing required parameter 'data'"})
 
         conn = pymysql.connect(
             host=db_config["host"],
@@ -39,16 +46,11 @@ def lambda_handler(event, context):
         with conn:
             with conn.cursor() as cursor:
                 if action == "create_user":
-                    if "username" not in data:
-                        return response(400, {"error": "Missing 'username'"})
-                    if "email" not in data:
-                        return response(400, {"error": "Missing 'email'"})
-                    if "role" not in data:
-                        return response(400, {"error": "Missing 'role'"})
-                    if "status" not in data:
-                        return response(400, {"error": "Missing 'status'"})
-                    if "created_at" not in data:
-                        return response(400, {"error": "Missing 'created_at'"})
+                    # Validate required fields
+                    required_fields = ["username", "email", "role", "status", "created_at"]
+                    for field in required_fields:
+                        if field not in data:
+                            return response(400, {"error": f"Missing required field '{field}'"})
 
                     sql = """
                         INSERT INTO users (username, email, role, status, calendly_name, created_at)
@@ -74,12 +76,12 @@ def lambda_handler(event, context):
                         data["username"],
                     ))
                     result = cursor.fetchone()
-                    print("Result:", result)
 
                     if result:
                         result = serialize_result(result)
-
-                    return response(200, result)
+                        return response(200, result)
+                    else:
+                        return response(404, {"error": "User not found"})
                 
                 elif action == "get_client_cn_calendly":
                     if "client_name" not in data:
@@ -100,7 +102,7 @@ def lambda_handler(event, context):
                     if result and result.get("calendly_name"):
                         return response(200, {"calendly_name": result["calendly_name"]})
                     else:
-                        return response(404, {"error": "CN calendly name not found for this client"})
+                        return response(404, {"error": "Care navigator calendly name not found for this client"})
                 
                 elif action == "get_cn_calendly_name":
                     if "cn_username" not in data:
@@ -124,41 +126,46 @@ def lambda_handler(event, context):
                         return response(400, {"error": "Missing 'username'"})
                     
                     sql = "UPDATE users SET status = 1 WHERE username = %s"
-                    cursor.execute(sql, (
-                        data["username"],
-                    ))
+                    affected_rows = cursor.execute(sql, (data["username"],))
                     conn.commit()
-                    return response(200, {"message": "Client email verified."})
+                    
+                    if affected_rows > 0:
+                        return response(200, {"message": "Client email verified successfully"})
+                    else:
+                        return response(404, {"error": "User not found"})
 
                 elif action == "active_user":
                     if "username" not in data:
                         return response(400, {"error": "Missing 'username'"})
                     
                     sql = "UPDATE users SET status = 2 WHERE username = %s"
-                    cursor.execute(sql, (
-                        data["username"],
-                    ))
+                    affected_rows = cursor.execute(sql, (data["username"],))
                     conn.commit()
-                    return response(200, {"message": "Active user."})
+                    
+                    if affected_rows > 0:
+                        return response(200, {"message": "User activated successfully"})
+                    else:
+                        return response(404, {"error": "User not found"})
 
                 elif action == "profile_incomplete_CN":
                     if "username" not in data:
                         return response(400, {"error": "Missing 'username'"})
                     
                     sql = "UPDATE users SET status = 4 WHERE username = %s"
-                    cursor.execute(sql, (
-                        data["username"],
-                    ))
+                    affected_rows = cursor.execute(sql, (data["username"],))
                     conn.commit()
-                    return response(200, {"message": "Permanent password created."})
+                    
+                    if affected_rows > 0:
+                        return response(200, {"message": "Permanent password created successfully"})
+                    else:
+                        return response(404, {"error": "User not found"})
 
                 elif action == "create_appointment":
-                    if "client_username" not in data:
-                        return response(400, {"error": "Missing 'client_username'"})
-                    if "local_start_time" not in data:
-                        return response(400, {"error": "Missing 'local_start_time'"})
-                    if "created_timestamp" not in data:
-                        return response(400, {"error": "Missing 'created_timestamp'"})
+                    # Validate required fields
+                    required_fields = ["client_username", "local_start_time", "created_timestamp"]
+                    for field in required_fields:
+                        if field not in data:
+                            return response(400, {"error": f"Missing required field '{field}'"})
                     
                     sql = """
                         INSERT INTO client_appointments (client_username, local_start_time, status, note, created_timestamp)
@@ -171,7 +178,11 @@ def lambda_handler(event, context):
                         data["created_timestamp"]
                     ))
                     conn.commit()
-                    return response(200, {"message": "Appointment created", "appointment_id": cursor.lastrowid})
+
+                    return response(200, {
+                        "message": "Appointment created successfully", 
+                        "appointment_id": cursor.lastrowid
+                    })
 
                 elif action == "cancel_appointment":
                     if "client_username" not in data:
@@ -190,11 +201,13 @@ def lambda_handler(event, context):
                                 ) AS subquery
                             )
                         """
-                    cursor.execute(sql, (
-                        data["client_username"],
-                    ))
+                    affected_rows = cursor.execute(sql, (data["client_username"],))
                     conn.commit()
-                    return response(200, {"message": "Appointment cancelled"})
+                    
+                    if affected_rows > 0:
+                        return response(200, {"message": "Appointment cancelled successfully"})
+                    else:
+                        return response(404, {"error": "No active appointment found for this client"})
                 
                 elif action == "complete_appointment":
                     if "client_username" not in data:
@@ -213,12 +226,16 @@ def lambda_handler(event, context):
                             ) AS subquery
                         )
                     """
-                    cursor.execute(sql, (data["client_username"],))
+                    affected_rows = cursor.execute(sql, (data["client_username"],))
                     conn.commit()
-                    return response(200, {"message": "Appointment marked as completed"})
+                    
+                    if affected_rows > 0:
+                        return response(200, {"message": "Appointment marked as completed successfully"})
+                    else:
+                        return response(404, {"error": "No active appointment found for this client"})
 
                 else:
-                    return response(400, {"error": "Invalid action"})
+                    return response(400, {"error": f"Invalid action: '{action}'"})
 
 
     except Exception as e:
