@@ -107,7 +107,7 @@ export const SignUpScreen = ({ navigation }) => {
           body: JSON.stringify({
             action: "create_user",
             data: {
-              username: username.trim(),
+              username: username.trim().toLowerCase(),
               email: email,
               role: 0,
               status: 0,

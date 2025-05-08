@@ -67,7 +67,7 @@ const LoginScreen = ({ navigation }) => {
           }),
         });
 
-        await AsyncStorage.setItem("appUser", username);
+        await AsyncStorage.setItem("appUser", username.trim().toLowerCase());
         const appUser = await AsyncStorage.getItem("appUser");
         console.log("appUser:", appUser);
 
