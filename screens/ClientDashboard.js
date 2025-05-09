@@ -24,12 +24,16 @@ import { useFocusEffect } from "@react-navigation/native";
 import { useAutomaticLogout } from "../screens/AutoLogout";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
+const API_ENDPOINT =
+  "https://uqzl6jyqvg.execute-api.ap-south-1.amazonaws.com/dev";
+
 const ClientDashboard = ({ navigation }) => {
   const { resetTimer } = useAutomaticLogout();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [showQuestionnaire, setShowQuestionnaire] = useState(false);
   const [hasAppointment, setHasAppointment] = useState(false);
   const [appointmentTime, setAppointmentTime] = useState(null);
+  const [username, setUsername] = useState("");
   const [countdown, setCountdown] = useState({
     days: 0,
     hours: 0,
@@ -49,42 +53,73 @@ const ClientDashboard = ({ navigation }) => {
     resetTimer();
   }, [resetTimer]);
 
-  // Make a database call and check if the appointment status is active
-  // Save that details to a constant
-  // if(active=="false")
-  // AsyncStorage.removeItem("hasAppointment");
-  // AsyncStorage.removeItem("appointmentDateTime");
-  // delete the note from readiness
+  // Fetch username on component mount
+  useEffect(() => {
+    const fetchUsername = async () => {
+      try {
+        const storedUsername = await AsyncStorage.getItem("appUser");
+        if (storedUsername) {
+          setUsername(storedUsername);
+        }
+      } catch (error) {
+        console.error("Error fetching username:", error);
+      }
+    };
+
+    fetchUsername();
+  }, []);
 
   // Check for existing appointment on component mount
   useEffect(() => {
     const checkAppointment = async () => {
+      if (!username) return;
+
       try {
-        // Get both hasAppointment flag and appointment date
-        const hasAppointmentFlag = await AsyncStorage.getItem("hasAppointment");
-        const appointmentDateTime = await AsyncStorage.getItem(
-          "appointmentDateTime"
-        );
+        // Fetch active appointment from database
+        const response = await fetch(`${API_ENDPOINT}/dbHandling`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            action: "get_active_appointment",
+            data: {
+              client_username: username,
+            },
+          }),
+        });
 
-        if (hasAppointmentFlag === "true" && appointmentDateTime) {
-          const appointmentDate = new Date(appointmentDateTime);
-          const now = new Date();
+        const result = await response.json();
+        const parsedBody = typeof result.body === 'string' ? JSON.parse(result.body) : result.body;
 
-          // Only show appointment if it's in the future
-          if (appointmentDate > now) {
+        if (result.statusCode === 200) {
+          const appointmentData = parsedBody;
+
+          if (
+            appointmentData.hasAppointment &&
+            appointmentData.appointmentDateTime
+          ) {
+            const appointmentDate = new Date(
+              appointmentData.appointmentDateTime
+            );
+
+            // Set state for UI
             setHasAppointment(true);
             setAppointmentTime(appointmentDate.getTime());
+
+            await AsyncStorage.setItem("hasAppointment", "true");
           } else {
-            // Clear expired appointment
-            await AsyncStorage.removeItem("hasAppointment");
-            await AsyncStorage.removeItem("appointmentDateTime");
-            // delete the note from readiness
+            // No active appointment found
             setHasAppointment(false);
             setAppointmentTime(null);
+
+            // Clean up AsyncStorage
+            await AsyncStorage.removeItem("hasAppointment");
           }
         } else {
-          setHasAppointment(false);
-          setAppointmentTime(null);
+          throw new Error(
+            parsedBody?.error || "Failed to fetch appointment data"
+          );
         }
       } catch (error) {
         console.error("Error checking appointment:", error);
@@ -93,15 +128,19 @@ const ClientDashboard = ({ navigation }) => {
       }
     };
 
-    checkAppointment();
+    if (username) {
+      checkAppointment();
+    }
 
     // Check for appointment updates whenever the dashboard is focused
     const unsubscribe = navigation.addListener("focus", () => {
-      checkAppointment();
+      if (username) {
+        checkAppointment();
+      }
     });
 
     return unsubscribe;
-  }, [navigation]);
+  }, [navigation, username]);
 
   // Update countdown timer
   useEffect(() => {
@@ -119,7 +158,36 @@ const ClientDashboard = ({ navigation }) => {
 
         // Clear from storage
         AsyncStorage.removeItem("hasAppointment");
-        AsyncStorage.removeItem("appointmentDateTime");
+        
+        // Call API to complete the appointment
+        const completeAppointment = async () => {
+          try {
+            const response = await fetch(`${API_ENDPOINT}/dbHandling`, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                action: "complete_appointment",
+                data: {
+                  client_username: username
+                }
+              }),
+            });
+            
+            const result = await response.json();
+            console.log("Appointment completion result:", result);
+            if (result.statusCode === 200) {
+              console.log("Appointment marked as completed");
+            } else {
+              console.warn("Failed to mark appointment as completed:", result);
+            }
+          } catch (error) {
+            console.error("Error completing appointment:", error);
+          }
+        };
+        
+        completeAppointment();
         return;
       }
 
