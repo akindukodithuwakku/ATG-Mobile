@@ -7,6 +7,9 @@ import {
   Modal,
   SafeAreaView,
   ScrollView,
+  TextInput,
+  KeyboardAvoidingView,
+  Platform,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -24,6 +27,7 @@ const ReadinessQuestionnaire = ({ visible, onClose, navigation }) => {
 
   const [answers, setAnswers] = useState(Array(questions.length).fill(null));
   const [allQuestionsAnswered, setAllQuestionsAnswered] = useState(false);
+  const [clientNote, setClientNote] = useState("");
 
   // Check if all questions have been answered
   const checkAllAnswered = useCallback(
@@ -47,6 +51,14 @@ const ReadinessQuestionnaire = ({ visible, onClose, navigation }) => {
     [answers, checkAllAnswered, resetTimer]
   );
 
+  const handleNoteChange = useCallback(
+    (text) => {
+      resetTimer();
+      setClientNote(text);
+    },
+    [resetTimer]
+  );
+
   const handleClose = useCallback(() => {
     resetTimer();
     onClose();
@@ -56,8 +68,18 @@ const ReadinessQuestionnaire = ({ visible, onClose, navigation }) => {
   const handleSubmit = useCallback(async () => {
     try {
       resetTimer();
-      // Save answers to AsyncStorage
-      // await AsyncStorage.setItem('questionnaireAnswers', JSON.stringify(answers));
+      // Format questionnaire data (just answers and client note)
+      const questionnaireData = {
+        answers: answers,
+        questions: questions,
+        clientNote: clientNote,
+      };
+
+      // Save questionnaire data to AsyncStorage
+      await AsyncStorage.setItem(
+        "pendingQuestionnaireData",
+        JSON.stringify(questionnaireData)
+      );
 
       // Close the questionnaire
       onClose();
@@ -65,9 +87,9 @@ const ReadinessQuestionnaire = ({ visible, onClose, navigation }) => {
       // Navigate to appointment scheduling
       navigation.navigate("AppointmentScheduling");
     } catch (error) {
-      console.error("Error saving questionnaire answers:", error);
+      console.error("Error saving questionnaire data:", error);
     }
-  }, [answers, navigation, onClose, resetTimer]);
+  }, [answers, questions, clientNote, navigation, onClose, resetTimer]);
 
   // Handler for scroll events to reset timer
   const handleScroll = useCallback(() => {
@@ -82,82 +104,107 @@ const ReadinessQuestionnaire = ({ visible, onClose, navigation }) => {
       onRequestClose={handleClose}
     >
       <SafeAreaView style={styles.modalContainer}>
-        <View style={styles.modalContent}>
-          <View style={styles.header}>
-            <TouchableOpacity onPress={handleClose} style={styles.closeButton}>
-              <Ionicons name="close" size={24} color="black" />
-            </TouchableOpacity>
-            <Text style={styles.title}>Readiness Questionnaire</Text>
-          </View>
-
-          <ScrollView
-            style={styles.scrollView}
-            onScrollBeginDrag={handleScroll}
-            onMomentumScrollBegin={handleScroll}
-          >
-            {questions.map((question, index) => (
-              <View key={index} style={styles.questionContainer}>
-                <Text style={styles.questionText}>
-                  {index + 1}. {question}
-                </Text>
-                <View style={styles.answerContainer}>
-                  <TouchableOpacity
-                    style={[
-                      styles.answerButton,
-                      styles.noButton,
-                      answers[index] === false && styles.selectedButton,
-                    ]}
-                    onPress={() => handleAnswer(index, false)}
-                  >
-                    <Text style={styles.buttonText}>NO</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={[
-                      styles.answerButton,
-                      styles.yesButton,
-                      answers[index] === true && styles.selectedButton,
-                    ]}
-                    onPress={() => handleAnswer(index, true)}
-                  >
-                    <Text style={styles.buttonText}>YES</Text>
-                  </TouchableOpacity>
-                </View>
-              </View>
-            ))}
-            <Text style={styles.confirmationText}>
-              Are you sure you need a consultation?
-            </Text>
-
-            {/* Add text field to send a note to the doctor, and save it in async
-            storage. */}
-
-            <View style={styles.bottomButtonsContainer}>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          style={styles.keyboardAvoidView}
+        >
+          <View style={styles.modalContent}>
+            <View style={styles.header}>
               <TouchableOpacity
-                style={styles.cancelButton}
                 onPress={handleClose}
+                style={styles.closeButton}
               >
-                <Text style={styles.cancelButtonText}>Cancel</Text>
+                <Ionicons name="close" size={24} color="black" />
               </TouchableOpacity>
-              <TouchableOpacity
-                style={[
-                  styles.submitButton,
-                  !allQuestionsAnswered && styles.disabledButton,
-                ]}
-                onPress={handleSubmit}
-                disabled={!allQuestionsAnswered}
-              >
-                <Text
-                  style={[
-                    styles.submitButtonText,
-                    !allQuestionsAnswered && styles.disabledButtonText,
-                  ]}
-                >
-                  Submit
-                </Text>
-              </TouchableOpacity>
+              <Text style={styles.title}>Readiness Questionnaire</Text>
             </View>
-          </ScrollView>
-        </View>
+
+            <ScrollView
+              style={styles.scrollView}
+              onScrollBeginDrag={handleScroll}
+              onMomentumScrollBegin={handleScroll}
+              keyboardShouldPersistTaps="handled"
+            >
+              {questions.map((question, index) => (
+                <View key={index} style={styles.questionContainer}>
+                  <Text style={styles.questionText}>
+                    {index + 1}. {question}
+                  </Text>
+                  <View style={styles.answerContainer}>
+                    <TouchableOpacity
+                      style={[
+                        styles.answerButton,
+                        styles.noButton,
+                        answers[index] === false && styles.selectedButton,
+                      ]}
+                      onPress={() => handleAnswer(index, false)}
+                    >
+                      <Text style={styles.buttonText}>NO</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={[
+                        styles.answerButton,
+                        styles.yesButton,
+                        answers[index] === true && styles.selectedButton,
+                      ]}
+                      onPress={() => handleAnswer(index, true)}
+                    >
+                      <Text style={styles.buttonText}>YES</Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              ))}
+              <Text style={styles.confirmationText}>
+                Are you sure you need a consultation?
+              </Text>
+
+              {/* Client note input */}
+              <View style={styles.noteContainer}>
+                <Text style={styles.noteLabel}>
+                  Add a note to your care navigator:
+                </Text>
+                <TextInput
+                  style={styles.noteInput}
+                  placeholder="Describe your concerns or questions here..."
+                  multiline={true}
+                  numberOfLines={5}
+                  value={clientNote}
+                  onChangeText={handleNoteChange}
+                  maxLength={500}
+                />
+                <Text style={styles.noteCounter}>{clientNote.length}/500</Text>
+              </View>
+
+              <View style={styles.bottomButtonsContainer}>
+                <TouchableOpacity
+                  style={styles.cancelButton}
+                  onPress={handleClose}
+                  activeOpacity={0.7}
+                >
+                  <Text style={styles.cancelButtonText}>Cancel</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[
+                    styles.submitButton,
+                    !allQuestionsAnswered && styles.disabledButton,
+                  ]}
+                  onPress={handleSubmit}
+                  disabled={!allQuestionsAnswered}
+                  activeOpacity={0.7}
+                >
+                  <Text
+                    style={[
+                      styles.submitButtonText,
+                      !allQuestionsAnswered && styles.disabledButtonText,
+                    ]}
+                  >
+                    Submit
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </ScrollView>
+          </View>
+        </KeyboardAvoidingView>
       </SafeAreaView>
     </Modal>
   );
@@ -170,12 +217,19 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
+  keyboardAvoidView: {
+    flex: 1,
+    width: "100%",
+    justifyContent: "center",
+    alignItems: "center",
+  },
   modalContent: {
     width: "90%",
     height: "80%",
     backgroundColor: "white",
     borderRadius: 20,
     overflow: "hidden",
+    paddingBottom: 15,
   },
   header: {
     flexDirection: "row",
@@ -233,10 +287,31 @@ const styles = StyleSheet.create({
     textAlign: "center",
     marginVertical: 15,
   },
+  noteContainer: {
+    marginTop: 10,
+    marginBottom: 20,
+  },
+  noteLabel: {
+    fontSize: 16,
+    marginBottom: 8,
+  },
+  noteInput: {
+    borderWidth: 1,
+    borderColor: "#ccc",
+    borderRadius: 10,
+    padding: 10,
+    minHeight: 100,
+    textAlignVertical: "top",
+  },
+  noteCounter: {
+    alignSelf: "flex-end",
+    marginTop: 5,
+    color: "#777",
+    fontSize: 12,
+  },
   bottomButtonsContainer: {
     flexDirection: "row",
     justifyContent: "space-between",
-    marginTop: 10,
     marginBottom: 20,
   },
   cancelButton: {
