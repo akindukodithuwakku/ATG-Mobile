@@ -84,8 +84,8 @@ def lambda_handler(event, context):
                         return response(404, {"error": "User not found"})
                 
                 elif action == "get_client_cn_calendly":
-                    if "client_name" not in data:
-                        return response(400, {"error": "Missing 'client_name'"})
+                    if "client_username" not in data:
+                        return response(400, {"error": "Missing 'client_username'"})
                     
                     sql = """
                         SELECT u.calendly_name 
@@ -93,10 +93,10 @@ def lambda_handler(event, context):
                         WHERE u.username = (
                             SELECT care_navigator_username 
                             FROM client_details 
-                            WHERE client_name = %s
+                            WHERE client_username = %s
                         )
                     """
-                    cursor.execute(sql, (data["client_name"],))
+                    cursor.execute(sql, (data["client_username"],))
                     result = cursor.fetchone()
                     
                     if result and result.get("calendly_name"):
@@ -162,20 +162,29 @@ def lambda_handler(event, context):
 
                 elif action == "create_appointment":
                     # Validate required fields
-                    required_fields = ["client_username", "local_start_time", "created_timestamp"]
+                    required_fields = ["client_username", "local_start_time"]
                     for field in required_fields:
                         if field not in data:
                             return response(400, {"error": f"Missing required field '{field}'"})
                     
+                    # Extract questionnaire data
+                    questionnaire_data = data.get("questionnaire_data", None)
+                    
                     sql = """
-                        INSERT INTO client_appointments (client_username, local_start_time, status, note, created_timestamp)
-                        VALUES (%s, %s, 'active', %s, %s)
+                        INSERT INTO client_appointments (
+                            client_username, 
+                            appointment_date_time, 
+                            client_note, 
+                            questionnaire_data
+                        )
+                        VALUES (%s, %s, %s, %s)
                     """
+                    
                     cursor.execute(sql, (
                         data["client_username"], 
                         data["local_start_time"], 
-                        data.get("note", ""),  # Optional field (Value or empty)
-                        data["created_timestamp"]
+                        data.get("client_note", ""),
+                        questionnaire_data
                     ))
                     conn.commit()
 
@@ -183,6 +192,33 @@ def lambda_handler(event, context):
                         "message": "Appointment created successfully", 
                         "appointment_id": cursor.lastrowid
                     })
+                
+                elif action == "get_active_appointment":
+                    if "client_username" not in data:
+                        return response(400, {"error": "Missing 'client_username'"})
+                    
+                    sql = """
+                        SELECT appointment_date_time
+                        FROM client_appointments
+                        WHERE client_username = %s
+                        AND status = 'active'
+                        AND appointment_date_time > NOW()
+                        ORDER BY appointment_date_time ASC
+                        LIMIT 1
+                    """
+                    cursor.execute(sql, (data["client_username"],))
+                    result = cursor.fetchone()
+
+                    if result:
+                        return response(200, {
+                            "hasAppointment": True,
+                            "appointmentDateTime": result["appointment_date_time"].isoformat()
+                        })
+                    else:
+                        return response(200, {
+                            "hasAppointment": False,
+                            "appointmentDateTime": None
+                        })
 
                 elif action == "cancel_appointment":
                     if "client_username" not in data:
