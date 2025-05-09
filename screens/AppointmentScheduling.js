@@ -23,11 +23,13 @@ const AppointmentScheduling = ({ navigation }) => {
   const { resetTimer } = useAutomaticLogout();
   const webViewRef = useRef(null);
 
-  const [bookingProcessed, setBookingProcessed] = useState(false);
   const [clientUsername, setClientUsername] = useState("");
   const [calendlyName, setCalendlyName] = useState("");
   const [calendlyError, setCalendlyError] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+
+  // Component level ref to track processed booking IDs
+  const processedBookingIds = useRef(new Set());
 
   // Constructing the Calendly URL of CN based on the fetched calendly name
   const calendlyUrl = calendlyName
@@ -38,6 +40,9 @@ const AppointmentScheduling = ({ navigation }) => {
   useFocusEffect(
     useCallback(() => {
       resetTimer();
+    
+      // Clear processed bookings when the screen comes into focus
+      processedBookingIds.current.clear();
 
       // Get username from AsyncStorage then fetch CN's calendly name
       const getClientAndFetchCnCalendly = async () => {
@@ -164,18 +169,35 @@ const AppointmentScheduling = ({ navigation }) => {
   const handleWebViewMessage = (event) => {
     try {
       resetTimer();
-      if (bookingProcessed) return;
-
       const data = JSON.parse(event.nativeEvent.data);
 
       if (data.type === "booking_response") {
-        setBookingProcessed(true);
-        saveBookingData(data.data);
-        Alert.alert(
-          "Booking Confirmed",
-          "Your appointment has been scheduled successfully!"
-        );
-        setBookingProcessed(false);
+        // Create a unique ID from the booking data
+        const bookingId =
+          data.data?.event?.uri ||
+          data.data?.event?.start_time ||
+          JSON.stringify(data.data);
+
+        // Check if this booking is already processed 
+        if (processedBookingIds.current.has(bookingId)) {
+          return;
+        }
+
+        // Mark this booking as processed
+        processedBookingIds.current.add(bookingId);
+
+        console.log("Processing booking:", bookingId);
+        saveBookingData(data.data)
+          .then(() => {
+            Alert.alert(
+              "Booking Confirmed",
+              "Your appointment has been scheduled successfully!"
+            );
+          })
+          .catch((error) => {
+            console.error("Error in booking:", error);
+            processedBookingIds.current.delete(bookingId);
+          });
       }
     } catch (error) {
       console.error("Error processing WebView message:", error);
@@ -192,30 +214,85 @@ const AppointmentScheduling = ({ navigation }) => {
         throw new Error("No start time found in booking data");
       }
 
-      // Convert UTC time to local timezone
-      const localStartTime = new Date(startTime);
-      console.log("Fetched local start time: " + localStartTime);
+      // Get the client username from AsyncStorage
+      const clientUsername = await AsyncStorage.getItem("appUser");
+      if (!clientUsername) {
+        throw new Error("No username found in storage");
+      }
 
-      // Save to AsyncStorage
-      await AsyncStorage.setItem(
-        "appointmentDateTime",
-        localStartTime.toISOString()
-      );
-      await AsyncStorage.setItem("hasAppointment", "true");
+      // Retrieve questionnaire data if available
+      let questionnaireData = null;
+      let clientNote = "";
 
-      // Read async to retrieve the note from readiness
-      // Query appointment data to the database (clientName, localStartTime, status, timeStamp, notes (Received and saved from questionnaire))
+      try {
+        const pendingQuestionnaireData = await AsyncStorage.getItem(
+          "pendingQuestionnaireData"
+        );
+        if (pendingQuestionnaireData) {
+          questionnaireData = JSON.parse(pendingQuestionnaireData);
+          clientNote = questionnaireData.clientNote || "";
+          console.log("Retrieved questionnaire data from storage");
+        } else {
+          console.log("No questionnaire data found in storage");
+        }
+      } catch (questionnaireError) {
+        console.warn(
+          "Error retrieving questionnaire data:",
+          questionnaireError
+        );
+      }
 
-      console.log(
-        "Appointment saved to storage:",
-        localStartTime.toISOString()
-      );
+      // Prepare questionnaire data for database
+      const questionnairePayload = questionnaireData
+        ? JSON.stringify({
+            answers: questionnaireData.answers,
+            questions: questionnaireData.questions,
+          })
+        : null;
+
+      // Save directly to the database
+      const response = await fetch(`${API_ENDPOINT}/dbHandling`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          action: "create_appointment",
+          data: {
+            client_username: clientUsername,
+            local_start_time: startTime,
+            client_note: clientNote,
+            questionnaire_data: questionnairePayload,
+          },
+        }),
+      });
+
+      const result = await response.json();
+
+      if (result.statusCode === 200) {
+        console.log("Appointment saved to database successfully:", result);
+
+        // Clear the pending questionnaire data after successful save
+        if (questionnaireData) {
+          await AsyncStorage.removeItem("pendingQuestionnaireData");
+        }
+
+        // Maintain hasAppointment flag in AsyncStorage for app state management
+        await AsyncStorage.setItem("hasAppointment", "true");
+
+        return true;
+      } else {
+        throw new Error(
+          result.body?.error || "Failed to create appointment in database"
+        );
+      }
     } catch (error) {
-      console.error("Error saving booking to storage:", error);
+      console.error("Error saving booking to database:", error);
       Alert.alert(
         "Error",
         "Failed to save appointment information. Please try again."
       );
+      return false;
     }
   };
 
