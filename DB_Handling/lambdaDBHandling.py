@@ -83,6 +83,22 @@ def lambda_handler(event, context):
                     else:
                         return response(404, {"error": "User not found"})
                 
+                elif action == "get_user_status":
+                    if "username" not in data:
+                        return response(400, {"error": "Missing 'username'"})
+                    
+                    sql = "SELECT status FROM users WHERE username = %s"
+                    cursor.execute(sql, (
+                        data["username"],
+                    ))
+                    result = cursor.fetchone()
+
+                    if result:
+                        result = serialize_result(result)
+                        return response(200, result)
+                    else:
+                        return response(404, {"error": "User not found"})
+                
                 elif action == "get_client_cn_calendly":
                     if "client_username" not in data:
                         return response(400, {"error": "Missing 'client_username'"})
