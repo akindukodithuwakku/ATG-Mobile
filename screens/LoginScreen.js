@@ -18,7 +18,7 @@ import { useResetTimerOnLogin } from "./AutoLogout";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const API_ENDPOINT =
-  "https://uqzl6jyqvg.execute-api.ap-south-1.amazonaws.com/dev/signIn";
+  "https://uqzl6jyqvg.execute-api.ap-south-1.amazonaws.com/dev";
 
 const LoginScreen = ({ navigation }) => {
   const [username, setUsername] = useState("");
@@ -55,8 +55,8 @@ const LoginScreen = ({ navigation }) => {
       try {
         console.log("Calling login API with username:", username.trim());
 
-        // Calling the Lambda function through API Gateway
-        const response = await fetch(API_ENDPOINT, {
+        // Calling the Lambda function through API Gateway for signIn process
+        const response = await fetch(`${API_ENDPOINT}/signIn`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -146,17 +146,105 @@ const LoginScreen = ({ navigation }) => {
           console.log("accessToken:", accessToken);
 
           // Database query to fetch the status of the user and the directing to correct screens has to be modified with a switch statement
-          // case 0: unconfirmed client to verification screen
+          // case 0: unconfirmed client to verification screen - handled at 403 error
           // case 1: confirmed but care intake less client to care intake form
           // case 2: active client/CN to respective dashboard
           // case 3: temporary password client will always be identified with the session string, so need of this case
           // case 4: CNs that need to update the profile page data will get directed to profile screen with a polite alert request to update it
 
-          // Navigate to dashboard
-          navigation.reset({
-            index: 0,
-            routes: [{ name: "CNDashboard" }],
-          });
+          try {
+            const statusResponse = await fetch(`${API_ENDPOINT}/dbHandling`, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                action: "get_user_status",
+                data: {
+                  username: username.trim(),
+                },
+              }),
+            });
+
+            const statusResult = await statusResponse.json();
+        
+            if (!statusResult.body) {
+              throw new Error("Invalid server response format");
+            }
+        
+            const parsedStatusResult =
+              typeof statusResult.body === "string" ? JSON.parse(statusResult.body) : statusResult.body;
+        
+            if (parsedStatusResult.status !== undefined && parsedStatusResult.status !== null) {
+              const status = parsedStatusResult.status;
+
+              if (status === 1) {
+                Alert.alert("Please fill the care intake form to proceed.");
+                // Navigate to dashboard
+                navigation.reset({
+                  index: 0,
+                  routes: [{ name: "Welcome" }],
+                });
+              } else if (status === 2) {
+                try {
+                  const roleResponse = await fetch(`${API_ENDPOINT}/dbHandling`, {
+                    method: "POST",
+                    headers: {
+                      "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                      action: "get_user_role",
+                      data: {
+                        username: username.trim(),
+                      },
+                    }),
+                  });
+      
+                  const roleResult = await roleResponse.json();
+              
+                  if (!roleResult.body) {
+                    throw new Error("Invalid server response format");
+                  }
+        
+                  const parsedRoleResult =
+                    typeof roleResult.body === "string" ? JSON.parse(roleResult.body) : roleResult.body;
+              
+                  if (parsedRoleResult.role !== undefined && parsedRoleResult.role !== null) {
+                    const role = parsedRoleResult.role;
+      
+                    if (role === 0) {
+                      // Navigate to ClientDashboard
+                      navigation.reset({
+                        index: 0,
+                        routes: [{ name: "ClientDashboard" }],
+                      });
+                    } else if (role === 1) {
+                      // Navigate to CNDashboard
+                      navigation.reset({
+                        index: 0,
+                        routes: [{ name: "CNDashboard" }],
+                      });
+                    }
+                  } else if (parsedRoleResult.error) {
+                    throw new Error(`Status error: ${parsedRoleResult.error}`);
+                  } else {
+                    Alert.alert("User role not found.");
+                  }
+                } catch(error) {
+                  Alert.alert(`Failed to fetch user role: ${error.message}`);
+                }
+              } else if (status === 4) {
+                Alert.alert("Profile incomplete, please update your personal details to proceed.");
+                navigation.navigate("ProfileScreenCN");
+              }
+            } else if (parsedStatusResult.error) {
+              throw new Error(`Status error: ${parsedStatusResult.error}`);
+            } else {
+              Alert.alert("User status not found.");
+            }
+          } catch (error) {
+            Alert.alert(`Failed to fetch user status: ${error.message}`);
+          }
         } else if (statusCode == 202) {
           console.log("CN temp login!");
 
