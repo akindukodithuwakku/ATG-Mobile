@@ -23,7 +23,8 @@ const ErrorIcon = () => (
   </View>
 );
 
-const EmergencyContact = ({ navigation }) => {
+const EmergencyContact = ({ navigation, route }) => {
+  const { personalInfoData, healthData, careNeedsData } = route.params || {};
   const [contactName, setContactName] = useState("");
   const [contactNumber, setContactNumber] = useState("");
   const [relationship, setRelationship] = useState("");
@@ -76,18 +77,21 @@ const EmergencyContact = ({ navigation }) => {
     return isValid;
   };
   const handleContinue = () => {
-    const emergencyContactData = {
+    if (validateForm()) {
+      saveData(); // Save data before navigating
+      const emergencyContactData = {
         contactName,
         contactNumber,
         relationship,
-    };
-    navigation.navigate("CareIntakeReview", {
-        personalInfoData: route.params.personalInfoData,
-        healthData: route.params.healthData,
-        careNeedsData: route.params.careNeedsData,
+      };
+      navigation.navigate("CareIntakeReview", {
+        personalInfoData,
+        healthData,
+        careNeedsData,
         emergencyContactData,
-    });
-};
+      });
+    }
+  };
 
   return (
     <KeyboardAvoidingView 
@@ -184,12 +188,7 @@ const EmergencyContact = ({ navigation }) => {
           
           <TouchableOpacity
             style={styles.continueButton}
-            onPress={() => {
-              if (validateForm()) {
-                saveData(); // Save data before navigating
-                navigation.navigate("CareIntakeReview"); // Navigate to CareIntakeReview
-              }
-            }}
+            onPress={handleContinue} // Use the correct handler here!
           >
             <Text style={styles.continueText}>Continue</Text>
           </TouchableOpacity>

@@ -22,7 +22,8 @@ const ErrorIcon = () => (
   </View>
 );
 
-const CareNeedsPreferences = ({ navigation }) => {
+const CareNeedsPreferences = ({ navigation, route }) => {
+  const { personalInfoData, healthData } = route.params || {};
   const [preference, setPreference] = useState("");
   const [additionalNotes, setAdditionalNotes] = useState(""); // State for additional notes
   const [primaryReasonError, setPrimaryReasonError] = useState("");
@@ -136,7 +137,7 @@ const CareNeedsPreferences = ({ navigation }) => {
       specialAssistance,
       additionalNotes,
     };
-    navigation.navigate("EmergencyContact", { careNeedsData }); // Pass data to the next screen
+    navigation.navigate("EmergencyContact", { personalInfoData, healthData, careNeedsData });// Pass data to the next screen
   }
 };
 

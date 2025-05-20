@@ -30,6 +30,8 @@ import Task from "./screens/Task";
 import CarePlan from "./screens/CarePlan";
 import MarkAppointment from "./screens/MarkAppointment";
 import FilterScreen from "./screens/FilterScreen";
+import AdditionalDetailsScreen from "./screens/AdditionalDetailsScreen";
+
 
 const Stack = createStackNavigator();
 
@@ -37,7 +39,7 @@ export default function App() {
   return (
     <NavigationContainer>
       <Stack.Navigator
-        initialRouteName="CarePlan"
+        initialRouteName="Personalinfo"
         screenOptions={{ headerShown: false }}
       >
         <Stack.Screen name="Welcome" component={WelcomeScreen} />
@@ -67,8 +69,9 @@ export default function App() {
         <Stack.Screen name="CarePlan" component={CarePlan} />
 <Stack.Screen name="MarkAppointment" component={MarkAppointment} />
 <Stack.Screen name="FilterScreen" component={FilterScreen} />
+<Stack.Screen name="AdditionalDetailsScreen" component={AdditionalDetailsScreen} />
 
-        
+
       </Stack.Navigator>
     </NavigationContainer>
   );

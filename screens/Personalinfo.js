@@ -66,18 +66,18 @@ const PersonalInfo = ({ navigation }) => {
   };
 
   const handleContinue = () => {
-    if (validateForm()) {
-      const personalInfoData = {
-        userName,
-        fullName,
-        dateOfBirth,
-        contactNumber,
-        homeAddress,
-        gender: isMale ? "Male" : "Female",
-      };
-      navigation.navigate("HealthConditions", { personalInfoData });
-    }
-  };
+  if (validateForm()) {
+    const personalInfoData = {
+      userName,
+      fullName,
+      dateOfBirth,
+      contactNumber,
+      homeAddress,
+      gender: isMale ? "Male" : "Female",
+    };
+    navigation.navigate("HealthConditions", { personalInfoData });
+  }
+};
 
   const handleInputChange = (setter, field) => (text) => {
     setter(text);

@@ -23,7 +23,8 @@ const ErrorIcon = () => (
   </View>
 );
 
-const HealthConditions = ({ navigation }) => {
+const HealthConditions = ({ navigation, route}) => {
+  const { personalInfoData } = route.params || {};
   const [conditions, setConditions] = useState({
     diabetes: false,
     hypertension: false,
@@ -94,8 +95,7 @@ const HealthConditions = ({ navigation }) => {
         medications,
         surgeries,
       };
-      navigation.navigate("CareNeedsPreferences", { healthData }); // Pass data to the next screen
-    }
+  navigation.navigate("CareNeedsPreferences", { personalInfoData, healthData });    }
   };
 
   return (
