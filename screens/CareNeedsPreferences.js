@@ -25,7 +25,7 @@ const ErrorIcon = () => (
 const CareNeedsPreferences = ({ navigation, route }) => {
   const { personalInfoData, healthData } = route.params || {};
   const [preference, setPreference] = useState("");
-  const [additionalNotes, setAdditionalNotes] = useState(""); // State for additional notes
+  const [additionalNotes, setAdditionalNotes] = useState("");
   const [primaryReasonError, setPrimaryReasonError] = useState("");
   const [medicalConditionsError, setMedicalConditionsError] = useState("");
   const [specialAssistanceError, setSpecialAssistanceError] = useState("");
@@ -54,20 +54,19 @@ const CareNeedsPreferences = ({ navigation, route }) => {
         setPreference(preference);
         setMedicalConditions(medicalConditions);
         setSpecialAssistance(specialAssistance);
-        setAdditionalNotes(additionalNotes); // Load additional notes
+        setAdditionalNotes(additionalNotes);
       }
     };
     loadData();
   }, []);
 
   const saveData = async () => {
-    const data = { preference, medicalConditions, specialAssistance, additionalNotes }; // Include additional notes
+    const data = { preference, medicalConditions, specialAssistance, additionalNotes };
     await AsyncStorage.setItem('careNeedsPreferences', JSON.stringify(data));
   };
 
   const handleMedicalConditionChange = (condition) => {
     const selectedCount = Object.values(medicalConditions).filter(Boolean).length;
-
     if (medicalConditions[condition]) {
       setMedicalConditions((prev) => ({
         ...prev,
@@ -79,13 +78,11 @@ const CareNeedsPreferences = ({ navigation, route }) => {
         [condition]: true,
       }));
     }
-
     setMedicalConditionsError("");
   };
 
   const handleSpecialAssistanceChange = (assistance) => {
     const selectedCount = Object.values(specialAssistance).filter(Boolean).length;
-
     if (specialAssistance[assistance]) {
       setSpecialAssistance((prev) => ({
         ...prev,
@@ -97,13 +94,11 @@ const CareNeedsPreferences = ({ navigation, route }) => {
         [assistance]: true,
       }));
     }
-
     setSpecialAssistanceError("");
   };
 
   const validateForm = () => {
     let isValid = true;
-
     setPrimaryReasonError("");
     setMedicalConditionsError("");
     setSpecialAssistanceError("");
@@ -126,20 +121,20 @@ const CareNeedsPreferences = ({ navigation, route }) => {
     }
 
     return isValid;
- };
+  };
 
- const handleContinue = () => {
-  if (validateForm()) {
-    saveData(); // Save data before navigating
-    const careNeedsData = {
-      preference,
-      medicalConditions,
-      specialAssistance,
-      additionalNotes,
-    };
-    navigation.navigate("EmergencyContact", { personalInfoData, healthData, careNeedsData });// Pass data to the next screen
-  }
-};
+  const handleContinue = () => {
+    if (validateForm()) {
+      saveData();
+      const careNeedsData = {
+        preference,
+        medicalConditions,
+        specialAssistance,
+        additionalNotes,
+      };
+      navigation.navigate("EmergencyContact", { personalInfoData, healthData, careNeedsData });
+    }
+  };
 
   return (
     <View style={styles.container}>
@@ -214,7 +209,9 @@ const CareNeedsPreferences = ({ navigation, route }) => {
                   onPress={() => handleSpecialAssistanceChange(assistance)}
                   color="#00BCD4"
                 />
-                <Text style={styles.checkboxLabel}>{assistance.charAt(0).toUpperCase() + assistance.slice(1).replace(/([A-Z])/g, ' $1')}</Text>
+                <Text style={styles.checkboxLabel}>
+                  {assistance.charAt(0).toUpperCase() + assistance.slice(1).replace(/([A-Z])/g, ' $1')}
+                </Text>
               </View>
             ))}
           </View>
@@ -250,7 +247,7 @@ const CareNeedsPreferences = ({ navigation, route }) => {
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.continueButton}
-          onPress={handleContinue} // Validate before navigating
+          onPress={handleContinue}
         >
           <Text style={styles.continueText}>Continue</Text>
         </TouchableOpacity>

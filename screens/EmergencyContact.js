@@ -26,10 +26,10 @@ const ErrorIcon = () => (
 const EmergencyContact = ({ navigation, route }) => {
   const { personalInfoData, healthData, careNeedsData } = route.params || {};
   const [contactName, setContactName] = useState("");
-  const [contactNumber, setContactNumber] = useState("");
+  const [emergencyContactNumber, setemergencyContactNumber] = useState("");
   const [relationship, setRelationship] = useState("");
   const [contactNameError, setContactNameError] = useState("");
-  const [contactNumberError, setContactNumberError] = useState("");
+  const [emergencyContactNumberError, setemergencyContactNumberError] = useState("");
   const [relationshipError, setRelationshipError] = useState("");
   const scheme = useColorScheme();
   const [isSideNavVisible, setIsSideNavVisible] = useState(false);
@@ -38,9 +38,9 @@ const EmergencyContact = ({ navigation, route }) => {
     const loadData = async () => {
       const savedData = await AsyncStorage.getItem('emergencyContact');
       if (savedData) {
-        const { contactName, contactNumber, relationship } = JSON.parse(savedData);
+        const { contactName, emergencyContactNumber, relationship } = JSON.parse(savedData);
         setContactName(contactName);
-        setContactNumber(contactNumber);
+        setemergencyContactNumber(emergencyContactNumber);
         setRelationship(relationship);
       }
     };
@@ -48,7 +48,7 @@ const EmergencyContact = ({ navigation, route }) => {
   }, []);
 
   const saveData = async () => {
-    const data = { contactName, contactNumber, relationship };
+    const data = { contactName, emergencyContactNumber, relationship };
     await AsyncStorage.setItem('emergencyContact', JSON.stringify(data));
   };
 
@@ -56,7 +56,7 @@ const EmergencyContact = ({ navigation, route }) => {
     let isValid = true;
 
     setContactNameError("");
-    setContactNumberError("");
+    setemergencyContactNumberError("");
     setRelationshipError("");
 
     if (!contactName) {
@@ -64,8 +64,8 @@ const EmergencyContact = ({ navigation, route }) => {
       isValid = false;
     }
 
-    if (!contactNumber) {
-      setContactNumberError("Contact number cannot be empty.");
+    if (!emergencyContactNumber) {
+      setemergencyContactNumberError("Contact number cannot be empty.");
       isValid = false;
     }
 
@@ -81,7 +81,7 @@ const EmergencyContact = ({ navigation, route }) => {
       saveData(); // Save data before navigating
       const emergencyContactData = {
         contactName,
-        contactNumber,
+        emergencyContactNumber,
         relationship,
       };
       navigation.navigate("CareIntakeReview", {
@@ -143,18 +143,18 @@ const EmergencyContact = ({ navigation, route }) => {
               placeholder="Enter Contact Number"
               placeholderTextColor="#B3E5FC"
               keyboardType="phone-pad"
-              value={contactNumber}
+              value={emergencyContactNumber}
               onChangeText={(text) => {
-                setContactNumber(text);
+                setemergencyContactNumber(text);
                 if (text) {
-                  setContactNumberError(""); // Clear error when user types
+                  setemergencyContactNumberError(""); // Clear error when user types
                 }
               }}
             />
-            {contactNumberError && (
+            {emergencyContactNumberError && (
               <View style={styles.errorContainer}>
                 <ErrorIcon />
-                <Text style={styles.error}>{contactNumberError}</Text>
+                <Text style={styles.error}>{emergencyContactNumberError}</Text>
               </View>
             )}
 
