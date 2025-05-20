@@ -35,7 +35,7 @@ const DocumentUpload = ({ navigation }) => {
   const pickDocument = async () => {
     try {
       const result = await DocumentPicker.getDocumentAsync({
-        type: "application/pdf",
+        type: ["application/pdf", "image/jpeg", "image/png"],
       });
       if (!result.canceled) {
         const file = result.assets[0];
@@ -49,7 +49,7 @@ const DocumentUpload = ({ navigation }) => {
   const uploadDocument = (uri, name) => {
     return new Promise((resolve, reject) => {
       try {
-        const userId = "Akindu_01";
+        const userId = "testuser_01";
         setUploadingFiles((prev) => ({
           ...prev,
           [name]: { progress: 0 },
@@ -85,7 +85,7 @@ const DocumentUpload = ({ navigation }) => {
               };
               setConfirmedFiles((prev) => [...prev, documentData]);
               scrollToEnd();
-              resolve(); // Resolve after successful upload
+              resolve();
             } catch (err) {
               console.error("Failed to parse response:", err);
               reject(err);
@@ -112,10 +112,18 @@ const DocumentUpload = ({ navigation }) => {
           });
         };
 
+        const fileType = name.endsWith(".pdf")
+          ? "application/pdf"
+          : name.endsWith(".jpg") || name.endsWith(".jpeg")
+          ? "image/jpeg"
+          : name.endsWith(".png")
+          ? "image/png"
+          : "application/octet-stream";
+
         const formData = new FormData();
         formData.append("file", {
           uri,
-          type: "application/pdf",
+          type: fileType,
           name,
         });
 
@@ -134,9 +142,8 @@ const DocumentUpload = ({ navigation }) => {
       for (const file of pendingFiles) {
         await uploadDocument(file.uri, file.name);
       }
-
       setPendingFiles([]);
-      setIsSuccess(true); // Show success page after upload
+      setIsSuccess(true);
     } catch (error) {
       console.error("Upload error:", error);
       Alert.alert("Upload Failed", "Some files could not be uploaded.");
@@ -201,10 +208,7 @@ const DocumentUpload = ({ navigation }) => {
   };
 
   const scrollToEnd = () => {
-    setTimeout(
-      () => scrollViewRef.current?.scrollToEnd({ animated: true }),
-      50
-    );
+    setTimeout(() => scrollViewRef.current?.scrollToEnd({ animated: true }), 50);
   };
 
   const isUploading = () => {
@@ -261,18 +265,11 @@ const DocumentUpload = ({ navigation }) => {
           contentContainerStyle={{ flexGrow: 1, paddingBottom: 100 }}
           keyboardShouldPersistTaps="handled"
         >
-          <TouchableOpacity
-            style={styles.uploadBox}
-            onPress={pickDocument}
-          >
-            <Ionicons
-              name="cloud-upload-outline"
-              size={30}
-              color="#00AEEF"
-            />
-            <Text style={styles.uploadText}>Drag & Drop</Text>
+          <TouchableOpacity style={styles.uploadBox} onPress={pickDocument}>
+            <Ionicons name="cloud-upload-outline" size={30} color="#00AEEF" />
+            <Text style={styles.uploadText}>Upload Files</Text>
             <Text style={styles.subText}>
-              You Can Drag And Drop or Click Here To Browse
+              Tap to upload PDFs or images (JPG, PNG)
             </Text>
           </TouchableOpacity>
 
@@ -333,11 +330,7 @@ const DocumentUpload = ({ navigation }) => {
                       style={styles.removeButton}
                       onPress={() => removeFile(index, item)}
                     >
-                      <Ionicons
-                        name="trash-outline"
-                        size={25}
-                        color="#FF0000"
-                      />
+                      <Ionicons name="trash-outline" size={25} color="#FF0000" />
                     </TouchableOpacity>
                   </View>
                 )}
