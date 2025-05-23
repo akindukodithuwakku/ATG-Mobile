@@ -167,15 +167,20 @@ const LoginScreen = ({ navigation }) => {
             });
 
             const statusResult = await statusResponse.json();
-        
+
             if (!statusResult.body) {
               throw new Error("Invalid server response format");
             }
-        
+
             const parsedStatusResult =
-              typeof statusResult.body === "string" ? JSON.parse(statusResult.body) : statusResult.body;
-        
-            if (parsedStatusResult.status !== undefined && parsedStatusResult.status !== null) {
+              typeof statusResult.body === "string"
+                ? JSON.parse(statusResult.body)
+                : statusResult.body;
+
+            if (
+              parsedStatusResult.status !== undefined &&
+              parsedStatusResult.status !== null
+            ) {
               const status = parsedStatusResult.status;
 
               if (status === 1) {
@@ -187,31 +192,39 @@ const LoginScreen = ({ navigation }) => {
                 });
               } else if (status === 2) {
                 try {
-                  const roleResponse = await fetch(`${API_ENDPOINT}/dbHandling`, {
-                    method: "POST",
-                    headers: {
-                      "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify({
-                      action: "get_user_role",
-                      data: {
-                        username: username.trim(),
+                  const roleResponse = await fetch(
+                    `${API_ENDPOINT}/dbHandling`,
+                    {
+                      method: "POST",
+                      headers: {
+                        "Content-Type": "application/json",
                       },
-                    }),
-                  });
-      
+                      body: JSON.stringify({
+                        action: "get_user_role",
+                        data: {
+                          username: username.trim(),
+                        },
+                      }),
+                    }
+                  );
+
                   const roleResult = await roleResponse.json();
-              
+
                   if (!roleResult.body) {
                     throw new Error("Invalid server response format");
                   }
-        
+
                   const parsedRoleResult =
-                    typeof roleResult.body === "string" ? JSON.parse(roleResult.body) : roleResult.body;
-              
-                  if (parsedRoleResult.role !== undefined && parsedRoleResult.role !== null) {
+                    typeof roleResult.body === "string"
+                      ? JSON.parse(roleResult.body)
+                      : roleResult.body;
+
+                  if (
+                    parsedRoleResult.role !== undefined &&
+                    parsedRoleResult.role !== null
+                  ) {
                     const role = parsedRoleResult.role;
-      
+
                     if (role === 0) {
                       // Navigate to ClientDashboard
                       navigation.reset({
@@ -230,12 +243,14 @@ const LoginScreen = ({ navigation }) => {
                   } else {
                     Alert.alert("User role not found.");
                   }
-                } catch(error) {
+                } catch (error) {
                   Alert.alert(`Failed to fetch user role: ${error.message}`);
                 }
               } else if (status === 4) {
-                Alert.alert("Profile incomplete, please update your personal details to proceed.");
-                navigation.navigate("ProfileScreenCN");
+                Alert.alert(
+                  "Profile incomplete, please update your personal details to proceed."
+                );
+                navigation.navigate("EditProfile");
               }
             } else if (parsedStatusResult.error) {
               throw new Error(`Status error: ${parsedStatusResult.error}`);
@@ -252,8 +267,8 @@ const LoginScreen = ({ navigation }) => {
           if (parsedBody.session) {
             await AsyncStorage.setItem("sessionString", parsedBody.session);
           }
-          
-          // A state to identify as the user(CN) is currently directed to a temporary password reset stage 
+
+          // A state to identify as the user(CN) is currently directed to a temporary password reset stage
           // to check at auto logout feature
           await AsyncStorage.setItem("TempPWDChange", "true");
 
