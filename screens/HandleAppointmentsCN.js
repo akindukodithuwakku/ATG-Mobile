@@ -17,6 +17,9 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useFocusEffect } from "@react-navigation/native";
 import { useAutomaticLogout } from "../screens/AutoLogout";
 
+const API_ENDPOINT =
+  "https://uqzl6jyqvg.execute-api.ap-south-1.amazonaws.com/dev";
+
 const HandleAppointmentsCN = ({ navigation }) => {
   const { resetTimer } = useAutomaticLogout();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -41,7 +44,7 @@ const HandleAppointmentsCN = ({ navigation }) => {
     setIsMenuOpen(!isMenuOpen);
   };
 
-  const handleCancelAppointment = () => {
+  const handleCancelAppointment = async () => {
     resetTimer();
     if (!clientUsername.trim()) {
       setError("Please enter a client username");
@@ -51,18 +54,40 @@ const HandleAppointmentsCN = ({ navigation }) => {
     setIsLoading(true);
     setError("");
 
-    // Simulate API call with timeout
-    setTimeout(() => {
+    // Database update for appointment cancelling
+    try {
+      const response = await fetch(`${API_ENDPOINT}/dbHandling`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          action: "cancel_appointment",
+          data: {
+            client_username: clientUsername.trim().toLowerCase(),
+          }
+        }),
+      });
+      
+      const result = await response.json();
+      console.log("Appointment cancellation result:", result);
+      if (result.statusCode === 200) {
+        setIsLoading(false);
+        console.log("Appointment marked as cancelled");
+        Alert.alert(
+          "Success",
+          `Appointment for client "${clientUsername}" has been cancelled.`,
+          [{ text: "OK", onPress: () => resetTimer() }]
+        );
+      } else {
+        console.warn("Failed to mark appointment as cancelled:", result);
+      }
+    } catch (error) {
+      console.error("Error cancelling appointment:", error);
+    } finally {
       setIsLoading(false);
-      Alert.alert(
-        "Success",
-        `Appointment for client "${clientUsername}" has been cancelled.`,
-        [{ text: "OK", onPress: () => resetTimer() }]
-      );
       setClientUsername("");
-    }, 1000);
-
-    // Database query will be added replacing the simulation
+    }
   };
 
   const handleGoToCalendar = () => {
