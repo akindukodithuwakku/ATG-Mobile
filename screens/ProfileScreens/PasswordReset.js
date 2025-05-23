@@ -19,7 +19,7 @@ import { useAutomaticLogout } from "../../screens/AutoLogout";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const API_ENDPOINT =
-  "https://uqzl6jyqvg.execute-api.ap-south-1.amazonaws.com/dev/mobile";
+  "https://uqzl6jyqvg.execute-api.ap-south-1.amazonaws.com/dev";
 
 const PasswordReset = ({ navigation }) => {
   const { resetTimer } = useAutomaticLogout();
@@ -102,7 +102,7 @@ const PasswordReset = ({ navigation }) => {
 
         if (accessToken) {
           // Call the password reset Lambda function through API Gateway
-          const response = await fetch(`${API_ENDPOINT}/passwordReset`, {
+          const response = await fetch(`${API_ENDPOINT}/mobile/passwordReset`, {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
@@ -170,13 +170,13 @@ const PasswordReset = ({ navigation }) => {
           }
         } else if (sessionString) {
           // Call the temp password reset Lambda function through API Gateway
-          const response = await fetch(`${API_ENDPOINT}/tempPWDReset`, {
+          const response = await fetch(`${API_ENDPOINT}/mobile/tempPWDReset`, {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
             },
             body: JSON.stringify({
-              username: appUser.trim(),
+              username: appUser.trim().toLowerCase(),
               new_password: newPassword,
               session: sessionString,
             }),
@@ -208,12 +208,42 @@ const PasswordReset = ({ navigation }) => {
                   (Date.now() + parsedBody.tokens.expiresIn * 1000).toString()
                 );
               }
-              
+
               await AsyncStorage.removeItem("sessionString");
               await AsyncStorage.setItem("TempPWDChange", "false");
 
               const accessToken = await AsyncStorage.getItem("accessToken");
               console.log("accessToken:", accessToken);
+
+              try {
+                const incompleteProfileCNResponse = await fetch(
+                  `${API_ENDPOINT}/dbHandling`,
+                  {
+                    method: "POST",
+                    headers: {
+                      "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                      action: "profile_incomplete_CN",
+                      data: {
+                        username: appUser.trim().toLowerCase(),
+                      },
+                    }),
+                  }
+                );
+
+                const responseResult = await incompleteProfileCNResponse.json();
+
+                if (!incompleteProfileCNResponse.ok) {
+                  const errorMessage =
+                    responseResult.error || "An unknown error occurred";
+                  throw new Error(errorMessage);
+                }
+
+                console.log("User status changed successfully.");
+              } catch (error) {
+                console.error("Error updating profile status:", error.message);
+              }
 
               Alert.alert(
                 "Success",
@@ -225,7 +255,7 @@ const PasswordReset = ({ navigation }) => {
                       resetTimer();
                       navigation.reset({
                         index: 0,
-                        routes: [{ name: "CNDashboard" }],
+                        routes: [{ name: "EditProfile" }],
                       });
                     },
                   },
