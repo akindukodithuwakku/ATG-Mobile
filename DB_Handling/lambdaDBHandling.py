@@ -214,11 +214,11 @@ def lambda_handler(event, context):
                         return response(400, {"error": "Missing 'client_username'"})
                     
                     sql = """
-                        SELECT appointment_date_time
+                        SELECT CONVERT_TZ(appointment_date_time, @@session.time_zone, '+00:00') AS appointment_date_time
                         FROM client_appointments
                         WHERE client_username = %s
                         AND status = 'active'
-                        AND appointment_date_time > NOW()
+                        AND appointment_date_time > UTC_TIMESTAMP()
                         ORDER BY appointment_date_time ASC
                         LIMIT 1
                     """
@@ -226,9 +226,14 @@ def lambda_handler(event, context):
                     result = cursor.fetchone()
 
                     if result:
+                        appointment_time = result["appointment_date_time"]
+                        if appointment_time.tzinfo is None:
+                            from datetime import timezone
+                            appointment_time = appointment_time.replace(tzinfo=timezone.utc)
+
                         return response(200, {
                             "hasAppointment": True,
-                            "appointmentDateTime": result["appointment_date_time"].isoformat()
+                            "appointmentDateTime": appointment_time.isoformat()
                         })
                     else:
                         return response(200, {
@@ -248,7 +253,7 @@ def lambda_handler(event, context):
                                     SELECT appointment_id 
                                     FROM client_appointments 
                                     WHERE client_username = %s AND status = 'active'
-                                    ORDER BY id DESC 
+                                    ORDER BY appointment_id DESC 
                                     LIMIT 1
                                 ) AS subquery
                             )
@@ -273,7 +278,7 @@ def lambda_handler(event, context):
                                 SELECT appointment_id 
                                 FROM client_appointments 
                                 WHERE client_username = %s AND status = 'active'
-                                ORDER BY id DESC 
+                                ORDER BY appointment_id DESC 
                                 LIMIT 1
                             ) AS subquery
                         )
