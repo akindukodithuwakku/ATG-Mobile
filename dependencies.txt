@@ -13,4 +13,8 @@ react-native-reanimated@3.16.6
 react-native-safe-area-context@5.0.0
 react-native-screens@4.4.0
 react-native-web@0.19.13
+expo-linear-gradient@14.0.2
 @babel/core@^7.20.0
+@react-native-async-storage/async-storage@2.1.1
+react-native-webview@13.12.5
+expo-image-picker@16.0.6

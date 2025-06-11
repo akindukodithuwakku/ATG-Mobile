@@ -1,22 +1,48 @@
 import React from "react";
-import { View, Text, StyleSheet, Image, TouchableOpacity } from "react-native";
+import {
+  View,
+  Text,
+  StyleSheet,
+  Image,
+  TouchableOpacity,
+  StatusBar,
+  useColorScheme,
+} from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
 
 const WelcomeScreen = ({ navigation }) => {
+  const scheme = useColorScheme();
   return (
     <View style={styles.container}>
+      <StatusBar
+        barStyle={scheme === "dark" ? "light-content" : "dark-content"}
+        translucent={true}
+        backgroundColor={scheme === "dark" ? "black" : "transparent"}
+      />
+
       <Image source={require("../assets/Ayman_Logo.png")} style={styles.logo} />
+
       <Text style={styles.welcomeText}>Welcome To</Text>
+
       <Text style={styles.appName}>ATG HealthCare</Text>
+
       <Text style={styles.tagline}>
         Your health is our priority. Empowering you with all our strength to
         live a healthier, happier life.
       </Text>
+
       <TouchableOpacity
         style={styles.loginButton}
         onPress={() => navigation.navigate("Login")}
       >
-        <Text style={styles.buttonText}>Log In</Text>
+        <LinearGradient
+          colors={["#09D1C7", "#35AFEA"]}
+          style={styles.gradientButton}
+        >
+          <Text style={styles.loginButtonText}>Log In</Text>
+        </LinearGradient>
       </TouchableOpacity>
+
       <TouchableOpacity
         style={styles.signupButton}
         onPress={() => navigation.navigate("Signup")}
@@ -25,7 +51,7 @@ const WelcomeScreen = ({ navigation }) => {
       </TouchableOpacity>
     </View>
   );
-}
+};
 
 const styles = StyleSheet.create({
   container: {
@@ -33,6 +59,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     backgroundColor: "#ffffff",
+    padding: 20,
   },
   logo: {
     width: 120,
@@ -43,38 +70,52 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: "bold",
     color: "#333",
+    marginBottom: 5,
   },
   appName: {
     fontSize: 28,
     fontWeight: "bold",
-    color: "#3CBAC8",
+    color: "#09D1C7",
+    marginBottom: 15,
   },
   tagline: {
     textAlign: "center",
     fontSize: 16,
     color: "#666",
-    marginVertical: 20,
-    paddingHorizontal: 30,
+    marginBottom: 40,
+    paddingHorizontal: 20,
   },
   loginButton: {
-    backgroundColor: "#3CBAC8",
-    paddingVertical: 10,
-    paddingHorizontal: 50,
+    width: 200,
+    height: 50,
     borderRadius: 25,
-    marginVertical: 10,
+    overflow: "hidden",
+    marginBottom: 15,
   },
-  signupButton: {
-    backgroundColor: "#E6F6F8",
-    paddingVertical: 10,
-    paddingHorizontal: 50,
-    borderRadius: 25,
+  gradientButton: {
+    width: "100%",
+    height: "100%",
+    justifyContent: "center",
+    alignItems: "center",
   },
-  buttonText: {
+  loginButtonText: {
     color: "#fff",
+    fontSize: 18,
     fontWeight: "bold",
   },
+  signupButton: {
+    width: 200,
+    height: 50,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#E9F6FE",
+    borderRadius: 25,
+    borderWidth: 1,
+    borderColor: "#09D1C7",
+  },
   signupText: {
-    color: "#3CBAC8",
+    color: "#09D1C7",
+    fontSize: 18,
     fontWeight: "bold",
   },
 });

@@ -31,7 +31,10 @@
           "iCloudContainerEnvironment": "Production"
         }
       ]
-    ]
+    ],
+    "packagerOpts": {
+      "sourceExts": ["js", "jsx", "ts", "tsx", "env"]
+    }
   }
 }
 
