@@ -65,3 +65,7 @@ This will start the Expo development server and display a QR code. From here, yo
 - Make sure you have the Expo Go app installed on your mobile device for testing
 - For iOS Simulator or Android Emulator usage, ensure you have the appropriate development tools installed
 - For more information on setting up the development environment, refer to the official [Expo documentation](https://docs.expo.dev/get-started/installation/)
+
+
+//kavindya_02
+//kavin@123
