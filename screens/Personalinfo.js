@@ -1,4 +1,3 @@
-// PersonalInfo.js
 import React, { useState } from "react";
 import {
   View,
@@ -41,11 +40,19 @@ const PersonalInfo = ({ navigation }) => {
     if (selectedDate) {
       const formattedDate = selectedDate.toLocaleDateString();
       setDateOfBirth(formattedDate);
+      // Clear error on focus/select
+      if (errors.dateOfBirth) {
+        setErrors((prev) => ({ ...prev, dateOfBirth: "" }));
+      }
     }
   };
 
   const showDatepicker = () => {
     setShowDatePicker(true);
+    // Clear error on focus
+    if (errors.dateOfBirth) {
+      setErrors((prev) => ({ ...prev, dateOfBirth: "" }));
+    }
   };
 
   const closeSideNav = () => {
@@ -66,18 +73,25 @@ const PersonalInfo = ({ navigation }) => {
   };
 
   const handleContinue = () => {
-  if (validateForm()) {
-    const personalInfoData = {
-      userName,
-      fullName,
-      dateOfBirth,
-      contactNumber,
-      homeAddress,
-      gender: isMale ? "Male" : "Female",
-    };
-    navigation.navigate("HealthConditions", { personalInfoData });
-  }
-};
+    if (validateForm()) {
+      const personalInfoData = {
+        userName,
+        fullName,
+        dateOfBirth,
+        contactNumber,
+        homeAddress,
+        gender: isMale ? "Male" : "Female",
+      };
+      navigation.navigate("HealthConditions", { personalInfoData });
+    }
+  };
+
+  // Updated: clear error on focus
+  const handleInputFocus = (field) => {
+    if (errors[field]) {
+      setErrors((prev) => ({ ...prev, [field]: "" }));
+    }
+  };
 
   const handleInputChange = (setter, field) => (text) => {
     setter(text);
@@ -116,6 +130,7 @@ const PersonalInfo = ({ navigation }) => {
               placeholderTextColor="#B3E5FC"
               value={userName}
               onChangeText={handleInputChange(setUserName, "userName")}
+              onFocus={() => handleInputFocus("userName")}
             />
           </View>
           {errors.userName && (
@@ -134,6 +149,7 @@ const PersonalInfo = ({ navigation }) => {
               placeholderTextColor="#B3E5FC"
               value={fullName}
               onChangeText={handleInputChange(setFullName, "fullName")}
+              onFocus={() => handleInputFocus("fullName")}
             />
           </View>
           {errors.fullName && (
@@ -175,6 +191,7 @@ const PersonalInfo = ({ navigation }) => {
                 onValueChange={() => {
                   setIsMale(true);
                   setIsFemale(false);
+                  if (errors.gender) setErrors((prev) => ({ ...prev, gender: "" }));
                 }}
               />
               <Text style={styles.genderText}>Male</Text>
@@ -186,6 +203,7 @@ const PersonalInfo = ({ navigation }) => {
                 onValueChange={() => {
                   setIsFemale(true);
                   setIsMale(false);
+                  if (errors.gender) setErrors((prev) => ({ ...prev, gender: "" }));
                 }}
               />
               <Text style={styles.genderText}>Female</Text>
@@ -208,6 +226,7 @@ const PersonalInfo = ({ navigation }) => {
               keyboardType="phone-pad"
               value={contactNumber}
               onChangeText={handleInputChange(setContactNumber, "contactNumber")}
+              onFocus={() => handleInputFocus("contactNumber")}
             />
           </View>
           {errors.contactNumber && (
@@ -226,6 +245,7 @@ const PersonalInfo = ({ navigation }) => {
               placeholderTextColor="#B3E5FC"
               value={homeAddress}
               onChangeText={handleInputChange(setHomeAddress, "homeAddress")}
+              onFocus={() => handleInputFocus("homeAddress")}
               multiline={true}
               numberOfLines={4}
               textAlignVertical="top"

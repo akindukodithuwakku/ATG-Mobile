@@ -129,6 +129,11 @@ const EmergencyContact = ({ navigation, route }) => {
                   setContactNameError(""); // Clear error when user types
                 }
               }}
+                onFocus={() =>{
+                  if (contactNameError) {
+                    setContactNameError(""); // Clear error when user focuses
+                  }
+                }}
             />
             {contactNameError && (
               <View style={styles.errorContainer}>
@@ -150,6 +155,11 @@ const EmergencyContact = ({ navigation, route }) => {
                   setemergencyContactNumberError(""); // Clear error when user types
                 }
               }}
+              onFocus={() =>{
+                  if (emergencyContactNumberError) {
+                    setemergencyContactNumberError(""); // Clear error when user focuses
+                  }
+                }}
             />
             {emergencyContactNumberError && (
               <View style={styles.errorContainer}>
@@ -170,6 +180,11 @@ const EmergencyContact = ({ navigation, route }) => {
                   setRelationshipError(""); // Clear error when user types
                 }
               }}
+              onFocus={() =>{
+                  if (relationshipError) {
+                    setRelationshipError(""); // Clear error when user focuses
+                  }
+                }}
             />
             {relationshipError && (
               <View style={styles.errorContainer}>

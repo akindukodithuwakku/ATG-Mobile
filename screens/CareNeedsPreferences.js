@@ -41,7 +41,7 @@ const CareNeedsPreferences = ({ navigation, route }) => {
 
   const [specialAssistance, setSpecialAssistance] = useState({
     mobility: false,
-    hypertension: false,
+    languagePreferences: false,
     medicationManagement: false,
     hygiene: false,
   });
@@ -172,6 +172,10 @@ const CareNeedsPreferences = ({ navigation, route }) => {
                 setPrimaryReasonError("");
               }
             }}
+            onFocus={() => {
+    if (primaryReasonError) setPrimaryReasonError("");
+  }}
+
           />
           {primaryReasonError && (
             <View style={styles.errorContainer}>

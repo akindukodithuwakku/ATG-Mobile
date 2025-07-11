@@ -1,4 +1,3 @@
-//health condtions form
 import React, { useState, useEffect } from "react";
 import {
   View,
@@ -23,7 +22,7 @@ const ErrorIcon = () => (
   </View>
 );
 
-const HealthConditions = ({ navigation, route}) => {
+const HealthConditions = ({ navigation, route}) => { //Main component
   const { personalInfoData } = route.params || {};
   const [conditions, setConditions] = useState({
     diabetes: false,
@@ -167,6 +166,11 @@ const HealthConditions = ({ navigation, route}) => {
                   setErrors((prevErrors) => ({ ...prevErrors, medications: "" }));
                 }
               }}
+              onFocus={() => {
+    if (errors.medications) {
+      setErrors((prevErrors) => ({ ...prevErrors, medications: "" }));
+    }
+  }}
             />
             {errors.medications && (
               <View style={styles.errorContainer}>

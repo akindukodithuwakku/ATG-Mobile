@@ -32,19 +32,42 @@ const AddTask = ({ navigation }) => {
     setIsSideNavVisible(false);
   };
 
-  const handleAddTask = () => {
+  const handleAddTask = async () => {
     if (!title) {
-      setErrorMessage("Title is required."); // Set error message if title is empty
+      setErrorMessage("Title is required.");
       return;
     }
-    setErrorMessage(""); // Clear error message if title is filled
-    console.log({
+    setErrorMessage("");
+
+    // Prepare your payload
+    const payload = {
+      care_plan_id: 2, // <-- Replace with actual care_plan_id
       title,
       description,
+      status: "pending",
+      updated_by: "testuser_01", // <-- Replace with actual username
       start: `${startDate} ${startTime}`,
       end: `${endDate} ${endTime}`,
-    });
-    // Add your task handling logic here
+    };
+
+    try {
+      const response = await fetch('https://sue7dsbf09.execute-api.ap-south-1.amazonaws.com/dev/tasks', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        // Optionally show a success message or navigate
+        navigation.goBack();
+      } else {
+        const errorData = await response.json();
+        setErrorMessage(errorData.error || "Failed to add task.");
+      }
+    } catch (error) {
+      setErrorMessage("Network error. Please try again.");
+    }
   };
 
   const showPicker = (field, type) => {
@@ -106,7 +129,7 @@ const AddTask = ({ navigation }) => {
             placeholderTextColor="#B3E5FC"
             value={title}
             onChangeText={setTitle}
-            onFocus={() => setErrorMessage("")} // Clear error message on focus
+            onFocus={() => setErrorMessage("")}
           />
           {errorMessage ? (
             <View style={styles.errorContainer}>
@@ -115,7 +138,7 @@ const AddTask = ({ navigation }) => {
               </View>
               <Text style={styles.errorText}>{errorMessage}</Text>
             </View>
-          ) : null} {/* Display error message */}
+          ) : null}
 
           <Text style={styles.label}>Description</Text>
           <TextInput
@@ -271,8 +294,8 @@ const styles = StyleSheet.create({
   errorCircle: {
     width: 24,
     height: 24,
-    borderRadius: 12, // Make it circular
-    backgroundColor: "red", // Red background
+    borderRadius: 12,
+    backgroundColor: "red",
     justifyContent: "center",
     alignItems: "center",
     marginRight: 5,
