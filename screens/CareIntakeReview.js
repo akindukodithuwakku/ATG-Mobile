@@ -92,7 +92,26 @@ const CareIntakeReview = ({ navigation, route }) => {
     };
   };
 
+ const validateReviewForm = (data) => {
+  if (
+    !data.userName ||
+    !data.fullName ||
+    !data.dateOfBirth ||
+    !data.gender ||
+    !data.contactNumber ||
+    !data.homeAddress ||
+    !data.contactName ||
+    !data.emergencyContactNumber ||
+    !data.relationship
+  ) {
+    Alert.alert("Validation Error", "Please fill all required fields before submitting.");
+    return false;
+  }
+  return true;
+};
+
   const handleSubmit = async () => {
+    if (!validateReviewForm(formData)) return;
     try {
       const payload = transformFormData(formData);
       console.log("Submitting payload:", payload);
