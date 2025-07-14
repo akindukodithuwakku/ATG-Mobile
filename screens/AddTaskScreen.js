@@ -8,58 +8,75 @@ import {
   StatusBar,
   useColorScheme,
   ScrollView,
+  Alert,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import BottomNavigationClient from "../Components/BottomNavigationClient";
-import SideNavigationClient from "../Components/SideNavigationClient";
-import DateTimePicker from '@react-native-community/datetimepicker';
+import DateTimePicker from "@react-native-community/datetimepicker";
+import BottomNavigationCN from "../Components/BottomNavigationCN";
+import SideNavigationCN from "../Components/SideNavigationCN";
 
 const AddTask = ({ navigation }) => {
+  // Hardcoded values for now
+  const care_plan_id = 2;
+  const updated_by = "testuser_01";
+
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [startDate, setStartDate] = useState("");
+  const [startDate, setStartDate] = useState(null);
   const [startTime, setStartTime] = useState("");
-  const [endDate, setEndDate] = useState("");
+  const [endDate, setEndDate] = useState(null);
   const [endTime, setEndTime] = useState("");
-  const [isSideNavVisible, setIsSideNavVisible] = useState(false);
-  const scheme = useColorScheme();
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showTimePicker, setShowTimePicker] = useState(false);
-  const [activeField, setActiveField] = useState(null); // 'startDate', 'startTime', 'endDate', 'endTime'
-  const [errorMessage, setErrorMessage] = useState(""); // State for error message
+  const [activeField, setActiveField] = useState(null);
+  const [errorMessage, setErrorMessage] = useState("");
+  const [isSideNavVisible, setIsSideNavVisible] = useState(false);
+  const scheme = useColorScheme();
 
-  const closeSideNav = () => {
-    setIsSideNavVisible(false);
+  const closeSideNav = () => setIsSideNavVisible(false);
+
+  const formatDateTime = (dateObj, timeStr) => {
+    if (!dateObj || !timeStr) return null;
+    const year = dateObj.getFullYear();
+    const month = String(dateObj.getMonth() + 1).padStart(2, "0");
+    const day = String(dateObj.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day} ${timeStr}:00`;
   };
 
   const handleAddTask = async () => {
-    if (!title) {
-      setErrorMessage("Title is required.");
+    if (!title || !startDate || !startTime || !endDate || !endTime) {
+      setErrorMessage("All fields are required.");
       return;
     }
+
     setErrorMessage("");
 
-    // Prepare your payload
+    const start = formatDateTime(startDate, startTime);
+    const end = formatDateTime(endDate, endTime);
+
     const payload = {
-      care_plan_id: 2, // <-- Replace with actual care_plan_id
+      care_plan_id,
       title,
       description,
       status: "pending",
-      updated_by: "testuser_01", // <-- Replace with actual username
-      start: `${startDate} ${startTime}`,
-      end: `${endDate} ${endTime}`,
+      updated_by,
+      start,
+      end,
     };
 
     try {
-      const response = await fetch('https://sue7dsbf09.execute-api.ap-south-1.amazonaws.com/dev/tasks', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
+      const response = await fetch(
+        "https://sue7dsbf09.execute-api.ap-south-1.amazonaws.com/dev/tasks",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        }
+      );
 
       if (response.ok) {
         const data = await response.json();
-        // Optionally show a success message or navigate
+        Alert.alert("✅ Task added successfully!");
         navigation.goBack();
       } else {
         const errorData = await response.json();
@@ -72,52 +89,46 @@ const AddTask = ({ navigation }) => {
 
   const showPicker = (field, type) => {
     setActiveField(field);
-    if (type === 'date') {
-      setShowDatePicker(true);
-    } else {
-      setShowTimePicker(true);
-    }
+    if (type === "date") setShowDatePicker(true);
+    else setShowTimePicker(true);
   };
 
   const onDateChange = (event, selectedDate) => {
     setShowDatePicker(false);
-    const date = selectedDate || new Date();
-    if (activeField === 'startDate') {
-      setStartDate(date.toLocaleDateString());
-    } else if (activeField === 'endDate') {
-      setEndDate(date.toLocaleDateString());
-    }
+    if (!selectedDate) return;
+    if (activeField === "startDate") setStartDate(selectedDate);
+    else if (activeField === "endDate") setEndDate(selectedDate);
+    setErrorMessage("");
   };
 
   const onTimeChange = (event, selectedTime) => {
     setShowTimePicker(false);
-    const time = selectedTime || new Date();
-    const hours = time.getHours().toString().padStart(2, '0');
-    const minutes = time.getMinutes().toString().padStart(2, '0');
-    if (activeField === 'startTime') {
-      setStartTime(`${hours}:${minutes}`);
-    } else if (activeField === 'endTime') {
-      setEndTime(`${hours}:${minutes}`);
-    }
+    if (!selectedTime) return;
+    const hh = String(selectedTime.getHours()).padStart(2, "0");
+    const mm = String(selectedTime.getMinutes()).padStart(2, "0");
+    const time = `${hh}:${mm}`;
+    if (activeField === "startTime") setStartTime(time);
+    else if (activeField === "endTime") setEndTime(time);
+    setErrorMessage("");
   };
 
   return (
     <View style={styles.container}>
       <StatusBar
         barStyle={scheme === "dark" ? "light-content" : "dark-content"}
-        translucent={true}
-        backgroundColor={scheme === "dark" ? "black" : "transparent"}
+        translucent
+        backgroundColor="transparent"
       />
 
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => setIsSideNavVisible(!isSideNavVisible)}>
+        <TouchableOpacity onPress={() => setIsSideNavVisible(true)}>
           <Ionicons name="menu" size={28} color="white" />
         </TouchableOpacity>
-        <Text style={styles.headerText}>Add A Task</Text>
+        <Text style={styles.headerText}>Add Task</Text>
       </View>
 
       {isSideNavVisible && (
-        <SideNavigationClient navigation={navigation} onClose={closeSideNav} />
+        <SideNavigationCN navigation={navigation} onClose={closeSideNav} />
       )}
 
       <ScrollView contentContainerStyle={styles.scrollContainer}>
@@ -125,12 +136,56 @@ const AddTask = ({ navigation }) => {
           <Text style={styles.label}>Title</Text>
           <TextInput
             style={styles.input}
-            placeholder="Write the title of the activity here"
-            placeholderTextColor="#B3E5FC"
+            placeholder="Task title"
             value={title}
             onChangeText={setTitle}
             onFocus={() => setErrorMessage("")}
           />
+
+          <Text style={styles.label}>Description</Text>
+          <TextInput
+            style={styles.textArea}
+            placeholder="Task description"
+            value={description}
+            onChangeText={setDescription}
+            multiline
+            numberOfLines={4}
+            textAlignVertical="top"
+            onFocus={() => setErrorMessage("")}
+          />
+
+          <Text style={styles.label}>Start</Text>
+          <View style={styles.dateTimeContainer}>
+            <TouchableOpacity
+              style={styles.dateInput}
+              onPress={() => showPicker("startDate", "date")}
+            >
+              <Text>{startDate ? startDate.toDateString() : "Pick Date"}</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.timeInput}
+              onPress={() => showPicker("startTime", "time")}
+            >
+              <Text>{startTime || "Pick Time"}</Text>
+            </TouchableOpacity>
+          </View>
+
+          <Text style={styles.label}>End</Text>
+          <View style={styles.dateTimeContainer}>
+            <TouchableOpacity
+              style={styles.dateInput}
+              onPress={() => showPicker("endDate", "date")}
+            >
+              <Text>{endDate ? endDate.toDateString() : "Pick Date"}</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.timeInput}
+              onPress={() => showPicker("endTime", "time")}
+            >
+              <Text>{endTime || "Pick Time"}</Text>
+            </TouchableOpacity>
+          </View>
+
           {errorMessage ? (
             <View style={styles.errorContainer}>
               <View style={styles.errorCircle}>
@@ -139,38 +194,6 @@ const AddTask = ({ navigation }) => {
               <Text style={styles.errorText}>{errorMessage}</Text>
             </View>
           ) : null}
-
-          <Text style={styles.label}>Description</Text>
-          <TextInput
-            style={styles.textArea}
-            placeholder="Write a task description here"
-            placeholderTextColor="#B3E5FC"
-            value={description}
-            onChangeText={setDescription}
-            multiline={true}
-            numberOfLines={4}
-            textAlignVertical="top"
-          />
-
-          <Text style={styles.label}>Start</Text>
-          <View style={styles.dateTimeContainer}>
-            <TouchableOpacity style={styles.dateInput} onPress={() => showPicker('startDate', 'date')}>
-              <Text style={styles.inputText}>{startDate || "Select Date"}</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.timeInput} onPress={() => showPicker('startTime', 'time')}>
-              <Text style={styles.inputText}>{startTime || "Select Time"}</Text>
-            </TouchableOpacity>
-          </View>
-
-          <Text style={styles.label}>End</Text>
-          <View style={styles.dateTimeContainer}>
-            <TouchableOpacity style={styles.dateInput} onPress={() => showPicker('endDate', 'date')}>
-              <Text style={styles.inputText}>{endDate || "Select Date"}</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.timeInput} onPress={() => showPicker('endTime', 'time')}>
-              <Text style={styles.inputText}>{endTime || "Select Time"}</Text>
-            </TouchableOpacity>
-          </View>
         </View>
       </ScrollView>
 
@@ -182,7 +205,6 @@ const AddTask = ({ navigation }) => {
           onChange={onDateChange}
         />
       )}
-
       {showTimePicker && (
         <DateTimePicker
           value={new Date()}
@@ -192,23 +214,17 @@ const AddTask = ({ navigation }) => {
         />
       )}
 
-      <TouchableOpacity
-        style={styles.addTaskButton}
-        onPress={handleAddTask}
-      >
+      <TouchableOpacity style={styles.addTaskButton} onPress={handleAddTask}>
         <Text style={styles.addTaskText}>Add Task</Text>
       </TouchableOpacity>
 
-      <BottomNavigationClient navigation={navigation} />
+      <BottomNavigationCN navigation={navigation} />
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#F8FDFF",
-  },
+  container: { flex: 1, backgroundColor: "#F8FDFF" },
   header: {
     flexDirection: "row",
     alignItems: "center",
@@ -222,19 +238,9 @@ const styles = StyleSheet.create({
     color: "white",
     marginLeft: 20,
   },
-  scrollContainer: {
-    flexGrow: 1,
-    paddingBottom: 150,
-  },
-  formContainer: {
-    padding: 40,
-  },
-  label: {
-    fontSize: 20,
-    fontWeight: "bold",
-    marginTop: 20,
-    color: "#333",
-  },
+  scrollContainer: { flexGrow: 1, paddingBottom: 150 },
+  formContainer: { padding: 40 },
+  label: { fontSize: 18, fontWeight: "bold", marginTop: 20 },
   input: {
     backgroundColor: "#E0F7FA",
     borderRadius: 10,
@@ -246,9 +252,8 @@ const styles = StyleSheet.create({
     backgroundColor: "#E0F7FA",
     borderRadius: 10,
     padding: 12,
-    fontSize: 16,
     height: 80,
-    textAlignVertical: "top",
+    fontSize: 16,
     marginVertical: 8,
   },
   dateTimeContainer: {
@@ -260,7 +265,6 @@ const styles = StyleSheet.create({
     backgroundColor: "#E0F7FA",
     borderRadius: 10,
     padding: 12,
-    fontSize: 16,
     flex: 1,
     marginRight: 10,
   },
@@ -268,7 +272,6 @@ const styles = StyleSheet.create({
     backgroundColor: "#E0F7FA",
     borderRadius: 10,
     padding: 12,
-    fontSize: 16,
     flex: 1,
   },
   addTaskButton: {
@@ -281,15 +284,11 @@ const styles = StyleSheet.create({
     position: "absolute",
     bottom: 70,
   },
-  addTaskText: {
-    fontSize: 18,
-    color: "white",
-    fontWeight: "bold",
-  },
+  addTaskText: { fontSize: 18, color: "white", fontWeight: "bold" },
   errorContainer: {
     flexDirection: "row",
     alignItems: "center",
-    marginTop: 5,
+    marginTop: 15,
   },
   errorCircle: {
     width: 24,
@@ -299,13 +298,14 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     marginRight: 5,
-  },
-  errorText: {
-    color: "red",
-    fontSize: 16,
+    marginTop: 5,
   },
   errorIconText: {
     color: "white",
+    fontSize: 16,
+  },
+  errorText: {
+    color: "red",
     fontSize: 16,
   },
 });
