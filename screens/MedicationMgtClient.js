@@ -9,19 +9,22 @@ import {
   Animated,
   ScrollView,
   TextInput,
+  Alert,
 } from "react-native";
-import { Picker } from "@react-native-picker/picker";
+import CheckBox from "react-native-check-box";
 import { Ionicons } from "@expo/vector-icons";
 import SideNavigationClient from "../Components/SideNavigationClient";
 import BottomNavigationClient from "../Components/BottomNavigationClient";
 
+const scheduleOptions = ["Morning", "Evening", "Night", "Other"];
+
 const MedicationMgtClient = ({ navigation }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [medications, setMedications] = useState([
-    { name: "", dosage: "", schedule: "", refillDate: "" },
+    { name: "", dosage: "", schedule: [], customSchedule: "", refillDate: "" },
   ]);
-  const [isSuccess, setIsSuccess] = useState(false); // Track success state
-  const [errors, setErrors] = useState([]); // Track errors for each medication
+  const [isSuccess, setIsSuccess] = useState(false);
+  const [errors, setErrors] = useState([{}]);
   const scheme = useColorScheme();
   const menuAnimation = new Animated.Value(isMenuOpen ? 1 : 0);
 
@@ -34,294 +37,266 @@ const MedicationMgtClient = ({ navigation }) => {
     setIsMenuOpen(!isMenuOpen);
   };
 
-  const addMedication = () => {
-    setMedications([
-      ...medications,
-      { name: "", dosage: "", schedule: "", refillDate: "" },
-    ]);
-    setErrors([...errors, {}]); // Add an empty error object for the new medication
-  };
-
   const updateMedication = (index, key, value) => {
     const newMedications = [...medications];
     newMedications[index][key] = value;
     setMedications(newMedications);
-
-    // Clear error for this field if it's filled
-    if (value.trim()) {
+    if (value && value.length !== 0) {
       const newErrors = [...errors];
       newErrors[index] = { ...newErrors[index], [key]: "" };
       setErrors(newErrors);
     }
   };
 
-  const handleFinish = () => {
+  const toggleSchedule = (index, option) => {
+    const current = [...medications];
+    const schedule = [...current[index].schedule];
+
+    const isOtherSelected = schedule.includes("Other");
+    const isBasicSelected = schedule.some(opt => ["Morning", "Evening", "Night"].includes(opt));
+
+    // Handle disable logic
+    if (option === "Other") {
+      if (isOtherSelected) {
+        // Uncheck Other
+        current[index].schedule = [];
+      } else {
+        // Check Other and disable others
+        current[index].schedule = ["Other"];
+      }
+    } else {
+      if (isOtherSelected) return; // Do not allow if "Other" is selected
+      if (schedule.includes(option)) {
+        // Uncheck this option
+        current[index].schedule = schedule.filter(opt => opt !== option);
+      } else {
+        // Add this option
+        current[index].schedule.push(option);
+      }
+    }
+
+    setMedications(current);
+  };
+
+  const handleFinish = async () => {
     let hasError = false;
-    const newErrors = medications.map((med, index) => {
-      const errorsForMed = {};
+    const newErrors = medications.map((med) => {
+      const e = {};
       if (!med.name.trim()) {
-        errorsForMed.name = "Medication name is required.";
+        e.name = "Medication name required";
         hasError = true;
       }
       if (!med.dosage.trim()) {
-        errorsForMed.dosage = "Dosage is required.";
+        e.dosage = "Dosage required";
         hasError = true;
       }
-      if (!med.schedule.trim()) {
-        errorsForMed.schedule = "Schedule is required.";
+      if (med.schedule.length === 0) {
+        e.schedule = "Select at least one schedule option";
+        hasError = true;
+      }
+      if (med.schedule.includes("Other") && !med.customSchedule.trim()) {
+        e.customSchedule = "Enter frequency for 'Other'";
         hasError = true;
       }
       if (!med.refillDate.trim()) {
-        errorsForMed.refillDate = "Refill date is required.";
+        e.refillDate = "Refill date required";
         hasError = true;
       }
-      return errorsForMed;
+      return e;
     });
 
     setErrors(newErrors);
+    if (hasError) return;
 
-    if (!hasError) {
-      setIsSuccess(true); // Show success page
+    const client_username = "kavindya_02";
+
+    for (let med of medications) {
+      const payload = {
+        client_username,
+        medication_name: med.name,
+        dosage: med.dosage,
+        schedule_time: med.schedule.join(", ") + (med.schedule.includes("Other") ? ` (${med.customSchedule})` : ""),
+        refill_date: med.refillDate,
+      };
+
+      try {
+        const response = await fetch(
+          "https://rsxn7kxzr6.execute-api.ap-south-1.amazonaws.com/prod/addMedication",
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+          }
+        );
+
+        const result = await response.json();
+        if (!response.ok) {
+          Alert.alert("Upload Failed", result?.error || "Something went wrong");
+          return;
+        }
+      } catch (err) {
+        console.error("API Error:", err);
+        Alert.alert("Error", "Failed to submit medication.");
+        return;
+      }
     }
+
+    setIsSuccess(true);
   };
 
   const resetUpload = () => {
-    setIsSuccess(false); // Reset success state
-    setMedications([{ name: "", dosage: "", schedule: "", refillDate: "" }]); // Clear medications
-    setErrors([{}]); // Clear errors
+    setIsSuccess(false);
+    setMedications([
+      { name: "", dosage: "", schedule: [], customSchedule: "", refillDate: "" },
+    ]);
+    setErrors([{}]);
   };
 
-  const renderSuccessPage = () => {
-    return (
-      <View style={styles.successContainer}>
-        <Ionicons name="checkmark-circle-outline" size={80} color="#00AEEF" />
-        <Text style={styles.successTitle}>Medication Added Successfully!</Text>
-        <Text style={styles.successMessage}>
-          Your medication details have been saved successfully.
-        </Text>
-        <TouchableOpacity style={styles.successButton} onPress={resetUpload}>
-          <Text style={styles.successButtonText}>Close</Text>
-        </TouchableOpacity>
-      </View>
-    );
-  };
+  const renderSuccessPage = () => (
+    <View style={styles.successContainer}>
+      <Ionicons name="checkmark-circle-outline" size={80} color="#00AEEF" />
+      <Text style={styles.successTitle}>Medication Added Successfully!</Text>
+      <Text style={styles.successMessage}>Details saved successfully.</Text>
+      <TouchableOpacity style={styles.successButton} onPress={resetUpload}>
+        <Text style={styles.successButtonText}>Close</Text>
+      </TouchableOpacity>
+    </View>
+  );
 
   return (
     <View style={styles.container}>
       <StatusBar
         barStyle={scheme === "dark" ? "light-content" : "dark-content"}
-        translucent={true}
+        translucent
         backgroundColor={scheme === "dark" ? "black" : "transparent"}
       />
-      {/* Header with Menu */}
+
       <View style={styles.header}>
         <TouchableOpacity onPress={toggleMenu}>
           <Ionicons name={isMenuOpen ? "close" : "menu"} size={30} color="black" />
         </TouchableOpacity>
         <Text style={styles.headerText}>Medication Management</Text>
       </View>
-      {/* Side Navigation */}
+
       {isMenuOpen && (
         <Animated.View style={[styles.overlay, { opacity: menuAnimation }]}>
           <SideNavigationClient navigation={navigation} onClose={toggleMenu} />
           <TouchableOpacity style={styles.overlayBackground} onPress={toggleMenu} />
         </Animated.View>
       )}
-      {/* Success Page */}
-      {isSuccess && renderSuccessPage()}
-      {/* Main Form Section */}
-      {!isSuccess && (
+
+      <View style={styles.navButtonsContainer}>
+        <TouchableOpacity style={styles.navButton} onPress={() => navigation.navigate("MarkMedication")}>
+          <Text style={styles.navButtonText}>Mark Medication Taken</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.navButton} onPress={() => navigation.navigate("MedicationLog")}>
+          <Text style={styles.navButtonText}>View Medication Log</Text>
+        </TouchableOpacity>
+      </View>
+
+      {isSuccess ? (
+        renderSuccessPage()
+      ) : (
         <ScrollView contentContainerStyle={styles.content}>
           <Text style={styles.sectionTitle}>Medication Details</Text>
+
           {medications.map((med, index) => (
             <View key={index} style={styles.medicationBox}>
-              {/* Medication Name Input Field */}
               <Text style={styles.label}>Medication Name</Text>
               <TextInput
-                style={[
-                  styles.textInput,
-                  errors[index]?.name && { borderColor: "red", borderWidth: 2 },
-                ]}
-                placeholder="Enter medication name"
+                style={[styles.textInput, errors[index]?.name && styles.errorBorder]}
+                placeholder="e.g. Aspirin"
                 value={med.name}
-                onChangeText={(value) => updateMedication(index, "name", value)}
+                onChangeText={(text) => updateMedication(index, "name", text)}
               />
-              {errors[index]?.name && (
-                <Text style={styles.errorText}>{errors[index].name}</Text>
-              )}
+              {errors[index]?.name && <Text style={styles.errorText}>{errors[index].name}</Text>}
 
-              {/* Dosage Input (Hybrid Picker + Custom Input) */}
               <Text style={styles.label}>Dosage</Text>
-              <Picker
-                selectedValue={med.dosage}
-                onValueChange={(value) => updateMedication(index, "dosage", value)}
-                style={[
-                  styles.picker,
-                  errors[index]?.dosage && { borderColor: "red", borderWidth: 2 },
-                ]}
-              >
-                <Picker.Item label="Select Dosage" value="" />
-                <Picker.Item label="250 mg" value="250 mg" />
-                <Picker.Item label="500 mg" value="500 mg" />
-                <Picker.Item label="Custom" value="custom" />
-              </Picker>
-              {med.dosage === "custom" && (
-                <TextInput
-                  style={[
-                    styles.textInput,
-                    errors[index]?.dosage && { borderColor: "red", borderWidth: 2 },
-                  ]}
-                  placeholder="Enter custom dosage (e.g., 475 mg)"
-                  keyboardType="numeric"
-                  value={med.customDosage || ""}
-                  onChangeText={(text) =>
-                    updateMedication(index, "customDosage", text)
-                  }
-                />
-              )}
-              {errors[index]?.dosage && (
-                <Text style={styles.errorText}>{errors[index].dosage}</Text>
-              )}
+              <TextInput
+                style={[styles.textInput, errors[index]?.dosage && styles.errorBorder]}
+                placeholder="e.g. 500 mg"
+                value={med.dosage}
+                onChangeText={(text) => updateMedication(index, "dosage", text)}
+              />
+              {errors[index]?.dosage && <Text style={styles.errorText}>{errors[index].dosage}</Text>}
 
-              {/* Schedule Input (Hybrid Picker + Custom Input) */}
               <Text style={styles.label}>Schedule</Text>
-              <Picker
-                selectedValue={med.schedule}
-                onValueChange={(value) => updateMedication(index, "schedule", value)}
-                style={[
-                  styles.picker,
-                  errors[index]?.schedule && { borderColor: "red", borderWidth: 2 },
-                ]}
-              >
-                <Picker.Item label="Select Schedule" value="" />
-                <Picker.Item label="Morning" value="Morning" />
-                <Picker.Item label="Evening" value="Evening" />
-                <Picker.Item label="Custom" value="custom" />
-              </Picker>
-              {med.schedule === "custom" && (
-                <TextInput
-                  style={[
-                    styles.textInput,
-                    errors[index]?.schedule && { borderColor: "red", borderWidth: 2 },
-                  ]}
-                  placeholder="Enter custom schedule (e.g., Afternoon)"
-                  value={med.customSchedule || ""}
-                  onChangeText={(text) =>
-                    updateMedication(index, "customSchedule", text)
-                  }
-                />
-              )}
-              {errors[index]?.schedule && (
-                <Text style={styles.errorText}>{errors[index].schedule}</Text>
+              <View style={styles.checkboxRow}>
+                {scheduleOptions.map(option => (
+                  <CheckBox
+                    key={option}
+                    style={styles.checkbox}
+                    isChecked={med.schedule.includes(option)}
+                    onClick={() => toggleSchedule(index, option)}
+                    rightText={option}
+                    checkBoxColor="#00AEEF"
+                    disabled={
+                      (option === "Other" && med.schedule.some(opt => opt !== "Other")) ||
+                      (option !== "Other" && med.schedule.includes("Other"))
+                    }
+                  />
+                ))}
+              </View>
+              {errors[index]?.schedule && <Text style={styles.errorText}>{errors[index].schedule}</Text>}
+
+              {med.schedule.includes("Other") && (
+                <>
+                  <Text style={styles.label}>Frequency (for "Other")</Text>
+                  <TextInput
+                    style={[styles.textInput, errors[index]?.customSchedule && styles.errorBorder]}
+                    placeholder="e.g. Every 6 hours"
+                    value={med.customSchedule}
+                    onChangeText={(text) => updateMedication(index, "customSchedule", text)}
+                  />
+                  {errors[index]?.customSchedule && (
+                    <Text style={styles.errorText}>{errors[index].customSchedule}</Text>
+                  )}
+                </>
               )}
 
-              {/* Refill Date Input (Hybrid Picker + Custom Input) */}
-              <Text style={styles.label}>Next Refill Date</Text>
-              <Picker
-                selectedValue={med.refillDate}
-                onValueChange={(value) => updateMedication(index, "refillDate", value)}
-                style={[
-                  styles.picker,
-                  errors[index]?.refillDate && { borderColor: "red", borderWidth: 2 },
-                ]}
-              >
-                <Picker.Item label="Select Refill Date" value="" />
-                <Picker.Item label="In 1 Week" value="1 Week" />
-                <Picker.Item label="In 2 Weeks" value="2 Weeks" />
-                <Picker.Item label="Custom" value="custom" />
-              </Picker>
-              {med.refillDate === "custom" && (
-                <TextInput
-                  style={[
-                    styles.textInput,
-                    errors[index]?.refillDate && { borderColor: "red", borderWidth: 2 },
-                  ]}
-                  placeholder="Enter custom refill date (e.g., 2023-12-01)"
-                  value={med.customRefillDate || ""}
-                  onChangeText={(text) =>
-                    updateMedication(index, "customRefillDate", text)
-                  }
-                />
-              )}
+              <Text style={styles.label}>Next Refill Date (YYYY-MM-DD)</Text>
+              <TextInput
+                style={[styles.textInput, errors[index]?.refillDate && styles.errorBorder]}
+                placeholder="e.g. 2025-07-25"
+                value={med.refillDate}
+                onChangeText={(text) => updateMedication(index, "refillDate", text)}
+              />
               {errors[index]?.refillDate && (
                 <Text style={styles.errorText}>{errors[index].refillDate}</Text>
               )}
             </View>
           ))}
-          <TouchableOpacity style={styles.addButton} onPress={addMedication}>
-            <Text style={styles.addButtonText}>+ Add another</Text>
-          </TouchableOpacity>
+
           <TouchableOpacity style={styles.finishButton} onPress={handleFinish}>
             <Text style={styles.finishButtonText}>Finished</Text>
           </TouchableOpacity>
         </ScrollView>
       )}
-      {/* Bottom Navigation */}
+
       <BottomNavigationClient navigation={navigation} />
     </View>
   );
 };
 
-// Styles
+export default MedicationMgtClient;
+
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#ffffff",
-  },
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    padding: 15,
-    backgroundColor: "#f8f9fa",
-    marginTop: 30,
-  },
-  headerText: {
-    fontSize: 20,
-    fontWeight: "bold",
-    marginLeft: 15,
-  },
-  content: {
-    padding: 20,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: "#00AEEF",
-    marginBottom: 10,
-  },
-  medicationBox: {
-    backgroundColor: "#F2F2F2",
-    padding: 15,
-    borderRadius: 10,
-    marginBottom: 20,
-  },
-  label: {
-    fontSize: 14,
-    fontWeight: "bold",
-    marginBottom: 5,
-  },
-  picker: {
-    backgroundColor: "#ffffff",
-    borderRadius: 5,
-    marginBottom: 10,
-  },
+  container: { flex: 1, backgroundColor: "#ffffff" },
+  header: { flexDirection: "row", alignItems: "center", padding: 15, marginTop: 30 },
+  headerText: { fontSize: 20, fontWeight: "bold", marginLeft: 15 },
+  content: { padding: 20 },
+  sectionTitle: { fontSize: 18, fontWeight: "bold", color: "#00AEEF", marginBottom: 10 },
+  medicationBox: { backgroundColor: "#F2F2F2", padding: 15, borderRadius: 10, marginBottom: 20 },
+  label: { fontSize: 14, fontWeight: "bold", marginBottom: 5 },
   textInput: {
     backgroundColor: "#ffffff",
     borderRadius: 5,
     padding: 10,
-    marginBottom: 10,
     borderWidth: 1,
-    borderColor: "#ddd",
+    borderColor: "#ccc",
+    marginBottom: 10,
   },
-  addButton: {
-    marginTop: 10,
-    alignItems: "center",
-  },
-  addButtonText: {
-    fontSize: 16,
-    color: "#00AEEF",
-    fontWeight: "bold",
-  },
+  errorBorder: { borderColor: "red" },
   finishButton: {
     backgroundColor: "#00AEEF",
     paddingVertical: 15,
@@ -334,19 +309,6 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontWeight: "bold",
     fontSize: 16,
-  },
-  overlay: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    width: "100%",
-    height: "100%",
-    flexDirection: "row",
-    zIndex: 1,
-  },
-  overlayBackground: {
-    flex: 1,
-    backgroundColor: "rgba(0,0,0,0.4)",
   },
   successContainer: {
     flex: 1,
@@ -379,11 +341,48 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     fontSize: 16,
   },
+  navButtonsContainer: {
+    flexDirection: "row",
+    justifyContent: "space-around",
+    paddingVertical: 10,
+    backgroundColor: "#e6f7ff",
+  },
+  navButton: {
+    backgroundColor: "#00AEEF",
+    paddingVertical: 10,
+    paddingHorizontal: 15,
+    borderRadius: 20,
+  },
+  navButtonText: {
+    color: "#fff",
+    fontWeight: "bold",
+  },
+  overlay: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    width: "100%",
+    height: "100%",
+    flexDirection: "row",
+    zIndex: 1,
+  },
+  overlayBackground: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.4)",
+  },
   errorText: {
     color: "red",
     fontSize: 12,
     marginBottom: 10,
   },
+  checkboxRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "space-between",
+    marginBottom: 10,
+  },
+  checkbox: {
+    width: "48%",
+    padding: 8,
+  },
 });
-
-export default MedicationMgtClient;
