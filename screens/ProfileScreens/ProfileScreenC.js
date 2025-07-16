@@ -23,7 +23,7 @@ const SIGNOUT_API_ENDPOINT =
   "https://uqzl6jyqvg.execute-api.ap-south-1.amazonaws.com/dev/signOut";
 
 const REFRESH_TOKEN_API_ENDPOINT =
-  "https://your-api-gateway-url/dev/mobile/refreshToken";
+  "https://uqzl6jyqvg.execute-api.ap-south-1.amazonaws.com/dev/mobile/refreshToken";
 
 const ProfileScreenC = ({ navigation }) => {
   const { resetTimer } = useAutomaticLogout();
