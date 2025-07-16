@@ -21,6 +21,8 @@ import ClientDashboard from "./screens/ClientDashboard";
 import CNDashboard from "./screens/CNDashboard";
 import Documents from "./screens/Documents";
 import DocumentsCN from "./screens/DocumentsCN";
+import MarkMedicationTakenScreen from "./screens/MedicationMarkAsTaken";
+import MedicationLogScreen from "./screens/MedicationLogScreen";
 
 const Stack = createStackNavigator();
 
@@ -28,7 +30,7 @@ export default function App() {
   return (
     <NavigationContainer>
       <Stack.Navigator
-        initialRouteName="DocumentsCN"
+        initialRouteName="MedicationC"
         screenOptions={{ headerShown: false }}eas login
 
       >
@@ -41,7 +43,7 @@ export default function App() {
         <Stack.Screen name="AppointmentScheduling" component={AppointmentSchedulingScreen} /> */}
         <Stack.Screen name="Appointments" component={Appointments} />
         <Stack.Screen name="CarePlanC" component={CarePlanMgtClient} />
-        <Stack.Screen name="MedicationC" component={MedicationMgtClient} />
+      
         <Stack.Screen name="CarePlanCN" component={CarePlanMgtCN} />
         <Stack.Screen name="MedicationCN" component={MedicationMgtCN} />
         <Stack.Screen name="NotificationsC" component={NotificationsClient} />
@@ -50,6 +52,9 @@ export default function App() {
         <Stack.Screen name="CNDashboard" component={CNDashboard} />
         <Stack.Screen name="Documents" component={Documents} />
         <Stack.Screen name="DocumentsCN" component={DocumentsCN} />
+        <Stack.Screen name="MarkMedication" component={MarkMedicationTakenScreen} />
+        <Stack.Screen name="MedicationLog" component={MedicationLogScreen} />
+        <Stack.Screen name="MedicationC" component={MedicationMgtClient} />
       </Stack.Navigator>
     </NavigationContainer>
   );
