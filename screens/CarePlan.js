@@ -1,3 +1,4 @@
+//careplanmgtCN
 import React, { useEffect, useState } from 'react';
 import { View, Text, TextInput, FlatList, StyleSheet, TouchableOpacity, StatusBar, useColorScheme, ScrollView, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -53,14 +54,15 @@ const CarePlanOverview = ({ navigation, carePlanId }) => {
   );
 
   const renderTaskItem = ({ item, index }) => (
-  <TimelineItem
-    title={item.title}
-    description={item.description}
-    start={item.start}
-    status={item.status}
-    isLast={index === tasks.length - 1}
-  />
-);
+    <TimelineItem
+      title={item.title}
+      description={item.description}
+      start={item.start}
+      status={item.status}
+      isLast={index === tasks.length - 1}
+      onEdit={() => navigation.navigate('UpdateTaskScreen', { task: item })}
+    />
+  );
 
   return (
     <View>

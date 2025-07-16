@@ -29,7 +29,7 @@ import AddTaskScreen from "./screens/AddTaskScreen";
 import Task from "./screens/Task";
 import CarePlan from "./screens/CarePlan";
 import MarkAppointment from "./screens/MarkAppointment";
-import FilterScreen from "./screens/FilterScreen";
+import UpdateTaskScreen from "./screens/UpdateTaskScreen";
 import AdditionalDetailsScreen from "./screens/AdditionalDetailsScreen";
 
 
@@ -68,7 +68,7 @@ export default function App() {
         <Stack.Screen name="Task" component={Task} />
         <Stack.Screen name="CarePlan" component={CarePlan} />
 <Stack.Screen name="MarkAppointment" component={MarkAppointment} />
-<Stack.Screen name="FilterScreen" component={FilterScreen} />
+<Stack.Screen name="UpdateTaskScreen" component={UpdateTaskScreen} />
 <Stack.Screen name="AdditionalDetailsScreen" component={AdditionalDetailsScreen} />
 
 

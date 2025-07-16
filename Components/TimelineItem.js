@@ -1,7 +1,8 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 
-const TimelineItem = ({ title, description, start, status, isLast }) => {
+const TimelineItem = ({ title, description, start, status, isLast, onEdit }) => {
   const dateObj = start ? new Date(start) : null;
   const dayLabel = dateObj
     ? `${dateObj.getDate()} ${dateObj.toLocaleDateString('en-US', { weekday: 'short' })}`
@@ -30,6 +31,9 @@ const TimelineItem = ({ title, description, start, status, isLast }) => {
           <Text style={styles.status}>Status: {status}</Text>
         </View>
       </View>
+      <TouchableOpacity onPress={onEdit} style={styles.editButton}>
+        <Ionicons name="create-outline" size={24} color="#00BCD4" />
+      </TouchableOpacity>
     </View>
   );
 };
@@ -39,6 +43,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     marginBottom: 20,
     paddingHorizontal: 20,
+    alignItems: 'center',
   },
   leftColumn: {
     width: 60,
@@ -81,6 +86,9 @@ const styles = StyleSheet.create({
   time: { fontSize: 13, color: '#666', marginTop: 2 },
   description: { marginTop: 4, color: '#333' },
   status: { marginTop: 4, fontStyle: 'italic', color: '#007B9F' },
+  editButton: {
+    marginLeft: 10,
+  },
 });
 
 export default TimelineItem;
