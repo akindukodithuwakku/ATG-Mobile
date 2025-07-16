@@ -44,6 +44,197 @@ const PasswordReset = ({ navigation }) => {
     resetTimer();
   }, [resetTimer]);
 
+  // Check if the access token has expired
+  const isTokenExpired = async () => {
+    try {
+      const tokenExpiry = await AsyncStorage.getItem("tokenExpiry");
+
+      if (!tokenExpiry) {
+        console.log("No token expiry found in storage");
+        return true;
+      }
+
+      const expiryTime = parseInt(tokenExpiry, 10);
+      const currentTime = Date.now();
+
+      // Add a 5-minute buffer to refresh token before it actually expires
+      const bufferTime = 5 * 60 * 1000;
+
+      const isExpired = currentTime >= expiryTime - bufferTime;
+
+      console.log(`Token expiry check: ${isExpired ? "EXPIRED" : "VALID"}`);
+
+      return isExpired;
+    } catch (error) {
+      console.error("Error checking token expiry:", error);
+      return true;
+    }
+  };
+
+  const clearAuthData = async () => {
+    try {
+      const keysToRemove = [
+        "accessToken",
+        "refreshToken",
+        "tokenExpiry",
+        "userData",
+      ];
+      await Promise.all(
+        keysToRemove.map((key) => AsyncStorage.removeItem(key))
+      );
+      console.log("Auth data cleared from storage");
+    } catch (error) {
+      console.error("Error clearing auth data:", error);
+    }
+  };
+
+  const welcomeNavigation = () => {
+    navigation.reset({
+      index: 0,
+      routes: [{ name: "Welcome" }],
+    });
+  };
+
+  // Refresh the access token using the refresh token
+  const refreshAccessToken = async () => {
+    try {
+      console.log("Attempting to refresh access token...");
+
+      const refreshToken = await AsyncStorage.getItem("refreshToken");
+
+      if (!refreshToken) {
+        console.error("No refresh token found in storage");
+        Alert.alert(
+          "Session Expired",
+          "Your session has expired. Please login again."
+        );
+        return false;
+      }
+
+      const response = await fetch(`${API_ENDPOINT}/mobile/refreshToken`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          refreshToken: refreshToken,
+        }),
+      });
+
+      const data = await response.json();
+      const parsedBody = JSON.parse(data.body);
+      const statusCode = data.statusCode;
+
+      console.log("Token refresh response status:", statusCode);
+
+      switch (statusCode) {
+        case 200:
+          console.log("Access token refreshed successfully");
+
+          if (parsedBody.tokens) {
+            await AsyncStorage.setItem(
+              "accessToken",
+              parsedBody.tokens.accessToken
+            );
+
+            const newExpiryTime =
+              Date.now() + parsedBody.tokens.expiresIn * 1000;
+            await AsyncStorage.setItem("tokenExpiry", newExpiryTime.toString());
+
+            // Handle refresh token rotation if enabled (Else same refresh token will work)
+            if (parsedBody.tokens.refreshToken) {
+              console.log("New refresh token received - updating storage");
+              await AsyncStorage.setItem(
+                "refreshToken",
+                parsedBody.tokens.refreshToken
+              );
+            }
+
+            console.log("New tokens saved to AsyncStorage");
+            return true;
+          } else {
+            console.error("No tokens in refresh response");
+            return false;
+          }
+
+        case 401:
+          console.log("Refresh token is invalid or expired");
+          Alert.alert(
+            "Session Expired",
+            "Your session has expired. Please login again."
+          );
+          await clearAuthData();
+          welcomeNavigation();
+          return false;
+
+        case 400:
+          console.error("Invalid parameter in refresh request");
+          Alert.alert(
+            "Error",
+            parsedBody.message || "Invalid request parameters"
+          );
+          return false;
+
+        case 404:
+          console.error("User pool or user not found");
+          Alert.alert("Error", "User account not found");
+          await clearAuthData();
+          welcomeNavigation();
+          return false;
+
+        case 429:
+          console.error("Too many refresh requests");
+          Alert.alert("Error", "Too many requests. Please try again later.");
+          return false;
+
+        case 500:
+        default:
+          console.error("Internal error during token refresh");
+          Alert.alert(
+            "Error",
+            parsedBody.message ||
+              "An error occurred while refreshing your session. Please try again."
+          );
+          return false;
+      }
+    } catch (error) {
+      console.error("Token refresh request error:", error);
+      Alert.alert(
+        "Connection Error",
+        "Unable to refresh your session. Please check your internet connection."
+      );
+      return false;
+    }
+  };
+
+  // Validate token and refresh if necessary before making API calls
+  const ensureValidToken = async () => {
+    try {
+      console.log("Checking token validity...");
+
+      const tokenExpired = await isTokenExpired();
+
+      if (tokenExpired) {
+        console.log("Token is expired, attempting to refresh...");
+        const refreshSuccessful = await refreshAccessToken();
+
+        if (!refreshSuccessful) {
+          console.log("Token refresh failed");
+          return false;
+        }
+
+        console.log("Token refreshed successfully");
+      } else {
+        console.log("Token is still valid");
+      }
+
+      return true;
+    } catch (error) {
+      console.error("Error in ensureValidToken:", error);
+      return false;
+    }
+  };
+
   // Form validation
   const validateForm = () => {
     let errorTexts = {};
@@ -93,14 +284,32 @@ const PasswordReset = ({ navigation }) => {
             "Error",
             "No access token or session string found in async storage."
           );
-          navigation.reset({
-            index: 0,
-            routes: [{ name: "Welcome" }],
-          });
+          await clearAuthData();
+          welcomeNavigation();
           return;
         }
 
         if (accessToken) {
+          // Ensure we have a valid token before attempting logout
+          const tokenValid = await ensureValidToken();
+
+          if (!tokenValid) {
+            Alert.alert("Tokens are invalid", "Please login again.");
+            await clearAuthData();
+            welcomeNavigation();
+            return;
+          }
+
+          // To fetch new access token
+          const accessToken = await AsyncStorage.getItem("accessToken");
+
+          if (!accessToken) {
+            Alert.alert("Error", "No access token found.");
+            await clearAuthData();
+            welcomeNavigation();
+            return;
+          }
+
           // Call the password reset Lambda function through API Gateway
           const response = await fetch(`${API_ENDPOINT}/mobile/passwordReset`, {
             method: "POST",
