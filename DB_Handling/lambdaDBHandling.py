@@ -291,6 +291,50 @@ def lambda_handler(event, context):
                     else:
                         return response(404, {"error": "No active appointment found for this client"})
 
+                elif action == "get_client_care_navigator":
+                    if "client_username" not in data:
+                        return response(400, {"error": "Missing 'client_username'"})
+                    
+                    sql = """
+                        SELECT care_navigator_username 
+                        FROM client_details 
+                        WHERE client_username = %s
+                    """
+                    cursor.execute(sql, (data["client_username"],))
+                    result = cursor.fetchone()
+                    
+                    if result:
+                        return response(200, {"care_navigator_username": result["care_navigator_username"]})
+                    else:
+                        return response(404, {"error": "Care navigator not found for this client"})
+
+                elif action == "get_care_navigator_clients":
+                    if "care_navigator_username" not in data:
+                        return response(400, {"error": "Missing 'care_navigator_username'"})
+                    
+                    sql = """
+                        SELECT client_username 
+                        FROM client_details 
+                        WHERE care_navigator_username = %s
+                        ORDER BY client_username
+                    """
+                    cursor.execute(sql, (data["care_navigator_username"],))
+                    results = cursor.fetchall()
+                    
+                    if results:
+                        client_list = [row["client_username"] for row in results]
+                        return response(200, {
+                            "care_navigator_username": data["care_navigator_username"],
+                            "clients": client_list,
+                            "total_clients": len(client_list)
+                        })
+                    else:
+                        return response(200, {
+                            "care_navigator_username": data["care_navigator_username"],
+                            "clients": [],
+                            "total_clients": 0
+                        })
+
                 else:
                     return response(400, {"error": f"Invalid action: '{action}'"})
 
