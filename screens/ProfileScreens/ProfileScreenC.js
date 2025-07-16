@@ -19,16 +19,17 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useAutomaticLogout } from "../../screens/AutoLogout";
 import { useFocusEffect } from "@react-navigation/native";
 
-const API_ENDPOINT =
+const SIGNOUT_API_ENDPOINT =
   "https://uqzl6jyqvg.execute-api.ap-south-1.amazonaws.com/dev/signOut";
+
+const REFRESH_TOKEN_API_ENDPOINT =
+  "https://your-api-gateway-url/dev/mobile/refreshToken";
 
 const ProfileScreenC = ({ navigation }) => {
   const { resetTimer } = useAutomaticLogout();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [showClearDataModal, setShowClearDataModal] = useState(false);
-  const [clearDataConfirmText, setClearDataConfirmText] = useState("");
   const [profileData, setProfileData] = useState({
     fullName: "Jane Doe",
     profileImage: null,
@@ -40,8 +41,8 @@ const ProfileScreenC = ({ navigation }) => {
     React.useCallback(() => {
       resetTimer();
       setShowLogoutModal(false);
-      setShowClearDataModal(false);
-      setClearDataConfirmText("");
+      // Validate token when screen comes into focus
+      ensureValidToken();
     }, [])
   );
 
@@ -87,21 +88,208 @@ const ProfileScreenC = ({ navigation }) => {
     setShowLogoutModal(true);
   };
 
+  // Check if the access token has expired
+  const isTokenExpired = async () => {
+    try {
+      const tokenExpiry = await AsyncStorage.getItem("tokenExpiry");
+
+      if (!tokenExpiry) {
+        console.log("No token expiry found in storage");
+        return true;
+      }
+
+      const expiryTime = parseInt(tokenExpiry, 10);
+      const currentTime = Date.now();
+
+      // Add a 5-minute buffer to refresh token before it actually expires
+      const bufferTime = 5 * 60 * 1000;
+
+      const isExpired = currentTime >= expiryTime - bufferTime;
+
+      console.log(`Token expiry check: ${isExpired ? "EXPIRED" : "VALID"}`);
+
+      return isExpired;
+    } catch (error) {
+      console.error("Error checking token expiry:", error);
+      return true;
+    }
+  };
+
+  // Refresh the access token using the refresh token
+  const refreshAccessToken = async () => {
+    try {
+      console.log("Attempting to refresh access token...");
+
+      const refreshToken = await AsyncStorage.getItem("refreshToken");
+
+      if (!refreshToken) {
+        console.error("No refresh token found in storage");
+        Alert.alert(
+          "Session Expired",
+          "Your session has expired. Please login again."
+        );
+        return false;
+      }
+
+      const response = await fetch(REFRESH_TOKEN_API_ENDPOINT, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          refreshToken: refreshToken,
+        }),
+      });
+
+      const data = await response.json();
+      const parsedBody = JSON.parse(data.body);
+      const statusCode = data.statusCode;
+
+      console.log("Token refresh response status:", statusCode);
+
+      switch (statusCode) {
+        case 200:
+          console.log("Access token refreshed successfully");
+
+          if (parsedBody.tokens) {
+            await AsyncStorage.setItem(
+              "accessToken",
+              parsedBody.tokens.accessToken
+            );
+
+            const newExpiryTime =
+              Date.now() + parsedBody.tokens.expiresIn * 1000;
+            await AsyncStorage.setItem("tokenExpiry", newExpiryTime.toString());
+
+            // Handle refresh token rotation if enabled (Else same refresh token will work)
+            if (parsedBody.tokens.refreshToken) {
+              console.log("New refresh token received - updating storage");
+              await AsyncStorage.setItem(
+                "refreshToken",
+                parsedBody.tokens.refreshToken
+              );
+            }
+
+            console.log("New tokens saved to AsyncStorage");
+            return true;
+          } else {
+            console.error("No tokens in refresh response");
+            return false;
+          }
+
+        case 401:
+          console.log("Refresh token is invalid or expired");
+          Alert.alert(
+            "Session Expired",
+            "Your session has expired. Please login again."
+          );
+          await clearAuthData();
+          welcomeNavigation();
+          return false;
+
+        case 400:
+          console.error("Invalid parameter in refresh request");
+          Alert.alert(
+            "Error",
+            parsedBody.message || "Invalid request parameters"
+          );
+          return false;
+
+        case 404:
+          console.error("User pool or user not found");
+          Alert.alert("Error", "User account not found");
+          await clearAuthData();
+          welcomeNavigation();
+          return false;
+
+        case 429:
+          console.error("Too many refresh requests");
+          Alert.alert("Error", "Too many requests. Please try again later.");
+          return false;
+
+        case 500:
+        default:
+          console.error("Internal error during token refresh");
+          Alert.alert(
+            "Error",
+            parsedBody.message ||
+              "An error occurred while refreshing your session. Please try again."
+          );
+          return false;
+      }
+    } catch (error) {
+      console.error("Token refresh request error:", error);
+      Alert.alert(
+        "Connection Error",
+        "Unable to refresh your session. Please check your internet connection."
+      );
+      return false;
+    }
+  };
+
+  // Validate token and refresh if necessary before making API calls
+  const ensureValidToken = async () => {
+    try {
+      console.log("Checking token validity...");
+
+      const accessToken = await AsyncStorage.getItem("accessToken");
+      if (!accessToken) {
+        console.log("No access token found");
+        Alert.alert("Session Expired", "Please login again.");
+        await clearAuthData();
+        welcomeNavigation();
+        return false;
+      }
+
+      const tokenExpired = await isTokenExpired();
+
+      if (tokenExpired) {
+        console.log("Token is expired, attempting to refresh...");
+        const refreshSuccessful = await refreshAccessToken();
+
+        if (!refreshSuccessful) {
+          console.log("Token refresh failed");
+          return false;
+        }
+
+        console.log("Token refreshed successfully");
+      } else {
+        console.log("Token is still valid");
+      }
+
+      return true;
+    } catch (error) {
+      console.error("Error in ensureValidToken:", error);
+      return false;
+    }
+  };
+
   const handleLogout = async () => {
     try {
       setIsLoading(true);
+
+      // Ensure we have a valid token before attempting logout
+      const tokenValid = await ensureValidToken();
+
+      if (!tokenValid) {
+        Alert.alert("Tokens are invalid", "Please login again.");
+        await clearAuthData();
+        welcomeNavigation();
+        return;
+      }
 
       // Get the access token from AsyncStorage
       const accessToken = await AsyncStorage.getItem("accessToken");
 
       if (!accessToken) {
-        Alert.alert("Error", "No access token found in async storage.");
+        Alert.alert("Error", "No access token found.");
+        await clearAuthData();
         welcomeNavigation();
         return;
       }
 
       // Call the logout API endpoint
-      const response = await fetch(API_ENDPOINT, {
+      const response = await fetch(SIGNOUT_API_ENDPOINT, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -146,6 +334,8 @@ const ProfileScreenC = ({ navigation }) => {
 
         case 404: // ResourceNotFoundException
           Alert.alert("Error", "User account not found");
+          await clearAuthData();
+          welcomeNavigation();
           break;
 
         case 429: // TooManyRequestsException
@@ -159,6 +349,7 @@ const ProfileScreenC = ({ navigation }) => {
             parsedBody.message ||
               "An unknown error occurred. Please try again later."
           );
+          break;
       }
     } catch (error) {
       console.error("Logout request error:", error);
@@ -202,57 +393,6 @@ const ProfileScreenC = ({ navigation }) => {
     handleLogout();
   };
 
-  const handleClearData = () => {
-    setShowClearDataModal(true);
-  };
-
-  const clearStorage = async () => {
-    resetTimer();
-    try {
-      await AsyncStorage.clear();
-      console.log("AsyncStorage has been cleared!");
-      setShowClearDataModal(false);
-      setClearDataConfirmText("");
-
-      // Success alert
-      Alert.alert(
-        "Data Cleared",
-        "All app data has been successfully cleared.",
-        [{ text: "OK" }]
-      );
-    } catch (error) {
-      console.error("Failed to clear AsyncStorage:", error);
-
-      // Error alert
-      Alert.alert("Error", "Failed to clear app data. Please try again.", [
-        { text: "OK" },
-      ]);
-    }
-  };
-
-  const clearAppointmentData = async () => {
-    resetTimer();
-    try {
-      await AsyncStorage.removeItem("appointmentDateTime");
-      await AsyncStorage.removeItem("hasAppointment");
-
-      setShowClearDataModal(false);
-      setClearDataConfirmText("");
-
-      Alert.alert(
-        "Appointment Data Cleared",
-        "Your appointment data has been successfully cleared.",
-        [{ text: "OK" }]
-      );
-    } catch (error) {
-      Alert.alert(
-        "Error",
-        "Failed to clear appointment data. Please try again.",
-        [{ text: "OK" }]
-      );
-    }
-  };
-
   const menuItems = [
     {
       title: "Profile",
@@ -279,19 +419,12 @@ const ProfileScreenC = ({ navigation }) => {
       icon: <MaterialIcons name="logout" size={24} color="#ff4757" />,
       isLogout: true,
     },
-    {
-      title: "Clear App Data",
-      icon: <MaterialIcons name="delete-forever" size={24} color="#ff4757" />,
-      isClearData: true,
-    },
   ];
 
   const handleMenuItemPress = (item) => {
     resetTimer();
     if (item.isLogout) {
       showLogout();
-    } else if (item.isClearData) {
-      handleClearData();
     } else {
       navigation.navigate(item.route);
     }
@@ -370,8 +503,7 @@ const ProfileScreenC = ({ navigation }) => {
                 <Text
                   style={[
                     styles.menuItemText,
-                    item.isLogout && styles.logoutText,
-                    item.isClearData && styles.dangerText,
+                    item.route === "Logout" && styles.logoutText,
                   ]}
                 >
                   {item.title}
@@ -381,9 +513,7 @@ const ProfileScreenC = ({ navigation }) => {
                 <Feather
                   name="chevron-right"
                   size={24}
-                  color={
-                    item.isLogout || item.isClearData ? "#ff4757" : "#35AFEA"
-                  }
+                  color={item.route === "Logout" ? "#ff4757" : "#35AFEA"}
                 />
               </View>
             </TouchableOpacity>
@@ -419,97 +549,6 @@ const ProfileScreenC = ({ navigation }) => {
               >
                 <Text style={styles.logoutButtonText}>
                   {isLoading ? "Logging Out..." : "Yes, Logout"}
-                </Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
-
-      {/* Clear Data Confirmation Modal */}
-      <Modal
-        animationType="fade"
-        transparent={true}
-        visible={showClearDataModal}
-        onRequestClose={() => {
-          setShowClearDataModal(false);
-          setClearDataConfirmText("");
-        }}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <MaterialIcons
-              name="warning"
-              size={40}
-              color="#ff4757"
-              style={styles.warningIcon}
-            />
-            <Text style={styles.modalTitle}>Clear All App Data?</Text>
-            <Text style={styles.modalText}>
-              This action will permanently delete all your saved data and cannot
-              be undone.
-            </Text>
-            <Text style={styles.confirmInstructionText}>
-              Type "DELETE" to confirm:
-            </Text>
-            <View style={styles.confirmInputContainer}>
-              <Text style={styles.confirmInputText}>
-                {clearDataConfirmText}
-              </Text>
-            </View>
-            <View style={styles.keypadContainer}>
-              {["D", "E", "L", "T"].map((letter, index) => (
-                <TouchableOpacity
-                  key={index}
-                  style={styles.keypadButton}
-                  onPress={() => {
-                    resetTimer();
-                    setClearDataConfirmText(clearDataConfirmText + letter);
-                  }}
-                >
-                  <Text style={styles.keypadButtonText}>{letter}</Text>
-                </TouchableOpacity>
-              ))}
-              <TouchableOpacity
-                style={styles.keypadButton}
-                onPress={() => {
-                  resetTimer();
-                  setClearDataConfirmText(clearDataConfirmText.slice(0, -1));
-                }}
-              >
-                <Feather name="delete" size={24} color="#333" />
-              </TouchableOpacity>
-            </View>
-            <View style={styles.modalButtons}>
-              <TouchableOpacity
-                style={[styles.modalButton, styles.cancelButton]}
-                onPress={() => {
-                  resetTimer();
-                  setShowClearDataModal(false);
-                  setClearDataConfirmText("");
-                }}
-              >
-                <Text style={styles.cancelButtonText}>Cancel</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[
-                  styles.modalButton,
-                  styles.dangerButton,
-                  clearDataConfirmText !== "DELETE" && styles.disabledButton,
-                ]}
-                onPress={
-                  clearDataConfirmText === "DELETE" ? clearStorage : null
-                }
-                disabled={clearDataConfirmText !== "DELETE"}
-              >
-                <Text
-                  style={[
-                    styles.dangerButtonText,
-                    clearDataConfirmText !== "DELETE" &&
-                      styles.disabledButtonText,
-                  ]}
-                >
-                  Clear Data
                 </Text>
               </TouchableOpacity>
             </View>
@@ -703,72 +742,6 @@ const styles = StyleSheet.create({
     textAlign: "center",
     fontSize: 16,
     fontWeight: "500",
-  },
-  // Clear modal styles
-  warningIcon: {
-    marginBottom: 10,
-  },
-  modalTitle: {
-    fontSize: 20,
-    fontWeight: "bold",
-    color: "#333",
-    marginBottom: 15,
-    textAlign: "center",
-  },
-  confirmInstructionText: {
-    fontSize: 14,
-    fontWeight: "500",
-    color: "#333",
-    marginBottom: 10,
-  },
-  confirmInputContainer: {
-    width: "80%",
-    height: 50,
-    borderWidth: 1,
-    borderColor: "#ddd",
-    borderRadius: 10,
-    justifyContent: "center",
-    alignItems: "center",
-    marginBottom: 15,
-  },
-  confirmInputText: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: "#ff4757",
-  },
-  keypadContainer: {
-    flexDirection: "row",
-    // flexWrap: "wrap",
-    justifyContent: "center",
-    marginBottom: 20,
-  },
-  keypadButton: {
-    width: 40,
-    height: 40,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "#f0f0f0",
-    borderRadius: 8,
-    margin: 5,
-  },
-  keypadButtonText: {
-    fontSize: 16,
-    fontWeight: "500",
-  },
-  dangerButton: {
-    backgroundColor: "#ff4757",
-  },
-  disabledButton: {
-    backgroundColor: "#ffa0aa",
-  },
-  dangerButtonText: {
-    color: "white",
-    textAlign: "center",
-    fontSize: 16,
-    fontWeight: "500",
-  },
-  disabledButtonText: {
-    opacity: 0.7,
   },
 });
 
