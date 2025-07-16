@@ -10,8 +10,10 @@ import {
   ScrollView,
   TextInput,
   Alert,
+  Platform,
 } from "react-native";
 import CheckBox from "react-native-check-box";
+import DateTimePicker from "@react-native-community/datetimepicker";
 import { Ionicons } from "@expo/vector-icons";
 import SideNavigationClient from "../Components/SideNavigationClient";
 import BottomNavigationClient from "../Components/BottomNavigationClient";
@@ -21,7 +23,16 @@ const scheduleOptions = ["Morning", "Evening", "Night", "Other"];
 const MedicationMgtClient = ({ navigation }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [medications, setMedications] = useState([
-    { name: "", dosage: "", schedule: [], customSchedule: "", refillDate: "" },
+    {
+      name: "",
+      dosage: "",
+      schedule: [],
+      scheduleTime: new Date(),
+      refillDate: new Date(),
+      customSchedule: "",
+      showSchedulePicker: false,
+      showRefillPicker: false,
+    },
   ]);
   const [isSuccess, setIsSuccess] = useState(false);
   const [errors, setErrors] = useState([{}]);
@@ -41,44 +52,30 @@ const MedicationMgtClient = ({ navigation }) => {
     const newMedications = [...medications];
     newMedications[index][key] = value;
     setMedications(newMedications);
-    if (value && value.length !== 0) {
-      const newErrors = [...errors];
-      newErrors[index] = { ...newErrors[index], [key]: "" };
-      setErrors(newErrors);
-    }
+    const newErrors = [...errors];
+    newErrors[index][key] = "";
+    setErrors(newErrors);
   };
 
   const toggleSchedule = (index, option) => {
     const current = [...medications];
-    const schedule = [...current[index].schedule];
-
+    const schedule = [...(current[index].schedule || [])];
     const isOtherSelected = schedule.includes("Other");
-    const isBasicSelected = schedule.some(opt => ["Morning", "Evening", "Night"].includes(opt));
 
-    // Handle disable logic
     if (option === "Other") {
-      if (isOtherSelected) {
-        // Uncheck Other
-        current[index].schedule = [];
-      } else {
-        // Check Other and disable others
-        current[index].schedule = ["Other"];
-      }
+      current[index].schedule = isOtherSelected ? [] : ["Other"];
     } else {
-      if (isOtherSelected) return; // Do not allow if "Other" is selected
-      if (schedule.includes(option)) {
-        // Uncheck this option
-        current[index].schedule = schedule.filter(opt => opt !== option);
-      } else {
-        // Add this option
-        current[index].schedule.push(option);
-      }
+      if (isOtherSelected) return;
+      current[index].schedule = [option];
     }
 
     setMedications(current);
   };
 
   const handleFinish = async () => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
     let hasError = false;
     const newErrors = medications.map((med) => {
       const e = {};
@@ -91,17 +88,28 @@ const MedicationMgtClient = ({ navigation }) => {
         hasError = true;
       }
       if (med.schedule.length === 0) {
-        e.schedule = "Select at least one schedule option";
+        e.schedule = "Select a schedule option";
         hasError = true;
       }
       if (med.schedule.includes("Other") && !med.customSchedule.trim()) {
         e.customSchedule = "Enter frequency for 'Other'";
         hasError = true;
       }
-      if (!med.refillDate.trim()) {
+      if (!med.refillDate) {
         e.refillDate = "Refill date required";
         hasError = true;
+      } else if (med.refillDate < today) {
+        e.refillDate = "Refill date must be in the future";
+        hasError = true;
       }
+      if (!med.scheduleTime) {
+        e.scheduleTime = "Schedule time is required";
+        hasError = true;
+      } else if (med.refillDate && med.scheduleTime > med.refillDate) {
+        e.refillDate = "Refill date must be after the schedule time";
+        hasError = true;
+      }
+
       return e;
     });
 
@@ -115,8 +123,8 @@ const MedicationMgtClient = ({ navigation }) => {
         client_username,
         medication_name: med.name,
         dosage: med.dosage,
-        schedule_time: med.schedule.join(", ") + (med.schedule.includes("Other") ? ` (${med.customSchedule})` : ""),
-        refill_date: med.refillDate,
+        schedule_time: med.scheduleTime.toISOString(),
+        refill_date: med.refillDate.toISOString(),
       };
 
       try {
@@ -124,7 +132,9 @@ const MedicationMgtClient = ({ navigation }) => {
           "https://rsxn7kxzr6.execute-api.ap-south-1.amazonaws.com/prod/addMedication",
           {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers: {
+              "Content-Type": "application/json",
+            },
             body: JSON.stringify(payload),
           }
         );
@@ -147,7 +157,16 @@ const MedicationMgtClient = ({ navigation }) => {
   const resetUpload = () => {
     setIsSuccess(false);
     setMedications([
-      { name: "", dosage: "", schedule: [], customSchedule: "", refillDate: "" },
+      {
+        name: "",
+        dosage: "",
+        schedule: [],
+        scheduleTime: new Date(),
+        refillDate: new Date(),
+        customSchedule: "",
+        showSchedulePicker: false,
+        showRefillPicker: false,
+      },
     ]);
     setErrors([{}]);
   };
@@ -186,10 +205,16 @@ const MedicationMgtClient = ({ navigation }) => {
       )}
 
       <View style={styles.navButtonsContainer}>
-        <TouchableOpacity style={styles.navButton} onPress={() => navigation.navigate("MarkMedication")}>
+        <TouchableOpacity
+          style={styles.navButton}
+          onPress={() => navigation.navigate("MarkMedication")}
+        >
           <Text style={styles.navButtonText}>Mark Medication Taken</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.navButton} onPress={() => navigation.navigate("MedicationLog")}>
+        <TouchableOpacity
+          style={styles.navButton}
+          onPress={() => navigation.navigate("MedicationLog")}
+        >
           <Text style={styles.navButtonText}>View Medication Log</Text>
         </TouchableOpacity>
       </View>
@@ -222,17 +247,17 @@ const MedicationMgtClient = ({ navigation }) => {
 
               <Text style={styles.label}>Schedule</Text>
               <View style={styles.checkboxRow}>
-                {scheduleOptions.map(option => (
+                {scheduleOptions.map((option) => (
                   <CheckBox
                     key={option}
                     style={styles.checkbox}
-                    isChecked={med.schedule.includes(option)}
+                    isChecked={(med.schedule || []).includes(option)}
                     onClick={() => toggleSchedule(index, option)}
                     rightText={option}
                     checkBoxColor="#00AEEF"
                     disabled={
-                      (option === "Other" && med.schedule.some(opt => opt !== "Other")) ||
-                      (option !== "Other" && med.schedule.includes("Other"))
+                      (option === "Other" && (med.schedule || []).some((opt) => opt !== "Other")) ||
+                      (option !== "Other" && (med.schedule || []).includes("Other"))
                     }
                   />
                 ))}
@@ -254,13 +279,33 @@ const MedicationMgtClient = ({ navigation }) => {
                 </>
               )}
 
-              <Text style={styles.label}>Next Refill Date (YYYY-MM-DD)</Text>
-              <TextInput
-                style={[styles.textInput, errors[index]?.refillDate && styles.errorBorder]}
-                placeholder="e.g. 2025-07-25"
-                value={med.refillDate}
-                onChangeText={(text) => updateMedication(index, "refillDate", text)}
-              />
+            
+
+              <Text style={styles.label}>Next Refill Date</Text>
+              <TouchableOpacity
+                onPress={() => {
+                  const updated = [...medications];
+                  updated[index].showRefillPicker = true;
+                  setMedications(updated);
+                }}
+              >
+                <Text style={styles.valueText}>{med.refillDate.toLocaleDateString()}</Text>
+              </TouchableOpacity>
+              {med.showRefillPicker && (
+                <DateTimePicker
+                  value={med.refillDate || new Date()}
+                  mode="date"
+                  display={Platform.OS === "android" ? "calendar" : "default"}
+                  onChange={(event, selectedDate) => {
+                    const updated = [...medications];
+                    updated[index].showRefillPicker = Platform.OS === "ios";
+                    if (selectedDate) {
+                      updated[index].refillDate = selectedDate;
+                    }
+                    setMedications(updated);
+                  }}
+                />
+              )}
               {errors[index]?.refillDate && (
                 <Text style={styles.errorText}>{errors[index].refillDate}</Text>
               )}
@@ -279,6 +324,9 @@ const MedicationMgtClient = ({ navigation }) => {
 };
 
 export default MedicationMgtClient;
+
+// --- styles remain unchanged from your original code ---
+
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#ffffff" },
@@ -310,79 +358,18 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     fontSize: 16,
   },
-  successContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "#fff",
-  },
-  successTitle: {
-    fontSize: 24,
-    fontWeight: "bold",
-    color: "#00AEEF",
-    marginTop: 20,
-  },
-  successMessage: {
-    fontSize: 16,
-    color: "#6c757d",
-    textAlign: "center",
-    marginHorizontal: 20,
-    marginTop: 10,
-  },
-  successButton: {
-    backgroundColor: "#00AEEF",
-    padding: 20,
-    borderRadius: 50,
-    alignItems: "center",
-    marginTop: 40,
-  },
-  successButtonText: {
-    color: "#fff",
-    fontWeight: "bold",
-    fontSize: 16,
-  },
-  navButtonsContainer: {
-    flexDirection: "row",
-    justifyContent: "space-around",
-    paddingVertical: 10,
-    backgroundColor: "#e6f7ff",
-  },
-  navButton: {
-    backgroundColor: "#00AEEF",
-    paddingVertical: 10,
-    paddingHorizontal: 15,
-    borderRadius: 20,
-  },
-  navButtonText: {
-    color: "#fff",
-    fontWeight: "bold",
-  },
-  overlay: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    width: "100%",
-    height: "100%",
-    flexDirection: "row",
-    zIndex: 1,
-  },
-  overlayBackground: {
-    flex: 1,
-    backgroundColor: "rgba(0,0,0,0.4)",
-  },
-  errorText: {
-    color: "red",
-    fontSize: 12,
-    marginBottom: 10,
-  },
-  checkboxRow: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    justifyContent: "space-between",
-    marginBottom: 10,
-  },
-  checkbox: {
-    width: "48%",
-    padding: 8,
-  },
+  successContainer: { flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: "#fff" },
+  successTitle: { fontSize: 24, fontWeight: "bold", color: "#00AEEF", marginTop: 20 },
+  successMessage: { fontSize: 16, color: "#6c757d", textAlign: "center", marginHorizontal: 20, marginTop: 10 },
+  successButton: { backgroundColor: "#00AEEF", padding: 20, borderRadius: 50, alignItems: "center", marginTop: 40 },
+  successButtonText: { color: "#fff", fontWeight: "bold", fontSize: 16 },
+  navButtonsContainer: { flexDirection: "row", justifyContent: "space-around", paddingVertical: 10, backgroundColor: "#e6f7ff" },
+  navButton: { backgroundColor: "#00AEEF", paddingVertical: 10, paddingHorizontal: 15, borderRadius: 20 },
+  navButtonText: { color: "#fff", fontWeight: "bold" },
+  overlay: { position: "absolute", top: 0, left: 0, width: "100%", height: "100%", flexDirection: "row", zIndex: 1 },
+  overlayBackground: { flex: 1, backgroundColor: "rgba(0,0,0,0.4)" },
+  errorText: { color: "red", fontSize: 12, marginBottom: 10 },
+  checkboxRow: { flexDirection: "row", flexWrap: "wrap", justifyContent: "space-between", marginBottom: 10 },
+  checkbox: { width: "48%", padding: 8 },
+  valueText: { marginBottom: 10, fontSize: 16, color: "#333" },
 });
