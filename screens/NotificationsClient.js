@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   View,
   Text,
@@ -10,13 +10,37 @@ import {
 import SideNavigationClient from "../Components/SideNavigationClient";
 import BottomNavigationClient from "../Components/BottomNavigationClient";
 import { Ionicons } from "@expo/vector-icons";
+import { registerNotificationHandler } from "../utils/NotificationHandler";
+
+
 
 const NotificationsClient = ({ navigation }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [notifications, setNotifications] = useState([]);
   const scheme = useColorScheme();
 
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
+  };
+
+  const addNotification = useCallback((message) => {
+    const newNotification = {
+      id: Date.now(),
+      message,
+      timestamp: new Date().toLocaleString(),
+    };
+    setNotifications((prev) => [newNotification, ...prev]);
+
+    // Simulate push notification (replace with actual push logic)
+    console.log("Push Notification:", message);
+  }, []);
+
+  useEffect(() => {
+    registerNotificationHandler(addNotification);
+  }, [addNotification]);
+
+  const clearNotifications = () => {
+    setNotifications([]);
   };
 
   return (
@@ -52,7 +76,22 @@ const NotificationsClient = ({ navigation }) => {
 
       {/* Dashboard Content */}
       <View style={styles.content}>
-        <Text style={styles.dashboardText}>Welcome to the NotificationsC</Text>
+        <Text style={styles.dashboardText}>Notifications</Text>
+        {notifications.length === 0 ? (
+          <Text style={{ marginTop: 20 }}>No notifications available.</Text>
+        ) : (
+          notifications.map((notif) => (
+            <View key={notif.id} style={styles.notificationItem}>
+              <Text style={styles.notificationText}>{notif.message}</Text>
+              <Text style={styles.timestamp}>{notif.timestamp}</Text>
+            </View>
+          ))
+        )}
+        {notifications.length > 0 && (
+          <TouchableOpacity onPress={clearNotifications} style={styles.clearButton}>
+            <Text style={styles.clearButtonText}>Clear Notifications</Text>
+          </TouchableOpacity>
+        )}
       </View>
 
       {/* Bottom Navigation */}
@@ -101,6 +140,32 @@ const styles = StyleSheet.create({
   overlayBackground: {
     flex: 1,
     backgroundColor: "rgba(0,0,0,0.4)",
+  },
+  notificationItem: {
+    backgroundColor: "#eef",
+    padding: 10,
+    marginVertical: 5,
+    borderRadius: 5,
+    width: "90%",
+  },
+  notificationText: {
+    fontSize: 16,
+  },
+  timestamp: {
+    fontSize: 12,
+    color: "gray",
+    textAlign: "right",
+  },
+  clearButton: {
+    marginTop: 20,
+    backgroundColor: "#ff4444",
+    padding: 10,
+    borderRadius: 5,
+  },
+  clearButtonText: {
+    color: "#fff",
+    fontWeight: "bold",
+    textAlign: "center",
   },
 });
 

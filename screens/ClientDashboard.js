@@ -411,7 +411,7 @@ const ClientDashboard = ({ navigation }) => {
           {/* Chat Icon */}
           <TouchableOpacity
             style={styles.chatButton}
-            onPress={() => navigateToScreen("Chat")}
+            onPress={() => navigateToScreen("Messaging")}
           >
             <View style={styles.chatIconContainer}>
               <Feather

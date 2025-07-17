@@ -22,6 +22,7 @@ import {
 import { LinearGradient } from "expo-linear-gradient";
 import { useAutomaticLogout } from "../screens/AutoLogout";
 
+
 const CNDashboard = ({ navigation }) => {
   const { resetTimer } = useAutomaticLogout();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -189,10 +190,10 @@ const CNDashboard = ({ navigation }) => {
             <Text style={styles.documentsButtonText}>View Documents</Text>
           </TouchableOpacity>
 
-          {/* Chat Icon */}
+          {/* Navigate to Messaging screen when chat icon is pressed */}
           <TouchableOpacity
             style={styles.chatButton}
-            onPress={() => navigateToScreen("Chat")}
+            onPress={() => navigateToScreen("Messaging")}
           >
             <View style={styles.chatIconContainer}>
               <Feather

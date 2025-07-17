@@ -1,3 +1,4 @@
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import React, { useState, useEffect, useRef } from "react";
 import {
   View,
@@ -11,25 +12,43 @@ import {
   Image,
   StatusBar,
   useColorScheme,
+  Alert,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { SafeAreaView } from "react-native-safe-area-context"; // Import SafeAreaView
 import SideNavigationCN from "../Components/SideNavigationCN";
 import BottomNavigationCN from "../Components/BottomNavigationCN";
 import { database } from "../firebaseConfig.js"; // 👈 Adjust this path if firebaseConfig.js is elsewhere
-import { ref, onValue, push } from "firebase/database";
+import { ref, onValue, push, remove, ref as dbRef } from "firebase/database";
+// import { addNotification } from "../utils/NotificationHandler";
+
+
 
 const ChatScreen = ({ navigation, route }) => {
-  const { userId } = route.params; // <-- Receive userId from LoginScreen
+  const [currentUser, setCurrentUser] = useState(null);
+
+  const RECEIVER_ID = "user2"; // Temporary placeholder
+
+  useEffect(() => {
+    const loadUser = async () => {
+      const storedId = await AsyncStorage.getItem("appUser");
+      const userId = storedId || "defaultUser";
+
+      setCurrentUser({
+        id: userId,
+        name: "You",
+        avatar: "https://i.pravatar.cc/150?img=2",
+      });
+    };
+
+    loadUser();
+  }, []);
   
-  const currentUser = {
-    id: userId,
-    name: userId === "user1" ? "Caretaker John" : "Caregiver Mary",
-    avatar: userId === "user1" 
-      ? "https://i.pravatar.cc/150?img=2" 
-      : "https://i.pravatar.cc/150?img=3",
-  };
-  
+//sample notification trigger 
+// useEffect(() => {
+//   addNotification("A new case has been added.");
+// }, []);
+
   const [messages, setMessages] = useState([]);
   const [inputText, setInputText] = useState("");
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -59,14 +78,18 @@ const ChatScreen = ({ navigation, route }) => {
     return () => unsubscribe();
   }, []);
 
+  
+
   // Handle sending new messages
   const handleSend = () => {
     if (inputText.trim() === "") return;
   
     const newMessage = {
       text: inputText,
-      sender: "You",
-      avatar: "https://i.pravatar.cc/150?img=2",
+      senderId: currentUser.id,
+      senderName: currentUser.name,
+      receiverId: RECEIVER_ID,
+      avatar: currentUser.avatar,
       isUser: true,
       timestamp: Date.now(), // optional, for sorting later
     };
@@ -76,6 +99,36 @@ const ChatScreen = ({ navigation, route }) => {
   
     setInputText(""); // Clear the input field
   };
+
+  const handleLongPress = (message) => {
+    if (message.senderId !== currentUser.id) return;
+
+    Alert.alert(
+      "Delete Message",
+      "Are you sure you want to delete this message?",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Delete",
+          style: "destructive",
+          onPress: () => deleteMessage(message.id),
+        },
+      ]
+    );
+  };
+
+  const deleteMessage = async (messageId) => {
+    const messageRef = dbRef(database, `messages/${messageId}`);
+    try {
+      await remove(messageRef);
+    } catch (error) {
+      console.error("Failed to delete message:", error);
+    }
+  };
+
+  if (!currentUser) {
+    return <View style={styles.container}><Text>Loading...</Text></View>;
+  }
 
   return (
     <SafeAreaView style={styles.safeAreaContainer}> {/* Wrap everything in SafeAreaView */}
@@ -122,22 +175,27 @@ const ChatScreen = ({ navigation, route }) => {
           }
         >
           {messages.map((message) => (
-            <View
+            <TouchableOpacity
               key={message.id}
-              style={[
-                styles.messageContainer,
-                message.isUser ? styles.userMessage : styles.otherMessage,
-              ]}
+              onLongPress={() => handleLongPress(message)}
+              delayLongPress={500}
             >
-              {/* Profile Photo */}
-              <Image source={{ uri: message.avatar }} style={styles.avatar} />
+              <View
+                style={[
+                  styles.messageContainer,
+                  message.senderId === currentUser.id ? styles.userMessage : styles.otherMessage,
+                ]}
+              >
+                {/* Profile Photo
+                <Image source={{ uri: message.avatar }} style={styles.avatar} /> */}
 
-              {/* Message Bubble */}
-              <View style={styles.messageBubble}>
-                <Text style={styles.senderName}>{message.sender}</Text>
-                <Text style={styles.messageText}>{message.text}</Text>
+                {/* Message Bubble */}
+                <View style={styles.messageBubble}>
+                  <Text style={styles.senderName}>{message.senderName}</Text>
+                  <Text style={styles.messageText}>{message.text}</Text>
+                </View>
               </View>
-            </View>
+            </TouchableOpacity>
           ))}
         </ScrollView>
 
@@ -212,12 +270,12 @@ const styles = StyleSheet.create({
   otherMessage: {
     alignSelf: "flex-start",
   },
-  avatar: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    marginRight: 10,
-  },
+  // avatar: {
+  //   width: 40,
+  //   height: 40,
+  //   borderRadius: 20,
+  //   marginRight: 10,
+  // },
   messageBubble: {
     padding: 10,
     borderRadius: 10,
