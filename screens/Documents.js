@@ -13,8 +13,8 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import * as DocumentPicker from "expo-document-picker";
-import SideNavigationCN from "../Components/SideNavigationCN";
-import BottomNavigationCN from "../Components/BottomNavigationCN";
+import SideNavigationClient from "../Components/SideNavigationClient";
+import BottomNavigationClient from "../Components/BottomNavigationClient";
 
 const DocumentUpload = ({ navigation }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -49,7 +49,7 @@ const DocumentUpload = ({ navigation }) => {
   const uploadDocument = (uri, name) => {
     return new Promise((resolve, reject) => {
       try {
-        const userId = "testuser_01";
+       const clientUsername = "kavindya_02"; // or fetch dynamically if you have auth
         setUploadingFiles((prev) => ({
           ...prev,
           [name]: { progress: 0 },
@@ -57,7 +57,7 @@ const DocumentUpload = ({ navigation }) => {
 
         const xhr = new XMLHttpRequest();
         xhr.open("POST", AWS_BACKEND_URL);
-        xhr.setRequestHeader("userid", userId);
+        xhr.setRequestHeader("userid", clientUsername);
         xhr.setRequestHeader("filename", name);
         xhr.setRequestHeader("Accept", "application/json");
 
@@ -208,7 +208,10 @@ const DocumentUpload = ({ navigation }) => {
   };
 
   const scrollToEnd = () => {
-    setTimeout(() => scrollViewRef.current?.scrollToEnd({ animated: true }), 50);
+    setTimeout(
+      () => scrollViewRef.current?.scrollToEnd({ animated: true }),
+      50
+    );
   };
 
   const isUploading = () => {
@@ -248,7 +251,7 @@ const DocumentUpload = ({ navigation }) => {
 
       {isMenuOpen && (
         <View style={styles.overlay}>
-          <SideNavigationCN navigation={navigation} onClose={toggleMenu} />
+          <SideNavigationClient navigation={navigation} onClose={toggleMenu} />
           <TouchableOpacity
             style={styles.overlayBackground}
             onPress={toggleMenu}
@@ -304,9 +307,7 @@ const DocumentUpload = ({ navigation }) => {
                 {name}
               </Text>
               <View style={styles.progressBarContainer}>
-                <View
-                  style={[styles.progressBar, { width: `${progress}%` }]}
-                />
+                <View style={[styles.progressBar, { width: `${progress}%` }]} />
                 <Text style={styles.progressText}>{`${progress}%`}</Text>
               </View>
             </View>
@@ -330,7 +331,11 @@ const DocumentUpload = ({ navigation }) => {
                       style={styles.removeButton}
                       onPress={() => removeFile(index, item)}
                     >
-                      <Ionicons name="trash-outline" size={25} color="#FF0000" />
+                      <Ionicons
+                        name="trash-outline"
+                        size={25}
+                        color="#FF0000"
+                      />
                     </TouchableOpacity>
                   </View>
                 )}
@@ -359,7 +364,7 @@ const DocumentUpload = ({ navigation }) => {
         </ScrollView>
       )}
 
-      <BottomNavigationCN />
+      <BottomNavigationClient />
     </View>
   );
 };

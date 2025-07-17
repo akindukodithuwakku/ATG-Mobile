@@ -29,14 +29,21 @@ const DocumentsCN = ({ navigation }) => {
   const [loading, setLoading] = useState(false);
   const scheme = useColorScheme();
 
+  // Replace this with the actual logged-in care navigator ID
+  const careNavigatorId ='cn_alecbenjamin';
+
   useEffect(() => {
     fetchDocuments();
-  }, []);
+  }, [search]);
 
   const fetchDocuments = async () => {
     setLoading(true);
     try {
-      const res = await fetch(API_URL);
+      const url = `${API_URL}?careNavigatorId=${encodeURIComponent(careNavigatorId)}&search=${encodeURIComponent(search)}`;
+
+      const res = await fetch(url);
+      if (!res.ok) throw new Error("Failed to fetch documents");
+
       const json = await res.json();
       const docs = Array.isArray(json) ? json : json.body;
       const list = typeof docs === "string" ? JSON.parse(docs) : docs;
@@ -46,8 +53,8 @@ const DocumentsCN = ({ navigation }) => {
           doc.document_url.split("amazonaws.com/")[1].split("?")[0]
         );
         return {
-          id: String(doc.id),
-          name: doc.user_name || doc.user_id || "Unknown",
+          id: String(doc.doc_id || doc.id),
+          name: doc.full_name || doc.user_name || doc.user_id || "Unknown",
           fileName: s3Key.split("/").pop(),
           uploadDate: doc.created_at?.split("T")[0] || "N/A",
           s3Key,
@@ -73,16 +80,13 @@ const DocumentsCN = ({ navigation }) => {
 
       const fileUri = FileSystem.documentDirectory + fileName;
 
-      // Download the file to local file system
       const { uri } = await FileSystem.downloadAsync(downloadUrl, fileUri);
 
-      // Notify the user that the file has been downloaded
       Alert.alert("Download Complete", `File saved to: ${uri}`, [
         {
           text: "Open",
           onPress: async () => {
             try {
-              // Open the downloaded file
               await Sharing.shareAsync(uri);
             } catch (err) {
               console.error("Sharing error:", err);
@@ -91,10 +95,8 @@ const DocumentsCN = ({ navigation }) => {
           },
         },
         {
-          text: "OK", 
-          onPress: () => {
-            // Simply close the alert when "OK" is pressed.
-          },
+          text: "OK",
+          onPress: () => {},
         },
       ]);
     } catch (err) {
