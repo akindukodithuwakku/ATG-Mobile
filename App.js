@@ -27,7 +27,7 @@ import CareIntakeReview from "./screens/CareIntakeReview";
 import SubmissionSuccess from "./screens/SubmissionSuccess";
 import AddTaskScreen from "./screens/AddTaskScreen";
 import Task from "./screens/Task";
-import CarePlan from "./screens/CarePlan";
+import CarePlan from "./screens/CarePlanMgtCN";
 import MarkAppointment from "./screens/MarkAppointment";
 import UpdateTaskScreen from "./screens/UpdateTaskScreen";
 import AdditionalDetailsScreen from "./screens/AdditionalDetailsScreen";
@@ -39,7 +39,7 @@ export default function App() {
   return (
     <NavigationContainer>
       <Stack.Navigator
-        initialRouteName="CarePlan"
+        initialRouteName="Personalinfo"
         screenOptions={{ headerShown: false }}
       >
         <Stack.Screen name="Welcome" component={WelcomeScreen} />
@@ -52,7 +52,7 @@ export default function App() {
         <Stack.Screen name="Appointments" component={Appointments} />
         <Stack.Screen name="CarePlanC" component={CarePlanMgtClient} />
         <Stack.Screen name="MedicationC" component={MedicationMgtClient} />
-        <Stack.Screen name="CarePlanCN" component={CarePlanMgtCN} />
+        <Stack.Screen name="CarePlanMgtCN" component={CarePlanMgtCN} />
         <Stack.Screen name="MedicationCN" component={MedicationMgtCN} />
         <Stack.Screen name="NotificationsC" component={NotificationsClient} />
         <Stack.Screen name="NotificationsCN" component={NotificationsCN} />

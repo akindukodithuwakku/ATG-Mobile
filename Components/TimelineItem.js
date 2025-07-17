@@ -2,33 +2,65 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
-const TimelineItem = ({ title, description, start, status, isLast, onEdit }) => {
-  const dateObj = start ? new Date(start) : null;
-  const dayLabel = dateObj
-    ? `${dateObj.getDate()} ${dateObj.toLocaleDateString('en-US', { weekday: 'short' })}`
+const TimelineItem = ({ title, description, start, end, status, isLast, onEdit }) => {
+  // Parse date/time as local (remove the + 'Z')
+  const startObj = start ? new Date(start.replace(' ', 'T')) : null;
+  const endObj = end ? new Date(end.replace(' ', 'T')) : null;
+
+  // Format date label (e.g., "12 Tue")
+  const dayLabel = startObj && !isNaN(startObj)
+    ? `${startObj.getDate()} ${startObj.toLocaleDateString('en-US', { weekday: 'short' })}`
     : 'No date';
-  const timeLabel = dateObj
-    ? dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+
+  // Show time as stored in DB (local)
+  const startTimeLabel = startObj && !isNaN(startObj)
+    ? startObj.getHours().toString().padStart(2, '0') + ':' + startObj.getMinutes().toString().padStart(2, '0')
     : '';
+  const endTimeLabel = endObj && !isNaN(endObj)
+    ? endObj.getHours().toString().padStart(2, '0') + ':' + endObj.getMinutes().toString().padStart(2, '0')
+    : '';
+
+  // Status color and icon
+  let statusColor = '#BDBDBD';
+  let statusIcon = <Ionicons name="time" size={18} color={statusColor} />;
+  if (status === 'completed') {
+    statusColor = '#4CAF50';
+    statusIcon = <Ionicons name="checkmark-circle" size={18} color={statusColor} />;
+  } else if (status === 'overdue') {
+    statusColor = '#F44336';
+    statusIcon = <Ionicons name="close-circle" size={18} color={statusColor} />;
+  }
 
   return (
     <View style={styles.row}>
       {/* Timeline section */}
       <View style={styles.leftColumn}>
         <View style={styles.dotContainer}>
-          <View style={styles.dot} />
-          <Text style={styles.dateLabel}>{dayLabel}</Text>
+          <View style={[styles.dot, { backgroundColor: statusColor }]} />
+          <Text style={[styles.dateLabel, { color: statusColor }]}>{dayLabel}</Text>
         </View>
-        {!isLast && <View style={styles.line} />}
+        {!isLast && <View style={[styles.line, { backgroundColor: statusColor }]} />}
       </View>
 
       {/* Task info section */}
       <View style={styles.rightColumn}>
         <View style={styles.card}>
-          <Text style={styles.title}>{title}</Text>
-          <Text style={styles.time}>{timeLabel}</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <Text style={styles.title}>{title}</Text>
+            {/* Removed statusIcon from here */}
+          </View>
+          <Text style={styles.time}>
+            {startTimeLabel && endTimeLabel
+              ? `${startTimeLabel} - ${endTimeLabel}`
+              : startTimeLabel || ''}
+          </Text>
           {description ? <Text style={styles.description}>{description}</Text> : null}
-          <Text style={styles.status}>Status: {status}</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 4 }}>
+            <Text style={[styles.status, { color: statusColor }]}>
+              Status: {status}
+            </Text>
+            <View style={{ marginLeft: 6 }}>{statusIcon}</View>
+          </View>
         </View>
       </View>
       <TouchableOpacity onPress={onEdit} style={styles.editButton}>
@@ -58,18 +90,15 @@ const styles = StyleSheet.create({
     width: 10,
     height: 10,
     borderRadius: 5,
-    backgroundColor: '#00BCD4',
     marginRight: 6,
   },
   dateLabel: {
     fontSize: 13,
-    color: '#00BCD4',
     fontWeight: 'bold',
   },
   line: {
     width: 2,
     flex: 1,
-    backgroundColor: '#00BCD4',
     marginTop: 4,
   },
   rightColumn: {
@@ -85,7 +114,7 @@ const styles = StyleSheet.create({
   title: { fontWeight: 'bold', fontSize: 16 },
   time: { fontSize: 13, color: '#666', marginTop: 2 },
   description: { marginTop: 4, color: '#333' },
-  status: { marginTop: 4, fontStyle: 'italic', color: '#007B9F' },
+  status: { marginTop: 4, fontStyle: 'italic' },
   editButton: {
     marginLeft: 10,
   },

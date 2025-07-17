@@ -1,23 +1,100 @@
-import React, { useState } from "react";
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  StatusBar,
-  useColorScheme,
-} from "react-native";
-import SideNavigationCN from "../Components/SideNavigationCN";
+//careplanmgtCN
+import React, { useEffect, useState } from 'react';
+import { View, Text, TextInput, FlatList, StyleSheet, TouchableOpacity, StatusBar, useColorScheme, ScrollView, ActivityIndicator } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import BottomNavigationCN from "../Components/BottomNavigationCN";
-import { Ionicons } from "@expo/vector-icons";
+import SideNavigationCN from "../Components/SideNavigationCN";
+import ArticleCard from '../Components/ArticleCard';
+import TaskCard from '../Components/TaskCard';
+import { useIsFocused } from '@react-navigation/native';
+import TimelineItem from '../Components/TimelineItem';
 
-const CarePlanMgtCN = ({ navigation }) => {
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
+const CarePlanOverview = ({ navigation, carePlanId }) => {
+  const [tasks, setTasks] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const isFocused = useIsFocused();
+
+  const fetchTasks = async () => {
+  try {
+    const response = await fetch(
+      `https://sue7dsbf09.execute-api.ap-south-1.amazonaws.com/dev/tasks?care_plan_id=${carePlanId}`
+    );
+    const result = await response.json();
+
+    const sortedTasks = (result.data || []).sort((a, b) => {
+      return new Date(a.start) - new Date(b.start);
+    });
+
+    setTasks(sortedTasks);
+  } catch (error) {
+    console.error("Error fetching tasks:", error);
+  } finally {
+    setLoading(false);
+  }
+};
+
+
+  useEffect(() => {
+    if (isFocused) {
+      fetchTasks();
+    }
+  }, [isFocused]);
+
+  const articleData = [
+    { id: '1', type: 'Article', duration: '5 min', title: 'What is a care plan?' },
+  ];
+
+  const renderArticleItem = ({ item }) => (
+    <ArticleCard
+      title={item.title}
+      duration={item.duration}
+      type={item.type}
+      onPress={() => navigation.navigate('Details', { item })}
+    />
+  );
+
+  const renderTaskItem = ({ item, index }) => (
+    <TimelineItem
+      title={item.title}
+      description={item.description}
+      start={item.start}
+      end={item.end} // <-- Add this line
+      status={item.status}
+      isLast={index === tasks.length - 1}
+      onEdit={() => navigation.navigate('UpdateTaskScreen', { task: item })}
+    />
+  );
+
+  return (
+    <View>
+      <FlatList
+        data={articleData}
+        renderItem={renderArticleItem}
+        keyExtractor={item => item.id}
+        showsVerticalScrollIndicator={false}
+      />
+
+      <Text style={styles.taskHeader}>Tasks</Text>
+      {loading ? (
+        <ActivityIndicator size="large" color="#00BCD4" />
+      ) : (
+        <FlatList
+          data={tasks}
+          renderItem={renderTaskItem}
+          keyExtractor={item => item.id.toString()}
+          showsVerticalScrollIndicator={false}
+        />
+      )}
+    </View>
+  );
+};
+
+const CarePlanScreen = ({ navigation }) => {
   const scheme = useColorScheme();
+  const [isSideNavVisible, setIsSideNavVisible] = useState(false);
+  const carePlanId = 2; // Hardcoded for now
 
-  const toggleMenu = () => {
-    setIsMenuOpen(!isMenuOpen);
-  };
+  const closeSideNav = () => setIsSideNavVisible(false);
 
   return (
     <View style={styles.container}>
@@ -27,83 +104,82 @@ const CarePlanMgtCN = ({ navigation }) => {
         backgroundColor={scheme === "dark" ? "black" : "transparent"}
       />
 
-      {/* Header with Hamburger Icon */}
-      <View style={styles.header}>
-        <TouchableOpacity onPress={toggleMenu}>
-          <Ionicons
-            name={isMenuOpen ? "close" : "menu"}
-            size={30}
-            color="black"
-          />
+      <View style={styles.headerContainer}>
+        <TouchableOpacity onPress={() => setIsSideNavVisible(!isSideNavVisible)}>
+          <Ionicons name="menu" size={28} color="white" />
         </TouchableOpacity>
-        <Text style={styles.headerText}>CarePlan ManagementCN</Text>
+        <View style={styles.headerTextContainer}>
+          <Text style={styles.headerText}>Care Plan Overview</Text>
+          <Text style={styles.headersec}>What you can do for yourself?</Text>
+        </View>
       </View>
 
-      {/* Overlay for Side Navigation */}
-      {isMenuOpen && (
-        <View style={styles.overlay}>
-          <SideNavigationCN navigation={navigation} onClose={toggleMenu} />
-          <TouchableOpacity
-            style={styles.overlayBackground}
-            onPress={toggleMenu}
-          />
-        </View>
+      <View style={styles.searchContainer}>
+        <Ionicons name="search" size={20} color="#B3E5FC" style={styles.searchIcon} />
+        <TextInput style={styles.searchInput} placeholder="Search..." />
+      </View>
+
+      {isSideNavVisible && (
+        <SideNavigationCN navigation={navigation} onClose={closeSideNav} />
       )}
 
-      {/* Dashboard Content */}
-      <View style={styles.content}>
-        <Text style={styles.dashboardText}>
-          Welcome to the CarePlan ManagementCN
-        </Text>
-      </View>
+      <ScrollView contentContainerStyle={styles.scrollContainer}>
+        <CarePlanOverview navigation={navigation} carePlanId={carePlanId} />
+      </ScrollView>
 
-      {/* Bottom Navigation */}
       <BottomNavigationCN navigation={navigation} />
+
+      <TouchableOpacity
+        style={styles.fab}
+        onPress={() => navigation.navigate('AddTaskScreen', {
+          care_plan_id: carePlanId,
+        })}>
+        <Ionicons name="add" size={24} color="white" />
+      </TouchableOpacity>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#fff",
-  },
-  header: {
+  container: { flex: 1, backgroundColor: "#F8FDFF" },
+  headerContainer: {
     flexDirection: "row",
     alignItems: "center",
     padding: 15,
-    backgroundColor: "#f8f9fa",
-    marginTop: 30,
+    backgroundColor: "#00BCD4",
+    paddingTop: 40,
+    justifyContent: 'center',
   },
-  headerText: {
-    fontSize: 20,
-    fontWeight: "bold",
-    marginLeft: 15,
-  },
-  content: {
+  headerTextContainer: {
     flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    marginBottom: 60,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  dashboardText: {
-    fontSize: 20,
-    fontWeight: "bold",
-    textAlign: "center",
+  headerText: { fontSize: 25, fontWeight: "bold", color: "white", textAlign: 'center' },
+  headersec: { fontSize: 15, paddingTop: 20, fontWeight: "bold", color: "white", textAlign: 'center' },
+  searchContainer: {
+    flexDirection: 'row', alignItems: 'center', width: '100%', height: 90,
+    marginTop: 0, marginBottom: 10, backgroundColor: '#00BCD4', paddingHorizontal: 10,
   },
-  overlay: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    width: "100%",
-    height: "100%",
-    flexDirection: "row",
-    zIndex: 1,
+  searchInput: {
+    height: 40, flex: 1, borderColor: '#CCCCCC', borderWidth: 2, borderRadius: 10,
+    paddingHorizontal: 10, backgroundColor: '#E0F7FA',
   },
-  overlayBackground: {
-    flex: 1,
-    backgroundColor: "rgba(0,0,0,0.4)",
+  searchIcon: { marginRight: 10 },
+  scrollContainer: { flexGrow: 1, paddingBottom: 150 },
+  fab: {
+    position: 'absolute', bottom: 90, right: 30, backgroundColor: '#00BCD4',
+    width: 56, height: 56, borderRadius: 28, alignItems: 'center', justifyContent: 'center',
+    elevation: 5, shadowColor: '#000', shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3, shadowRadius: 4,
+  },
+  taskHeader: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    paddingHorizontal: 20,
+    paddingTop: 10,
+    color: '#007B9F',
   },
 });
 
-export default CarePlanMgtCN;
+export default CarePlanScreen;
