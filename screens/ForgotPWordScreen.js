@@ -74,17 +74,46 @@ export const ForgotPasswordScreen = ({ navigation }) => {
             break;
 
           case 400:
-            // InvalidParameterException
-            Alert.alert(
-              "Error",
-              parsedBody.message || "Invalid request parameters."
-            );
+            // InvalidParameterException or UserNotConfirmedException
+            if (parsedBody.code === "UserNotConfirmedException") {
+              Alert.alert(
+                "Account Not Verified",
+                "Your account is not verified. Please check your email and verify your account first.",
+                [
+                  {
+                    text: "OK",
+                    onPress: () =>
+                      navigation.reset({
+                        index: 0,
+                        routes: [
+                          {
+                            name: "VerificationSent",
+                            params: { username: username },
+                          },
+                        ],
+                      }),
+                  },
+                ]
+              );
+            } else {
+              Alert.alert(
+                "Error",
+                parsedBody.message || "Invalid request parameters."
+              );
+            }
             break;
 
           case 404:
-            // Username not passed
+          // Username not found or not passed
+          if (parsedBody.code === 'UserNotFoundException') {
+            Alert.alert(
+              "User Not Found",
+              "The username you entered doesn't exist. Please check your username and try again."
+            );
+          } else {
             Alert.alert("Error", parsedBody.message || "Username is required.");
-            break;
+          }
+          break;
 
           case 429: // TooManyRequestsException
             Alert.alert("Too many requests. Please try again later.");
