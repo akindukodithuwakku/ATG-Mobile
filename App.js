@@ -30,7 +30,7 @@ export default function App() {
   return (
     <NavigationContainer>
       <Stack.Navigator
-        initialRouteName="MedicationC"
+        initialRouteName="DocumentsCN"
         screenOptions={{ headerShown: false }}eas login
 
       >
