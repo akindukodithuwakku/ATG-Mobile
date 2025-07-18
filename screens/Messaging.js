@@ -13,28 +13,55 @@ import {
   useColorScheme,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { SafeAreaView } from "react-native-safe-area-context"; // Import SafeAreaView
+import { SafeAreaView } from "react-native-safe-area-context";
+import SideNavigationClient from "../Components/SideNavigationClient";
 import SideNavigationCN from "../Components/SideNavigationCN";
+import BottomNavigationClient from "../Components/BottomNavigationClient";
 import BottomNavigationCN from "../Components/BottomNavigationCN";
-import { database } from "../firebaseConfig.js"; // 👈 Adjust this path if firebaseConfig.js is elsewhere
+import { database } from "../firebaseConfig.js";
 import { ref, onValue, push } from "firebase/database";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const ChatScreen = ({ navigation, route }) => {
-  const { userId } = route.params; // <-- Receive userId from LoginScreen
-  
+  const { userId } = route.params || {}; // <-- Receive userId from LoginScreen
+  const [userType, setUserType] = useState(null); // 'client' or 'cn'
+
   const currentUser = {
     id: userId,
     name: userId === "user1" ? "Caretaker John" : "Caregiver Mary",
-    avatar: userId === "user1" 
-      ? "https://i.pravatar.cc/150?img=2" 
-      : "https://i.pravatar.cc/150?img=3",
+    avatar:
+      userId === "user1"
+        ? "https://i.pravatar.cc/150?img=2"
+        : "https://i.pravatar.cc/150?img=3",
   };
-  
+
   const [messages, setMessages] = useState([]);
   const [inputText, setInputText] = useState("");
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const scheme = useColorScheme();
   const scrollViewRef = useRef(null);
+
+  // Detect user type on component mount
+  useEffect(() => {
+    const detectUserType = async () => {
+      try {
+        const username = await AsyncStorage.getItem("appUser");
+        if (username) {
+          // Check if username contains 'cn_' prefix for care navigators
+          if (username.startsWith("cn_")) {
+            setUserType("cn");
+          } else {
+            setUserType("client");
+          }
+        }
+      } catch (error) {
+        console.error("Error detecting user type:", error);
+        setUserType("client"); // Default to client
+      }
+    };
+
+    detectUserType();
+  }, []);
 
   // Toggle side menu
   const toggleMenu = () => {
@@ -44,7 +71,7 @@ const ChatScreen = ({ navigation, route }) => {
   // Load initial messages
   useEffect(() => {
     const messagesRef = ref(database, "messages");
-    
+
     const unsubscribe = onValue(messagesRef, (snapshot) => {
       const data = snapshot.val();
       if (data) {
@@ -55,14 +82,14 @@ const ChatScreen = ({ navigation, route }) => {
         setMessages(parsedMessages);
       }
     });
-  
+
     return () => unsubscribe();
   }, []);
 
   // Handle sending new messages
   const handleSend = () => {
     if (inputText.trim() === "") return;
-  
+
     const newMessage = {
       text: inputText,
       sender: "You",
@@ -70,15 +97,34 @@ const ChatScreen = ({ navigation, route }) => {
       isUser: true,
       timestamp: Date.now(), // optional, for sorting later
     };
-  
+
     const messagesRef = ref(database, "messages");
     push(messagesRef, newMessage);
-  
+
     setInputText(""); // Clear the input field
   };
 
+  // Render appropriate navigation components based on user type
+  const renderSideNavigation = () => {
+    if (userType === "cn") {
+      return <SideNavigationCN navigation={navigation} onClose={toggleMenu} />;
+    } else {
+      return (
+        <SideNavigationClient navigation={navigation} onClose={toggleMenu} />
+      );
+    }
+  };
+
+  const renderBottomNavigation = () => {
+    if (userType === "cn") {
+      return <BottomNavigationCN navigation={navigation} />;
+    } else {
+      return <BottomNavigationClient navigation={navigation} />;
+    }
+  };
+
   return (
-    <SafeAreaView style={styles.safeAreaContainer}> {/* Wrap everything in SafeAreaView */}
+    <SafeAreaView style={styles.safeAreaContainer}>
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         style={styles.container}
@@ -105,7 +151,7 @@ const ChatScreen = ({ navigation, route }) => {
         {/* Overlay for Side Navigation */}
         {isMenuOpen && (
           <View style={styles.overlay}>
-            <SideNavigationCN navigation={navigation} onClose={toggleMenu} />
+            {renderSideNavigation()}
             <TouchableOpacity
               style={styles.overlayBackground}
               onPress={toggleMenu}
@@ -157,7 +203,7 @@ const ChatScreen = ({ navigation, route }) => {
       </KeyboardAvoidingView>
 
       {/* Bottom Navigation */}
-      {/* <BottomNavigationCN navigation={navigation} /> */}
+      {renderBottomNavigation()}
     </SafeAreaView>
   );
 };

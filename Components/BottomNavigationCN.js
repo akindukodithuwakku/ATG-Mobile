@@ -3,6 +3,7 @@ import { View, TouchableOpacity, StyleSheet, Image } from "react-native";
 import { Ionicons, Foundation } from "@expo/vector-icons";
 import { useRoute } from "@react-navigation/native";
 import { useAutomaticLogout } from "../screens/AutoLogout";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const BottomNavigationCN = ({ navigation }) => {
   const route = useRoute();
@@ -21,7 +22,14 @@ const BottomNavigationCN = ({ navigation }) => {
 
   const handleNavigation = (route) => {
     resetTimer();
-    navigation.navigate(route);
+    if (route === "Chat") {
+      // Get username from AsyncStorage for Chat navigation
+      AsyncStorage.getItem("appUser").then((username) => {
+        navigation.navigate(route, { userId: username });
+      });
+    } else {
+      navigation.navigate(route);
+    }
   };
 
   const handleInteraction = () => {

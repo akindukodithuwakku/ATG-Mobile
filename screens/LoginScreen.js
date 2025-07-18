@@ -185,10 +185,10 @@ const LoginScreen = ({ navigation }) => {
 
               if (status === 1) {
                 Alert.alert("Please fill the care intake form to proceed.");
-                // Navigate to dashboard
+                // Navigate to care intake flow
                 navigation.reset({
                   index: 0,
-                  routes: [{ name: "Welcome" }],
+                  routes: [{ name: "ReadinessQuestionnaire" }],
                 });
               } else if (status === 2) {
                 try {

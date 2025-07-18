@@ -44,9 +44,9 @@ const CNDashboard = ({ navigation }) => {
   }, [isMenuOpen, resetTimer]);
 
   const navigateToScreen = useCallback(
-    (screenName) => {
+    (screenName, params = {}) => {
       resetTimer();
-      navigation.navigate(screenName);
+      navigation.navigate(screenName, params);
     },
     [navigation, resetTimer]
   );
@@ -192,7 +192,7 @@ const CNDashboard = ({ navigation }) => {
           {/* Chat Icon */}
           <TouchableOpacity
             style={styles.chatButton}
-            onPress={() => navigateToScreen("Chat")}
+            onPress={() => navigateToScreen("Chat", { userId: "cn_user" })}
           >
             <View style={styles.chatIconContainer}>
               <Feather

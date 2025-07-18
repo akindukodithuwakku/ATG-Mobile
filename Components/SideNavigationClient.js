@@ -29,6 +29,11 @@ const SideNavigationClient = ({ navigation, onClose }) => {
       route: "MedicationC",
     },
     {
+      name: "Documents",
+      icon: "document-text-outline",
+      route: "DocumentC",
+    },
+    {
       name: "Notifications",
       icon: "notifications-outline",
       route: "NotificationsC",

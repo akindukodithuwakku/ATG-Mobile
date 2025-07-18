@@ -90,7 +90,10 @@ const ClientDashboard = ({ navigation }) => {
         });
 
         const result = await response.json();
-        const parsedBody = typeof result.body === 'string' ? JSON.parse(result.body) : result.body;
+        const parsedBody =
+          typeof result.body === "string"
+            ? JSON.parse(result.body)
+            : result.body;
 
         if (result.statusCode === 200) {
           const appointmentData = parsedBody;
@@ -158,7 +161,7 @@ const ClientDashboard = ({ navigation }) => {
 
         // Clear from storage
         AsyncStorage.removeItem("hasAppointment");
-        
+
         // Call API to complete the appointment
         const completeAppointment = async () => {
           try {
@@ -170,11 +173,11 @@ const ClientDashboard = ({ navigation }) => {
               body: JSON.stringify({
                 action: "complete_appointment",
                 data: {
-                  client_username: username
-                }
+                  client_username: username,
+                },
               }),
             });
-            
+
             const result = await response.json();
             console.log("Appointment completion result:", result);
             if (result.statusCode === 200) {
@@ -186,7 +189,7 @@ const ClientDashboard = ({ navigation }) => {
             console.error("Error completing appointment:", error);
           }
         };
-        
+
         completeAppointment();
         return;
       }
@@ -211,9 +214,9 @@ const ClientDashboard = ({ navigation }) => {
   }, [isMenuOpen, resetTimer]);
 
   const navigateToScreen = useCallback(
-    (screenName) => {
+    (screenName, params = {}) => {
       resetTimer();
-      navigation.navigate(screenName);
+      navigation.navigate(screenName, params);
     },
     [navigation, resetTimer]
   );
@@ -411,7 +414,7 @@ const ClientDashboard = ({ navigation }) => {
           {/* Chat Icon */}
           <TouchableOpacity
             style={styles.chatButton}
-            onPress={() => navigateToScreen("Chat")}
+            onPress={() => navigateToScreen("Chat", { userId: username })}
           >
             <View style={styles.chatIconContainer}>
               <Feather

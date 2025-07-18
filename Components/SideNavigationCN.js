@@ -34,6 +34,11 @@ const SideNavigationCN = ({ navigation, onClose }) => {
       route: "AppointmentHandling",
     },
     {
+      name: "Documents",
+      icon: "document-text-outline",
+      route: "DocumentCN",
+    },
+    {
       name: "Notifications",
       icon: "notifications-outline",
       route: "NotificationsCN",
