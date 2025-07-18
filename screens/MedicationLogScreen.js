@@ -23,7 +23,7 @@ const MedicationLogScreen = ({ navigation }) => {
   const scheme = useColorScheme();
   const menuAnimation = new Animated.Value(isMenuOpen ? 1 : 0);
 
-  const client_username = "kavindya_02"; // Replace this dynamically if needed
+  const client_username = "testuser_01"; // Replace this dynamically if needed
 
   const toggleMenu = () => {
     Animated.timing(menuAnimation, {

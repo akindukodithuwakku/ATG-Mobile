@@ -116,16 +116,18 @@ const MedicationMgtClient = ({ navigation }) => {
     setErrors(newErrors);
     if (hasError) return;
 
-    const client_username = "kavindya_02";
+    const client_username = "testuser_01";
 
     for (let med of medications) {
       const payload = {
-        client_username,
-        medication_name: med.name,
-        dosage: med.dosage,
-        schedule_time: med.scheduleTime.toISOString(),
-        refill_date: med.refillDate.toISOString(),
-      };
+  client_username,
+  medication_name: med.name,
+  dosage: med.dosage,
+  schedule_time: med.schedule.includes("Other")
+    ? med.customSchedule
+    : med.scheduleTime.toISOString(),
+  refill_date: med.refillDate.toISOString(),
+};
 
       try {
         const response = await fetch(

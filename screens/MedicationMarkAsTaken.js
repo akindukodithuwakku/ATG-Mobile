@@ -23,7 +23,7 @@ const MarkMedicationTakenScreen = ({ navigation }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const menuAnimation = useRef(new Animated.Value(0)).current;
 
-  const client_username = "kavindya_02"; // Ideally from auth context
+  const client_username = "testuser_01"; // Ideally from auth context
 
   const toggleMenu = () => {
     Animated.timing(menuAnimation, {
