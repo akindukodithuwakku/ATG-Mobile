@@ -23,7 +23,8 @@
       "package": "com.anonymous.ATG_HealthCare"
     },
     "web": {
-      "favicon": "./assets/favicon.png"
+      "favicon": "./assets/favicon.png",
+      "bundler": "metro"
     },
     "plugins": [
       [
@@ -35,7 +36,12 @@
     ],
     "packagerOpts": {
       "sourceExts": ["js", "jsx", "ts", "tsx", "env"]
-    }
+    },
+    "extra": {
+      "eas": {
+        "projectId": "your-project-id"
+      }
+    },
+    "owner": "your-expo-username"
   }
 }
-

@@ -1,0 +1,28 @@
+{
+  "buildCommand": "npm run build:web",
+  "outputDirectory": "web-build",
+  "framework": "expo",
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/static/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ]
+    }
+  ],
+  "env": {
+    "EXPO_PUBLIC_API_URL": "@expo_public_api_url",
+    "EXPO_PUBLIC_AWS_REGION": "@expo_public_aws_region",
+    "EXPO_PUBLIC_USER_POOLS_ID": "@expo_public_user_pools_id",
+    "EXPO_PUBLIC_USER_POOLS_WEB_CLIENT_ID": "@expo_public_user_pools_web_client_id"
+  }
+}
