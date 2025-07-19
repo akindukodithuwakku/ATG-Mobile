@@ -16,8 +16,8 @@ import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useResetTimerOnLogin } from "./AutoLogout";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import TestInput from "../components/TestInput";
-import WebInput from "../components/WebInput";
+import TestInput from "../Components/TestInput";
+import WebInput from "../Components/WebInput";
 
 const API_ENDPOINT =
   "https://uqzl6jyqvg.execute-api.ap-south-1.amazonaws.com/dev";
@@ -303,8 +303,6 @@ const LoginScreen = ({ navigation }) => {
       }
     }
   };
-
-
 
   return (
     <View style={styles.container}>
