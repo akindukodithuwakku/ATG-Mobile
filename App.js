@@ -54,6 +54,8 @@ import CarePlanMgtCN from "./screens/CarePlanMgtCN";
 // Medication Management Screens
 import MedicationMgtClient from "./screens/MedicationMgtClient";
 import MedicationMgtCN from "./screens/MedicationMgtCN";
+import MedicationLogScreen from "./screens/MedicationLogScreen";
+import MarkMedicationTakenScreen from "./screens/MedicationMarkAsTaken";
 
 // Task Management Screens
 import AddTaskScreen from "./screens/AddTaskScreen";
@@ -134,6 +136,11 @@ const AppNavigator = () => {
         {/* Medication Management */}
         <Stack.Screen name="MedicationC" component={MedicationMgtClient} />
         <Stack.Screen name="MedicationCN" component={MedicationMgtCN} />
+        <Stack.Screen name="MedicationLog" component={MedicationLogScreen} />
+        <Stack.Screen
+          name="MarkMedication"
+          component={MarkMedicationTakenScreen}
+        />
 
         {/* Task Management */}
         <Stack.Screen name="AddTask" component={AddTaskScreen} />

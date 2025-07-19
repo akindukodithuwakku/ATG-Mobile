@@ -31,12 +31,12 @@ const SideNavigationCN = ({ navigation, onClose }) => {
     {
       name: "Appointments",
       icon: "calendar-outline",
-      route: "AppointmentHandling",
+      route: "HandleAppointmentsCN",
     },
     {
       name: "Documents",
       icon: "document-text-outline",
-      route: "DocumentCN",
+      route: "DocumentsCN",
     },
     {
       name: "Notifications",
