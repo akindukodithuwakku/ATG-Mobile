@@ -61,6 +61,23 @@ function Deploy-ToVercel {
         npm install -g vercel
     }
     
+    # Check for environment variables
+    Write-Host "🔍 Checking environment variables..." -ForegroundColor Blue
+    Write-Host "⚠️  IMPORTANT: Make sure you have set up environment variables in Vercel!" -ForegroundColor Yellow
+    Write-Host "   Required variables:" -ForegroundColor White
+    Write-Host "   - EXPO_PUBLIC_API_URL" -ForegroundColor Gray
+    Write-Host "   - EXPO_PUBLIC_AWS_REGION" -ForegroundColor Gray
+    Write-Host "   - EXPO_PUBLIC_USER_POOLS_ID" -ForegroundColor Gray
+    Write-Host "   - EXPO_PUBLIC_USER_POOLS_WEB_CLIENT_ID" -ForegroundColor Gray
+    Write-Host ""
+    Write-Host "   See VERCEL_ENV_SETUP.md for detailed instructions." -ForegroundColor Cyan
+    
+    $continue = Read-Host "Continue with deployment? (y/N)"
+    if ($continue -ne "y" -and $continue -ne "Y") {
+        Write-Host "❌ Deployment cancelled." -ForegroundColor Red
+        return
+    }
+    
     # Build for web
     Write-Host "🔨 Building for web..." -ForegroundColor Blue
     npm run build:web
@@ -70,6 +87,7 @@ function Deploy-ToVercel {
     vercel --prod
     
     Write-Host "✅ Vercel deployment completed!" -ForegroundColor Green
+    Write-Host "💡 If you encounter environment variable errors, check VERCEL_ENV_SETUP.md" -ForegroundColor Yellow
 }
 
 # Function to deploy to Netlify
@@ -107,6 +125,9 @@ function Show-Help {
     Write-Host "  .\deploy.ps1 eas" -ForegroundColor Gray
     Write-Host "  .\deploy.ps1 vercel" -ForegroundColor Gray
     Write-Host "  .\deploy.ps1 netlify" -ForegroundColor Gray
+    Write-Host ""
+    Write-Host "Environment Variables:" -ForegroundColor White
+    Write-Host "  For Vercel deployment, see VERCEL_ENV_SETUP.md" -ForegroundColor Cyan
 }
 
 # Main script logic
