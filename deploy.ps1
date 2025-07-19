@@ -106,7 +106,7 @@ function Deploy-ToNetlify {
     
     # Deploy to Netlify
     Write-Host "📤 Deploying to Netlify..." -ForegroundColor Blue
-    netlify deploy --prod --dir=web-build
+    netlify deploy --prod --dir=dist
     
     Write-Host "✅ Netlify deployment completed!" -ForegroundColor Green
 }

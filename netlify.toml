@@ -1,6 +1,6 @@
 [build]
-  command = "npm run build:web"
-  publish = "web-build"
+  command = "expo export --platform web"
+  publish = "dist"
 
 [build.environment]
   NODE_VERSION = "18"

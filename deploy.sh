@@ -86,7 +86,7 @@ deploy_to_netlify() {
     
     # Deploy to Netlify
     echo "📤 Deploying to Netlify..."
-    netlify deploy --prod --dir=web-build
+    netlify deploy --prod --dir=dist
     
     echo "✅ Netlify deployment completed!"
 }

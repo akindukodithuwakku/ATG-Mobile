@@ -84,7 +84,7 @@ npm install -g vercel
 ```json
 {
   "buildCommand": "expo export --platform web",
-  "outputDirectory": "web-build",
+  "outputDirectory": "dist",
   "rewrites": [
     {
       "source": "/(.*)",
@@ -154,7 +154,7 @@ vercel --prod
 3. When prompted:
    - **Framework**: Select "Other" or "No Framework"
    - **Build Command**: `expo export --platform web`
-   - **Output Directory**: `web-build`
+   - **Output Directory**: `dist`
 
 ### Troubleshooting Vercel Issues
 
@@ -173,7 +173,7 @@ vercel --prod
 ```toml
 [build]
   command = "expo export --platform web"
-  publish = "web-build"
+  publish = "dist"
 
 [[redirects]]
   from = "/*"
@@ -192,7 +192,7 @@ expo export --platform web
 2. Deploy to Netlify:
 
 ```bash
-npx netlify-cli deploy --prod --dir=web-build
+npx netlify-cli deploy --prod --dir=dist
 ```
 
 ## Option 4: AWS Amplify
