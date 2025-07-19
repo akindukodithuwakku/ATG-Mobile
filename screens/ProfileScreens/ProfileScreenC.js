@@ -22,6 +22,9 @@ import { useFocusEffect } from "@react-navigation/native";
 const SIGNOUT_API_ENDPOINT =
   "https://uqzl6jyqvg.execute-api.ap-south-1.amazonaws.com/dev/signOut";
 
+const DB_API_ENDPOINT =
+  "https://uqzl6jyqvg.execute-api.ap-south-1.amazonaws.com/dev/dbHandling";
+
 const REFRESH_TOKEN_API_ENDPOINT =
   "https://uqzl6jyqvg.execute-api.ap-south-1.amazonaws.com/dev/mobile/refreshToken";
 
@@ -41,8 +44,6 @@ const ProfileScreenC = ({ navigation }) => {
     React.useCallback(() => {
       resetTimer();
       setShowLogoutModal(false);
-      // Validate token when screen comes into focus
-      ensureValidToken();
     }, [])
   );
 
@@ -56,11 +57,71 @@ const ProfileScreenC = ({ navigation }) => {
     const loadProfileData = async () => {
       try {
         const storedProfileData = await AsyncStorage.getItem("userProfile");
+        let currentUserProfile = {};
+
         if (storedProfileData !== null) {
-          const userData = JSON.parse(storedProfileData);
+          currentUserProfile = JSON.parse(storedProfileData);
+        }
+
+        // Get the client username from AsyncStorage
+        const clientUsername = await AsyncStorage.getItem("appUser");
+
+        if (clientUsername) {
+          // Fetch client details from database
+          const dbResponse = await fetch(DB_API_ENDPOINT, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              action: "get_client_details",
+              data: {
+                username: clientUsername,
+              },
+            }),
+          });
+
+          const dbData = await dbResponse.json();
+          const dbDataBody =
+            typeof dbData.body === "string"
+              ? JSON.parse(dbData.body)
+              : dbData.body;
+
+          if (dbResponse.ok && dbDataBody.full_name) {
+            // Update userProfile with all fetched details
+            const updatedUserProfile = {
+              ...currentUserProfile, // Keep existing data (like profileImage)
+              fullName: dbDataBody.full_name,
+              dateOfBirth: dbDataBody.date_of_birth,
+              gender: dbDataBody.gender,
+              contactNumber: dbDataBody.contact_number,
+              homeAddress: dbDataBody.home_address,
+            };
+
+            // Save updated profile to AsyncStorage
+            await AsyncStorage.setItem(
+              "userProfile",
+              JSON.stringify(updatedUserProfile)
+            );
+
+            // Update state
+            setProfileData({
+              fullName: dbDataBody.full_name,
+              profileImage: currentUserProfile.profileImage || null,
+            });
+          } else {
+            console.log("hello");
+            // Fallback to stored data or default
+            setProfileData({
+              fullName: currentUserProfile.fullName || "User",
+              profileImage: currentUserProfile.profileImage || null,
+            });
+          }
+        } else {
+          // If no clientUsername is found
           setProfileData({
-            fullName: userData.fullName,
-            profileImage: userData.profileImage,
+            fullName: currentUserProfile.fullName || "User",
+            profileImage: currentUserProfile.profileImage || null,
           });
         }
       } catch (error) {
