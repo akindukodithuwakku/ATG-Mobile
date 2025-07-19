@@ -16,6 +16,8 @@ import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useResetTimerOnLogin } from "./AutoLogout";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import TestInput from "../components/TestInput";
+import WebInput from "../components/WebInput";
 
 const API_ENDPOINT =
   "https://uqzl6jyqvg.execute-api.ap-south-1.amazonaws.com/dev";
@@ -302,48 +304,50 @@ const LoginScreen = ({ navigation }) => {
     }
   };
 
+
+
   return (
-    <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-      <View style={styles.container}>
-        <StatusBar
-          barStyle="light-content"
-          backgroundColor="transparent"
-          translucent
-        />
+    <View style={styles.container}>
+      <StatusBar
+        barStyle="light-content"
+        backgroundColor="transparent"
+        translucent
+      />
 
-        <LinearGradient
-          colors={["#09D1C7", "#35AFEA"]}
-          style={styles.headerGradient}
-        >
-          <View style={styles.header}>
-            <TouchableOpacity
-              onPress={() => navigation.goBack()}
-              style={styles.backButton}
-            >
-              <Ionicons name="chevron-back" size={28} color="#FFFFFF" />
-            </TouchableOpacity>
-            <Text style={styles.headerText}>Log In</Text>
+      <LinearGradient
+        colors={["#09D1C7", "#35AFEA"]}
+        style={styles.headerGradient}
+      >
+        <View style={styles.header}>
+          <TouchableOpacity
+            onPress={() => navigation.goBack()}
+            style={styles.backButton}
+          >
+            <Ionicons name="chevron-back" size={28} color="#FFFFFF" />
+          </TouchableOpacity>
+          <Text style={styles.headerText}>Log In</Text>
+        </View>
+      </LinearGradient>
+
+      <ScrollView
+        style={styles.formScrollView}
+        contentContainerStyle={styles.formContentContainer}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+      >
+        <View style={styles.form}>
+          <TestInput />
+          <View style={styles.welcomeContainer}>
+            <Text style={styles.welcomeTitle}>Welcome Back!</Text>
+            <Text style={styles.welcomeSubtitle}>
+              Log in to access your dashboard
+            </Text>
           </View>
-        </LinearGradient>
 
-        <ScrollView
-          style={styles.formScrollView}
-          contentContainerStyle={styles.formContentContainer}
-          showsVerticalScrollIndicator={false}
-          keyboardShouldPersistTaps="handled"
-        >
-          <View style={styles.form}>
-            <View style={styles.welcomeContainer}>
-              <Text style={styles.welcomeTitle}>Welcome Back!</Text>
-              <Text style={styles.welcomeSubtitle}>
-                Log in to access your dashboard
-              </Text>
-            </View>
-
-            {/* Username Field */}
-            <Text style={styles.inputLabel}>Username</Text>
-            <TextInput
-              style={styles.input}
+          {/* Username Field */}
+          <Text style={styles.inputLabel}>Username</Text>
+          <View style={styles.inputContainer}>
+            <WebInput
               placeholder="Username"
               value={username}
               onChangeText={(text) => {
@@ -353,95 +357,86 @@ const LoginScreen = ({ navigation }) => {
                 }
               }}
               autoCapitalize="none"
-              onFocus={handleInputFocus}
-              autoComplete={Platform.OS === "web" ? "username" : undefined}
+              autoComplete="username"
               autoCorrect={false}
               spellCheck={false}
-              {...(Platform.OS === "web" && {
-                "data-testid": "username-input",
-                "aria-label": "Username input field",
-              })}
+              data-testid="username-input"
+              aria-label="Username input field"
             />
-            {errors.username && (
-              <Text style={styles.errorText}>{errors.username}</Text>
-            )}
-
-            {/* Password Field */}
-            <Text style={styles.inputLabel}>Password</Text>
-            <View style={styles.passwordContainer} {...(Platform.OS === "web" && { className: "password-container" })}>
-              <TextInput
-                style={styles.passwordInput}
-                placeholder="Password"
-                value={password}
-                onChangeText={(text) => {
-                  setPassword(text);
-                  if (errors.password) {
-                    setErrors({ ...errors, password: null });
-                  }
-                }}
-                secureTextEntry={!passwordVisible}
-                onFocus={handleInputFocus}
-                autoComplete={
-                  Platform.OS === "web" ? "current-password" : undefined
-                }
-                autoCorrect={false}
-                spellCheck={false}
-                {...(Platform.OS === "web" && {
-                  "data-testid": "password-input",
-                  "aria-label": "Password input field",
-                })}
-              />
-              <TouchableOpacity
-                style={styles.eyeIcon}
-                onPress={() => setPasswordVisible(!passwordVisible)}
-                {...(Platform.OS === "web" && { "data-testid": "eye-icon" })}
-              >
-                <Ionicons
-                  name={passwordVisible ? "eye-off" : "eye"}
-                  size={24}
-                  color="#777"
-                />
-              </TouchableOpacity>
-            </View>
-            {errors.password && (
-              <Text style={styles.errorText}>{errors.password}</Text>
-            )}
-
-            {/* Forgot Password Link */}
-            <TouchableOpacity
-              style={styles.forgotPasswordContainer}
-              onPress={() => navigation.navigate("ForgotPassword")}
-            >
-              <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={styles.loginButton}
-              onPress={handleLogin}
-              disabled={isLoading}
-              {...(Platform.OS === "web" && { "data-testid": "login-button" })}
-            >
-              <LinearGradient
-                colors={["#09D1C7", "#35AFEA"]}
-                style={styles.gradientButton}
-              >
-                <Text style={styles.loginButtonText}>
-                  {isLoading ? "Logging In..." : "Log In"}
-                </Text>
-              </LinearGradient>
-            </TouchableOpacity>
-
-            {/* Sign Up Link */}
-            <View style={styles.signUpLinkContainer}>
-              <Text style={styles.signUpText}>Don't have an account? </Text>
-              <TouchableOpacity onPress={() => navigation.navigate("Signup")}>
-                <Text style={styles.signUpLink}>Sign Up</Text>
-              </TouchableOpacity>
-            </View>
           </View>
-        </ScrollView>
-      </View>
-    </TouchableWithoutFeedback>
+          {errors.username && (
+            <Text style={styles.errorText}>{errors.username}</Text>
+          )}
+
+          {/* Password Field */}
+          <Text style={styles.inputLabel}>Password</Text>
+          <View style={styles.passwordContainer}>
+            <WebInput
+              placeholder="Password"
+              value={password}
+              onChangeText={(text) => {
+                setPassword(text);
+                if (errors.password) {
+                  setErrors({ ...errors, password: null });
+                }
+              }}
+              secureTextEntry={!passwordVisible}
+              autoComplete="current-password"
+              autoCorrect={false}
+              spellCheck={false}
+              data-testid="password-input"
+              aria-label="Password input field"
+            />
+            <TouchableOpacity
+              style={styles.eyeIcon}
+              onPress={() => setPasswordVisible(!passwordVisible)}
+              data-testid="eye-icon"
+            >
+              <Ionicons
+                name={passwordVisible ? "eye-off" : "eye"}
+                size={24}
+                color="#777"
+              />
+            </TouchableOpacity>
+          </View>
+          {errors.password && (
+            <Text style={styles.errorText}>{errors.password}</Text>
+          )}
+
+          {/* Forgot Password Link */}
+          <TouchableOpacity
+            style={styles.forgotPasswordContainer}
+            onPress={() => navigation.navigate("ForgotPassword")}
+          >
+            <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.loginButton}
+            onPress={handleLogin}
+            disabled={isLoading}
+            data-testid="login-button"
+          >
+            <LinearGradient
+              colors={["#09D1C7", "#35AFEA"]}
+              style={styles.gradientButton}
+            >
+              <Text style={styles.loginButtonText}>
+                {isLoading ? "Logging In..." : "Log In"}
+              </Text>
+            </LinearGradient>
+          </TouchableOpacity>
+
+          {/* Sign Up Link */}
+          <View style={styles.signUpLinkContainer}>
+            <Text style={styles.signUpText}>Don't have an account? </Text>
+            <TouchableOpacity onPress={() => navigation.navigate("Signup")}>
+              <Text style={styles.signUpLink}>Sign Up</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </ScrollView>
+    </View>
   );
 };
 
@@ -500,6 +495,15 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     marginTop: 15,
   },
+  inputContainer: {
+    height: 50,
+    borderWidth: 1,
+    borderRadius: 10,
+    paddingHorizontal: 15,
+    backgroundColor: "#E9F6FE",
+    fontSize: 16,
+    justifyContent: "center",
+  },
   input: {
     height: 50,
     borderWidth: 1,
@@ -507,15 +511,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 15,
     backgroundColor: "#E9F6FE",
     fontSize: 16,
-    ...(Platform.OS === "web" && {
-      outlineStyle: "none",
-      outline: "none",
-      border: "1px solid #E9F6FE",
-      "&:focus": {
-        borderColor: "#09D1C7",
-        borderWidth: "2px",
-      },
-    }),
   },
   passwordContainer: {
     flexDirection: "row",
@@ -523,18 +518,14 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderRadius: 10,
     backgroundColor: "#E9F6FE",
+    height: 50,
+    paddingHorizontal: 15,
   },
   passwordInput: {
     flex: 1,
     height: 50,
     paddingHorizontal: 15,
     fontSize: 16,
-    ...(Platform.OS === "web" && {
-      outlineStyle: "none",
-      outline: "none",
-      border: "none",
-      backgroundColor: "transparent",
-    }),
   },
   eyeIcon: {
     padding: 10,

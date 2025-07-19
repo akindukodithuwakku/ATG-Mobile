@@ -11,7 +11,32 @@
     <style>
       /* Web-specific styles for React Native Web input compatibility */
 
-      /* Fix for TextInput focus issues on web */
+      /* Reset and base styles */
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        padding: 0;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto",
+          "Oxygen", "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans",
+          "Helvetica Neue", sans-serif;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        background-color: #ffffff;
+      }
+
+      /* Ensure proper input behavior */
+      input,
+      textarea,
+      select {
+        font-family: inherit;
+        font-size: inherit;
+        outline: none;
+      }
+
+      /* Fix for HTML input elements */
       input[data-testid="username-input"],
       input[data-testid="password-input"] {
         outline: none !important;
@@ -25,6 +50,7 @@
         padding: 0 !important;
         margin: 0 !important;
         box-sizing: border-box !important;
+        display: block !important;
       }
 
       /* Ensure inputs are clickable and focusable */
@@ -50,6 +76,8 @@
         -webkit-user-select: none !important;
         -moz-user-select: none !important;
         -ms-user-select: none !important;
+        z-index: 10 !important;
+        position: relative !important;
       }
 
       /* Fix for button interactions */
@@ -103,29 +131,6 @@
         }
       }
 
-      /* Additional fixes for React Native Web */
-      * {
-        box-sizing: border-box;
-      }
-
-      body {
-        margin: 0;
-        padding: 0;
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto",
-          "Oxygen", "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans",
-          "Helvetica Neue", sans-serif;
-        -webkit-font-smoothing: antialiased;
-        -moz-osx-font-smoothing: grayscale;
-      }
-
-      /* Ensure proper input behavior */
-      input,
-      textarea,
-      select {
-        font-family: inherit;
-        font-size: inherit;
-      }
-
       /* Fix for touch events on web */
       button,
       [role="button"] {
@@ -141,6 +146,72 @@
       /* Remove default focus outline for custom elements */
       [data-testid]:focus {
         outline: none;
+      }
+
+      /* Additional fixes for input containers */
+      .input-container {
+        position: relative !important;
+        display: flex !important;
+        align-items: center !important;
+      }
+
+      /* Ensure inputs are above other elements */
+      input[data-testid] {
+        z-index: 1 !important;
+        position: relative !important;
+      }
+
+      /* Fix for touch events */
+      input[data-testid] {
+        touch-action: manipulation !important;
+        -webkit-touch-callout: none !important;
+        -webkit-user-select: none !important;
+        -khtml-user-select: none !important;
+        -moz-user-select: none !important;
+        -ms-user-select: none !important;
+        user-select: none !important;
+      }
+
+      /* Allow text selection in inputs */
+      input[data-testid] {
+        -webkit-user-select: text !important;
+        -moz-user-select: text !important;
+        -ms-user-select: text !important;
+        user-select: text !important;
+      }
+
+      /* Prevent zoom on iOS */
+      @media screen and (max-width: 768px) {
+        input[data-testid] {
+          font-size: 16px !important;
+        }
+      }
+
+      /* Ensure proper event handling */
+      * {
+        -webkit-tap-highlight-color: transparent;
+      }
+
+      /* Fix for React Native Web specific issues */
+      [data-testid] {
+        pointer-events: auto !important;
+      }
+
+      /* Ensure proper stacking context */
+      .container {
+        position: relative;
+        z-index: 1;
+      }
+
+      /* Fix for form elements */
+      form {
+        width: 100%;
+      }
+
+      /* Ensure proper input sizing */
+      input {
+        box-sizing: border-box;
+        width: 100%;
       }
     </style>
   </head>
