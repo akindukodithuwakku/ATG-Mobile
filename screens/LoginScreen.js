@@ -29,6 +29,15 @@ const LoginScreen = ({ navigation }) => {
 
   useResetTimerOnLogin();
 
+  // Web-specific input focus handling
+  const handleInputFocus = () => {
+    // Ensure input is focused on web
+    if (Platform.OS === "web") {
+      // Small delay to ensure proper focus
+      setTimeout(() => {}, 100);
+    }
+  };
+
   // Form validation
   const validateForm = () => {
     let errorTexts = {};
@@ -344,6 +353,14 @@ const LoginScreen = ({ navigation }) => {
                 }
               }}
               autoCapitalize="none"
+              onFocus={handleInputFocus}
+              autoComplete={Platform.OS === "web" ? "username" : undefined}
+              autoCorrect={false}
+              spellCheck={false}
+              {...(Platform.OS === "web" && {
+                "data-testid": "username-input",
+                "aria-label": "Username input field",
+              })}
             />
             {errors.username && (
               <Text style={styles.errorText}>{errors.username}</Text>
@@ -351,7 +368,7 @@ const LoginScreen = ({ navigation }) => {
 
             {/* Password Field */}
             <Text style={styles.inputLabel}>Password</Text>
-            <View style={styles.passwordContainer}>
+            <View style={styles.passwordContainer} {...(Platform.OS === "web" && { className: "password-container" })}>
               <TextInput
                 style={styles.passwordInput}
                 placeholder="Password"
@@ -363,10 +380,21 @@ const LoginScreen = ({ navigation }) => {
                   }
                 }}
                 secureTextEntry={!passwordVisible}
+                onFocus={handleInputFocus}
+                autoComplete={
+                  Platform.OS === "web" ? "current-password" : undefined
+                }
+                autoCorrect={false}
+                spellCheck={false}
+                {...(Platform.OS === "web" && {
+                  "data-testid": "password-input",
+                  "aria-label": "Password input field",
+                })}
               />
               <TouchableOpacity
                 style={styles.eyeIcon}
                 onPress={() => setPasswordVisible(!passwordVisible)}
+                {...(Platform.OS === "web" && { "data-testid": "eye-icon" })}
               >
                 <Ionicons
                   name={passwordVisible ? "eye-off" : "eye"}
@@ -391,6 +419,7 @@ const LoginScreen = ({ navigation }) => {
               style={styles.loginButton}
               onPress={handleLogin}
               disabled={isLoading}
+              {...(Platform.OS === "web" && { "data-testid": "login-button" })}
             >
               <LinearGradient
                 colors={["#09D1C7", "#35AFEA"]}
@@ -478,6 +507,15 @@ const styles = StyleSheet.create({
     paddingHorizontal: 15,
     backgroundColor: "#E9F6FE",
     fontSize: 16,
+    ...(Platform.OS === "web" && {
+      outlineStyle: "none",
+      outline: "none",
+      border: "1px solid #E9F6FE",
+      "&:focus": {
+        borderColor: "#09D1C7",
+        borderWidth: "2px",
+      },
+    }),
   },
   passwordContainer: {
     flexDirection: "row",
@@ -491,6 +529,12 @@ const styles = StyleSheet.create({
     height: 50,
     paddingHorizontal: 15,
     fontSize: 16,
+    ...(Platform.OS === "web" && {
+      outlineStyle: "none",
+      outline: "none",
+      border: "none",
+      backgroundColor: "transparent",
+    }),
   },
   eyeIcon: {
     padding: 10,

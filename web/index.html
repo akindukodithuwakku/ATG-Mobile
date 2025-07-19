@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, shrink-to-fit=no"
+    />
+    <meta name="theme-color" content="#09D1C7" />
+    <title>ATG Healthcare</title>
+    <style>
+      /* Web-specific styles for React Native Web input compatibility */
+
+      /* Fix for TextInput focus issues on web */
+      input[data-testid="username-input"],
+      input[data-testid="password-input"] {
+        outline: none !important;
+        border: none !important;
+        background: transparent !important;
+        font-family: inherit !important;
+        font-size: 16px !important;
+        color: inherit !important;
+        width: 100% !important;
+        height: 100% !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        box-sizing: border-box !important;
+      }
+
+      /* Ensure inputs are clickable and focusable */
+      input[data-testid="username-input"]:focus,
+      input[data-testid="password-input"]:focus {
+        outline: none !important;
+        border: none !important;
+        background: transparent !important;
+      }
+
+      /* Fix for password container */
+      .password-container {
+        position: relative !important;
+        display: flex !important;
+        align-items: center !important;
+        width: 100% !important;
+      }
+
+      /* Ensure touchable opacity works on web */
+      [data-testid="eye-icon"] {
+        cursor: pointer !important;
+        user-select: none !important;
+        -webkit-user-select: none !important;
+        -moz-user-select: none !important;
+        -ms-user-select: none !important;
+      }
+
+      /* Fix for button interactions */
+      [data-testid="login-button"] {
+        cursor: pointer !important;
+        user-select: none !important;
+        -webkit-user-select: none !important;
+        -moz-user-select: none !important;
+        -ms-user-select: none !important;
+      }
+
+      /* Ensure proper z-index for overlays */
+      .modal-overlay {
+        z-index: 1000 !important;
+      }
+
+      /* Fix for scroll view on web */
+      .scroll-view {
+        overflow-y: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+      }
+
+      /* Ensure proper text selection */
+      .selectable-text {
+        user-select: text !important;
+        -webkit-user-select: text !important;
+        -moz-user-select: text !important;
+        -ms-user-select: text !important;
+      }
+
+      /* Fix for keyboard handling */
+      .keyboard-aware-view {
+        position: relative !important;
+      }
+
+      /* Ensure proper focus management */
+      .focusable {
+        outline: none !important;
+      }
+
+      .focusable:focus {
+        outline: 2px solid #09d1c7 !important;
+        outline-offset: 2px !important;
+      }
+
+      /* Fix for iOS Safari input zoom */
+      @media screen and (-webkit-min-device-pixel-ratio: 0) {
+        input[data-testid="username-input"],
+        input[data-testid="password-input"] {
+          font-size: 16px !important;
+        }
+      }
+
+      /* Additional fixes for React Native Web */
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        padding: 0;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto",
+          "Oxygen", "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans",
+          "Helvetica Neue", sans-serif;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+      }
+
+      /* Ensure proper input behavior */
+      input,
+      textarea,
+      select {
+        font-family: inherit;
+        font-size: inherit;
+      }
+
+      /* Fix for touch events on web */
+      button,
+      [role="button"] {
+        cursor: pointer;
+      }
+
+      /* Ensure proper focus visibility */
+      :focus {
+        outline: 2px solid #09d1c7;
+        outline-offset: 2px;
+      }
+
+      /* Remove default focus outline for custom elements */
+      [data-testid]:focus {
+        outline: none;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+  </body>
+</html>

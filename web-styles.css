@@ -1,0 +1,93 @@
+/* Web-specific styles for React Native Web input compatibility */
+
+/* Fix for TextInput focus issues on web */
+input[data-testid="username-input"],
+input[data-testid="password-input"] {
+  outline: none !important;
+  border: none !important;
+  background: transparent !important;
+  font-family: inherit !important;
+  font-size: 16px !important;
+  color: inherit !important;
+  width: 100% !important;
+  height: 100% !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  box-sizing: border-box !important;
+}
+
+/* Ensure inputs are clickable and focusable */
+input[data-testid="username-input"]:focus,
+input[data-testid="password-input"]:focus {
+  outline: none !important;
+  border: none !important;
+  background: transparent !important;
+}
+
+/* Fix for password container */
+.password-container {
+  position: relative !important;
+  display: flex !important;
+  align-items: center !important;
+  width: 100% !important;
+}
+
+/* Ensure touchable opacity works on web */
+[data-testid="eye-icon"] {
+  cursor: pointer !important;
+  user-select: none !important;
+  -webkit-user-select: none !important;
+  -moz-user-select: none !important;
+  -ms-user-select: none !important;
+}
+
+/* Fix for button interactions */
+[data-testid="login-button"] {
+  cursor: pointer !important;
+  user-select: none !important;
+  -webkit-user-select: none !important;
+  -moz-user-select: none !important;
+  -ms-user-select: none !important;
+}
+
+/* Ensure proper z-index for overlays */
+.modal-overlay {
+  z-index: 1000 !important;
+}
+
+/* Fix for scroll view on web */
+.scroll-view {
+  overflow-y: auto !important;
+  -webkit-overflow-scrolling: touch !important;
+}
+
+/* Ensure proper text selection */
+.selectable-text {
+  user-select: text !important;
+  -webkit-user-select: text !important;
+  -moz-user-select: text !important;
+  -ms-user-select: text !important;
+}
+
+/* Fix for keyboard handling */
+.keyboard-aware-view {
+  position: relative !important;
+}
+
+/* Ensure proper focus management */
+.focusable {
+  outline: none !important;
+}
+
+.focusable:focus {
+  outline: 2px solid #09d1c7 !important;
+  outline-offset: 2px !important;
+}
+
+/* Fix for iOS Safari input zoom */
+@media screen and (-webkit-min-device-pixel-ratio: 0) {
+  input[data-testid="username-input"],
+  input[data-testid="password-input"] {
+    font-size: 16px !important;
+  }
+}
