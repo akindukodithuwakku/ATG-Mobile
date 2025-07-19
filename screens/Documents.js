@@ -49,7 +49,7 @@ const DocumentUpload = ({ navigation }) => {
   const uploadDocument = (uri, name) => {
     return new Promise((resolve, reject) => {
       try {
-       const clientUsername = "kavindya_02"; // or fetch dynamically if you have auth
+        const clientUsername = "kavindya_02"; // or fetch dynamically if you have auth
         setUploadingFiles((prev) => ({
           ...prev,
           [name]: { progress: 0 },
@@ -262,12 +262,7 @@ const DocumentUpload = ({ navigation }) => {
       {isSuccess ? (
         renderSuccessPage()
       ) : (
-        <ScrollView
-          ref={scrollViewRef}
-          style={styles.scrollContainer}
-          contentContainerStyle={{ flexGrow: 1, paddingBottom: 100 }}
-          keyboardShouldPersistTaps="handled"
-        >
+        <View style={styles.scrollContainer}>
           <TouchableOpacity style={styles.uploadBox} onPress={pickDocument}>
             <Ionicons name="cloud-upload-outline" size={30} color="#00AEEF" />
             <Text style={styles.uploadText}>Upload Files</Text>
@@ -279,20 +274,16 @@ const DocumentUpload = ({ navigation }) => {
           {pendingFiles.length > 0 && (
             <>
               <Text style={styles.sectionTitle}>Pending Files</Text>
-              <FlatList
-                data={pendingFiles}
-                keyExtractor={(_, i) => i.toString()}
-                renderItem={({ item }) => (
-                  <View style={styles.fileItem}>
-                    <Ionicons
-                      name="document-text-outline"
-                      size={20}
-                      color="#00AEEF"
-                    />
-                    <Text style={styles.fileName}>{item.name}</Text>
-                  </View>
-                )}
-              />
+              {pendingFiles.map((item, index) => (
+                <View key={index} style={styles.fileItem}>
+                  <Ionicons
+                    name="document-text-outline"
+                    size={20}
+                    color="#00AEEF"
+                  />
+                  <Text style={styles.fileName}>{item.name}</Text>
+                </View>
+              ))}
             </>
           )}
 
@@ -316,30 +307,22 @@ const DocumentUpload = ({ navigation }) => {
           {confirmedFiles.length > 0 && (
             <>
               <Text style={styles.sectionTitle}>Recently Uploaded</Text>
-              <FlatList
-                data={confirmedFiles}
-                keyExtractor={(_, i) => i.toString()}
-                renderItem={({ item, index }) => (
-                  <View style={styles.fileItem}>
-                    <Ionicons
-                      name="document-text-outline"
-                      size={20}
-                      color="#00AEEF"
-                    />
-                    <Text style={styles.fileName}>{item.name}</Text>
-                    <TouchableOpacity
-                      style={styles.removeButton}
-                      onPress={() => removeFile(index, item)}
-                    >
-                      <Ionicons
-                        name="trash-outline"
-                        size={25}
-                        color="#FF0000"
-                      />
-                    </TouchableOpacity>
-                  </View>
-                )}
-              />
+              {confirmedFiles.map((item, index) => (
+                <View key={index} style={styles.fileItem}>
+                  <Ionicons
+                    name="document-text-outline"
+                    size={20}
+                    color="#00AEEF"
+                  />
+                  <Text style={styles.fileName}>{item.name}</Text>
+                  <TouchableOpacity
+                    style={styles.removeButton}
+                    onPress={() => removeFile(index, item)}
+                  >
+                    <Ionicons name="trash-outline" size={25} color="#FF0000" />
+                  </TouchableOpacity>
+                </View>
+              ))}
             </>
           )}
 
@@ -361,7 +344,7 @@ const DocumentUpload = ({ navigation }) => {
               <Text style={styles.confirmButtonText}>Confirm Upload</Text>
             )}
           </TouchableOpacity>
-        </ScrollView>
+        </View>
       )}
 
       <BottomNavigationClient />

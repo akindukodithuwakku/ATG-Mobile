@@ -74,7 +74,7 @@ import NotificationsClient from "./screens/NotificationsClient";
 import NotificationsCN from "./screens/NotificationsCN";
 
 // Auto Logout Screen
-import AutoLogout from "./screens/AutoLogout";
+import { AutomaticLogoutScreen } from "./screens/AutoLogout";
 
 const Stack = createStackNavigator();
 
@@ -166,7 +166,10 @@ const AppNavigator = () => {
         <Stack.Screen name="ResetPassword" component={ResetPasswordScreen} />
 
         {/* Auto Logout */}
-        <Stack.Screen name="AutomaticLogout" component={AutoLogout} />
+        <Stack.Screen
+          name="AutomaticLogout"
+          component={AutomaticLogoutScreen}
+        />
       </Stack.Navigator>
     </NavigationContainer>
   );
