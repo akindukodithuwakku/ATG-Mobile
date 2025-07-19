@@ -38,7 +38,7 @@ function Deploy-ToEAS {
     
     # Build for web
     Write-Host "🔨 Building for web..." -ForegroundColor Blue
-    npm run build:web
+    expo export --platform web
     
     # Deploy update
     Write-Host "📤 Deploying update..." -ForegroundColor Blue
@@ -80,7 +80,7 @@ function Deploy-ToVercel {
     
     # Build for web
     Write-Host "🔨 Building for web..." -ForegroundColor Blue
-    npm run build:web
+    expo export --platform web
     
     # Deploy to Vercel
     Write-Host "📤 Deploying to Vercel..." -ForegroundColor Blue
@@ -102,7 +102,7 @@ function Deploy-ToNetlify {
     
     # Build for web
     Write-Host "🔨 Building for web..." -ForegroundColor Blue
-    npm run build:web
+    expo export --platform web
     
     # Deploy to Netlify
     Write-Host "📤 Deploying to Netlify..." -ForegroundColor Blue

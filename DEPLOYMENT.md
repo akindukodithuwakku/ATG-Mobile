@@ -48,7 +48,7 @@ eas build:configure
 1. Build for web:
 
 ```bash
-npm run build:web
+expo export --platform web
 ```
 
 2. Deploy to EAS:
@@ -83,7 +83,7 @@ npm install -g vercel
 
 ```json
 {
-  "buildCommand": "npm run build:web",
+  "buildCommand": "expo export --platform web",
   "outputDirectory": "web-build",
   "rewrites": [
     {
@@ -110,7 +110,7 @@ npm install -g vercel
 1. Build the app:
 
 ```bash
-npm run build:web
+expo export --platform web
 ```
 
 2. Deploy to Vercel:
@@ -153,14 +153,14 @@ vercel --prod
 
 3. When prompted:
    - **Framework**: Select "Other" or "No Framework"
-   - **Build Command**: `npm run build:web`
+   - **Build Command**: `expo export --platform web`
    - **Output Directory**: `web-build`
 
 ### Troubleshooting Vercel Issues
 
 - **Framework Error**: Remove the `framework` field from `vercel.json`
 - **Runtime Error**: Remove the `functions` section from `vercel.json`
-- **Build Failures**: Ensure `npm run build:web` works locally first
+- **Build Failures**: Ensure `expo export --platform web` works locally first
 - **Routing Issues**: Check that all routes redirect to `index.html`
 - **Environment Variables**: Set up in Vercel dashboard (see VERCEL_ENV_SETUP.md)
 
@@ -172,7 +172,7 @@ vercel --prod
 
 ```toml
 [build]
-  command = "npm run build:web"
+  command = "expo export --platform web"
   publish = "web-build"
 
 [[redirects]]
@@ -186,7 +186,7 @@ vercel --prod
 1. Build the app:
 
 ```bash
-npm run build:web
+expo export --platform web
 ```
 
 2. Deploy to Netlify:

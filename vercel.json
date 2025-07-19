@@ -1,5 +1,5 @@
 {
-  "buildCommand": "npm run build:web",
+  "buildCommand": "expo export --platform web",
   "outputDirectory": "web-build",
   "rewrites": [
     {

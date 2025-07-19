@@ -36,7 +36,7 @@ deploy_to_eas() {
     
     # Build for web
     echo "🔨 Building for web..."
-    npm run build:web
+    expo export --platform web
     
     # Deploy update
     echo "📤 Deploying update..."
@@ -61,7 +61,7 @@ deploy_to_vercel() {
     
     # Build for web
     echo "🔨 Building for web..."
-    npm run build:web
+    expo export --platform web
     
     # Deploy to Vercel
     echo "📤 Deploying to Vercel..."
@@ -82,7 +82,7 @@ deploy_to_netlify() {
     
     # Build for web
     echo "🔨 Building for web..."
-    npm run build:web
+    expo export --platform web
     
     # Deploy to Netlify
     echo "📤 Deploying to Netlify..."
