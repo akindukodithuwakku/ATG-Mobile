@@ -291,6 +291,20 @@ def lambda_handler(event, context):
                     else:
                         return response(404, {"error": "No active appointment found for this client"})
 
+                elif action == "get_client_details":
+                    if "username" not in data:
+                        return response(400, {"error": "Missing 'username'"})
+                    
+                    sql = "SELECT full_name, date_of_birth, gender, contact_number, home_address FROM client_details WHERE client_username = %s"
+                    cursor.execute(sql, (data["username"],))
+                    result = cursor.fetchone()
+
+                    if result:
+                        result = serialize_result(result)
+                        return response(200, result)
+                    else:
+                        return response(404, {"error": "Client details not found"})
+
                 elif action == "get_client_care_navigator":
                     if "client_username" not in data:
                         return response(400, {"error": "Missing 'client_username'"})
