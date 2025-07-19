@@ -79,19 +79,34 @@ eas build --platform web
 npm install -g vercel
 ```
 
-2. Create `vercel.json`:
+2. Use the correct `vercel.json` configuration:
 
 ```json
 {
   "buildCommand": "npm run build:web",
   "outputDirectory": "web-build",
-  "framework": "expo",
   "rewrites": [
     {
       "source": "/(.*)",
       "destination": "/index.html"
     }
-  ]
+  ],
+  "headers": [
+    {
+      "source": "/static/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ]
+    }
+  ],
+  "functions": {
+    "api/**/*.js": {
+      "runtime": "nodejs18.x"
+    }
+  }
 }
 ```
 
@@ -108,6 +123,28 @@ npm run build:web
 ```bash
 vercel --prod
 ```
+
+### Alternative: Static Site Deployment
+
+If you encounter issues, use the static site configuration:
+
+1. Rename `vercel-static.json` to `vercel.json`:
+
+```bash
+mv vercel-static.json vercel.json
+```
+
+2. Deploy:
+
+```bash
+vercel --prod
+```
+
+### Troubleshooting Vercel Issues
+
+- **Framework Error**: Remove the `framework` field from `vercel.json`
+- **Build Failures**: Ensure `npm run build:web` works locally first
+- **Routing Issues**: Check that all routes redirect to `index.html`
 
 ## Option 3: Netlify Deployment
 
@@ -242,6 +279,7 @@ jobs:
 2. **Web Compatibility**: Ensure all native modules have web support
 3. **Performance**: Optimize bundle size and images
 4. **CORS Errors**: Configure proper CORS headers
+5. **Vercel Framework Error**: Remove `framework` field from `vercel.json`
 
 ### Support
 

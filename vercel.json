@@ -1,7 +1,6 @@
 {
   "buildCommand": "npm run build:web",
   "outputDirectory": "web-build",
-  "framework": "expo",
   "rewrites": [
     {
       "source": "/(.*)",
@@ -19,6 +18,11 @@
       ]
     }
   ],
+  "functions": {
+    "api/**/*.js": {
+      "runtime": "nodejs18.x"
+    }
+  },
   "env": {
     "EXPO_PUBLIC_API_URL": "@expo_public_api_url",
     "EXPO_PUBLIC_AWS_REGION": "@expo_public_aws_region",
