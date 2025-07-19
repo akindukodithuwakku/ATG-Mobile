@@ -16,11 +16,13 @@ import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useResetTimerOnLogin } from "./AutoLogout";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import TestInput from "../Components/TestInput";
+
 import WebInput from "../Components/WebInput";
 
 const API_ENDPOINT =
-  "https://uqzl6jyqvg.execute-api.ap-south-1.amazonaws.com/dev";
+  Platform.OS === "web"
+    ? "https://atg-mobile.vercel.app/api/proxy"
+    : "https://uqzl6jyqvg.execute-api.ap-south-1.amazonaws.com/dev";
 
 const LoginScreen = ({ navigation }) => {
   const [username, setUsername] = useState("");
@@ -71,7 +73,11 @@ const LoginScreen = ({ navigation }) => {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
+            Accept: "application/json",
+            ...(Platform.OS === "web" && { Origin: window.location.origin }),
           },
+          mode: Platform.OS === "web" ? "cors" : "no-cors",
+          credentials: "omit",
           body: JSON.stringify({
             username: username.trim(),
             password: password,
@@ -168,7 +174,13 @@ const LoginScreen = ({ navigation }) => {
               method: "POST",
               headers: {
                 "Content-Type": "application/json",
+                Accept: "application/json",
+                ...(Platform.OS === "web" && {
+                  Origin: window.location.origin,
+                }),
               },
+              mode: Platform.OS === "web" ? "cors" : "no-cors",
+              credentials: "omit",
               body: JSON.stringify({
                 action: "get_user_status",
                 data: {
@@ -209,7 +221,13 @@ const LoginScreen = ({ navigation }) => {
                       method: "POST",
                       headers: {
                         "Content-Type": "application/json",
+                        Accept: "application/json",
+                        ...(Platform.OS === "web" && {
+                          Origin: window.location.origin,
+                        }),
                       },
+                      mode: Platform.OS === "web" ? "cors" : "no-cors",
+                      credentials: "omit",
                       body: JSON.stringify({
                         action: "get_user_role",
                         data: {
@@ -334,7 +352,6 @@ const LoginScreen = ({ navigation }) => {
         keyboardShouldPersistTaps="handled"
       >
         <View style={styles.form}>
-          <TestInput />
           <View style={styles.welcomeContainer}>
             <Text style={styles.welcomeTitle}>Welcome Back!</Text>
             <Text style={styles.welcomeSubtitle}>
