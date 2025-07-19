@@ -1,13 +1,24 @@
 //careplanmgtCN
-import React, { useEffect, useState } from 'react';
-import { View, Text, TextInput, FlatList, StyleSheet, TouchableOpacity, StatusBar, useColorScheme, ScrollView, ActivityIndicator } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import React, { useEffect, useState } from "react";
+import {
+  View,
+  Text,
+  TextInput,
+  FlatList,
+  StyleSheet,
+  TouchableOpacity,
+  StatusBar,
+  useColorScheme,
+  ScrollView,
+  ActivityIndicator,
+} from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 import BottomNavigationCN from "../Components/BottomNavigationCN";
 import SideNavigationCN from "../Components/SideNavigationCN";
-import ArticleCard from '../Components/ArticleCard';
-import TaskCard from '../Components/TaskCard';
-import { useIsFocused } from '@react-navigation/native';
-import TimelineItem from '../Components/TimelineItem';
+import ArticleCard from "../Components/ArticleCard";
+import TaskCard from "../Components/TaskCard";
+import { useIsFocused } from "@react-navigation/native";
+import TimelineItem from "../Components/TimelineItem";
 
 const CarePlanOverview = ({ navigation, carePlanId }) => {
   const [tasks, setTasks] = useState([]);
@@ -15,24 +26,23 @@ const CarePlanOverview = ({ navigation, carePlanId }) => {
   const isFocused = useIsFocused();
 
   const fetchTasks = async () => {
-  try {
-    const response = await fetch(
-      `https://sue7dsbf09.execute-api.ap-south-1.amazonaws.com/dev/tasks?care_plan_id=${carePlanId}`
-    );
-    const result = await response.json();
+    try {
+      const response = await fetch(
+        `https://sue7dsbf09.execute-api.ap-south-1.amazonaws.com/dev/tasks?care_plan_id=${carePlanId}`
+      );
+      const result = await response.json();
 
-    const sortedTasks = (result.data || []).sort((a, b) => {
-      return new Date(a.start) - new Date(b.start);
-    });
+      const sortedTasks = (result.data || []).sort((a, b) => {
+        return new Date(a.start) - new Date(b.start);
+      });
 
-    setTasks(sortedTasks);
-  } catch (error) {
-    console.error("Error fetching tasks:", error);
-  } finally {
-    setLoading(false);
-  }
-};
-
+      setTasks(sortedTasks);
+    } catch (error) {
+      console.error("Error fetching tasks:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
     if (isFocused) {
@@ -41,7 +51,12 @@ const CarePlanOverview = ({ navigation, carePlanId }) => {
   }, [isFocused]);
 
   const articleData = [
-    { id: '1', type: 'Article', duration: '5 min', title: 'What is a care plan?' },
+    {
+      id: "1",
+      type: "Article",
+      duration: "5 min",
+      title: "What is a care plan?",
+    },
   ];
 
   const renderArticleItem = ({ item }) => (
@@ -49,7 +64,7 @@ const CarePlanOverview = ({ navigation, carePlanId }) => {
       title={item.title}
       duration={item.duration}
       type={item.type}
-      onPress={() => navigation.navigate('Details', { item })}
+      onPress={() => navigation.navigate("Details", { item })}
     />
   );
 
@@ -61,27 +76,39 @@ const CarePlanOverview = ({ navigation, carePlanId }) => {
       end={item.end} // <-- Add this line
       status={item.status}
       isLast={index === tasks.length - 1}
-      onEdit={() => navigation.navigate('UpdateTaskScreen', { task: item })}
+      onEdit={() => navigation.navigate("UpdateTask", { task: item })}
     />
   );
 
-  return (
-    <View>
-      <FlatList
-        data={articleData}
-        renderItem={renderArticleItem}
-        keyExtractor={item => item.id}
-        showsVerticalScrollIndicator={false}
-      />
+  const combinedData = [
+    { type: "header", title: "Articles" },
+    ...articleData.map((item) => ({ ...item, type: "article" })),
+    { type: "header", title: "Tasks" },
+    ...tasks.map((item) => ({ ...item, type: "task" })),
+  ];
 
-      <Text style={styles.taskHeader}>Tasks</Text>
+  const renderItem = ({ item, index }) => {
+    if (item.type === "header") {
+      return <Text style={styles.taskHeader}>{item.title}</Text>;
+    } else if (item.type === "article") {
+      return renderArticleItem({ item });
+    } else if (item.type === "task") {
+      return renderTaskItem({ item, index: index - 2 }); // Adjust index for header items
+    }
+    return null;
+  };
+
+  return (
+    <View style={{ flex: 1 }}>
       {loading ? (
         <ActivityIndicator size="large" color="#00BCD4" />
       ) : (
         <FlatList
-          data={tasks}
-          renderItem={renderTaskItem}
-          keyExtractor={item => item.id.toString()}
+          data={combinedData}
+          renderItem={renderItem}
+          keyExtractor={(item, index) =>
+            item.id ? item.id.toString() : `header-${index}`
+          }
           showsVerticalScrollIndicator={false}
         />
       )}
@@ -105,7 +132,9 @@ const CarePlanScreen = ({ navigation }) => {
       />
 
       <View style={styles.headerContainer}>
-        <TouchableOpacity onPress={() => setIsSideNavVisible(!isSideNavVisible)}>
+        <TouchableOpacity
+          onPress={() => setIsSideNavVisible(!isSideNavVisible)}
+        >
           <Ionicons name="menu" size={28} color="white" />
         </TouchableOpacity>
         <View style={styles.headerTextContainer}>
@@ -115,7 +144,12 @@ const CarePlanScreen = ({ navigation }) => {
       </View>
 
       <View style={styles.searchContainer}>
-        <Ionicons name="search" size={20} color="#B3E5FC" style={styles.searchIcon} />
+        <Ionicons
+          name="search"
+          size={20}
+          color="#B3E5FC"
+          style={styles.searchIcon}
+        />
         <TextInput style={styles.searchInput} placeholder="Search..." />
       </View>
 
@@ -123,17 +157,20 @@ const CarePlanScreen = ({ navigation }) => {
         <SideNavigationCN navigation={navigation} onClose={closeSideNav} />
       )}
 
-      <ScrollView contentContainerStyle={styles.scrollContainer}>
+      <View style={styles.scrollContainer}>
         <CarePlanOverview navigation={navigation} carePlanId={carePlanId} />
-      </ScrollView>
+      </View>
 
       <BottomNavigationCN navigation={navigation} />
 
       <TouchableOpacity
         style={styles.fab}
-        onPress={() => navigation.navigate('AddTaskScreen', {
-          care_plan_id: carePlanId,
-        })}>
+        onPress={() =>
+          navigation.navigate("AddTask", {
+            care_plan_id: carePlanId,
+          })
+        }
+      >
         <Ionicons name="add" size={24} color="white" />
       </TouchableOpacity>
     </View>
@@ -148,37 +185,69 @@ const styles = StyleSheet.create({
     padding: 15,
     backgroundColor: "#00BCD4",
     paddingTop: 40,
-    justifyContent: 'center',
+    justifyContent: "center",
   },
   headerTextContainer: {
     flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
   },
-  headerText: { fontSize: 25, fontWeight: "bold", color: "white", textAlign: 'center' },
-  headersec: { fontSize: 15, paddingTop: 20, fontWeight: "bold", color: "white", textAlign: 'center' },
+  headerText: {
+    fontSize: 25,
+    fontWeight: "bold",
+    color: "white",
+    textAlign: "center",
+  },
+  headersec: {
+    fontSize: 15,
+    paddingTop: 20,
+    fontWeight: "bold",
+    color: "white",
+    textAlign: "center",
+  },
   searchContainer: {
-    flexDirection: 'row', alignItems: 'center', width: '100%', height: 90,
-    marginTop: 0, marginBottom: 10, backgroundColor: '#00BCD4', paddingHorizontal: 10,
+    flexDirection: "row",
+    alignItems: "center",
+    width: "100%",
+    height: 90,
+    marginTop: 0,
+    marginBottom: 10,
+    backgroundColor: "#00BCD4",
+    paddingHorizontal: 10,
   },
   searchInput: {
-    height: 40, flex: 1, borderColor: '#CCCCCC', borderWidth: 2, borderRadius: 10,
-    paddingHorizontal: 10, backgroundColor: '#E0F7FA',
+    height: 40,
+    flex: 1,
+    borderColor: "#CCCCCC",
+    borderWidth: 2,
+    borderRadius: 10,
+    paddingHorizontal: 10,
+    backgroundColor: "#E0F7FA",
   },
   searchIcon: { marginRight: 10 },
   scrollContainer: { flexGrow: 1, paddingBottom: 150 },
   fab: {
-    position: 'absolute', bottom: 90, right: 30, backgroundColor: '#00BCD4',
-    width: 56, height: 56, borderRadius: 28, alignItems: 'center', justifyContent: 'center',
-    elevation: 5, shadowColor: '#000', shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3, shadowRadius: 4,
+    position: "absolute",
+    bottom: 90,
+    right: 30,
+    backgroundColor: "#00BCD4",
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    alignItems: "center",
+    justifyContent: "center",
+    elevation: 5,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
   },
   taskHeader: {
     fontSize: 22,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     paddingHorizontal: 20,
     paddingTop: 10,
-    color: '#007B9F',
+    color: "#007B9F",
   },
 });
 

@@ -70,7 +70,7 @@ export const ForgotPasswordScreen = ({ navigation }) => {
           case 200:
             // Success
             console.log(parsedBody.message);
-            navigation.navigate("ForgotPWDCode", { username: username.trim() });
+            navigation.navigate("ResetCodeSent", { username: username.trim() });
             break;
 
           case 400:
@@ -104,16 +104,19 @@ export const ForgotPasswordScreen = ({ navigation }) => {
             break;
 
           case 404:
-          // Username not found or not passed
-          if (parsedBody.code === 'UserNotFoundException') {
-            Alert.alert(
-              "User Not Found",
-              "The username you entered doesn't exist. Please check your username and try again."
-            );
-          } else {
-            Alert.alert("Error", parsedBody.message || "Username is required.");
-          }
-          break;
+            // Username not found or not passed
+            if (parsedBody.code === "UserNotFoundException") {
+              Alert.alert(
+                "User Not Found",
+                "The username you entered doesn't exist. Please check your username and try again."
+              );
+            } else {
+              Alert.alert(
+                "Error",
+                parsedBody.message || "Username is required."
+              );
+            }
+            break;
 
           case 429: // TooManyRequestsException
             Alert.alert("Too many requests. Please try again later.");
@@ -327,7 +330,7 @@ export const ResetCodeSentScreen = ({ navigation, route }) => {
           <TouchableOpacity
             style={styles.primaryButton}
             onPress={() => {
-              navigation.navigate("ForgotPWDReset", { username });
+              navigation.navigate("ResetPassword", { username });
             }}
           >
             <LinearGradient
@@ -647,7 +650,7 @@ export const ResetPasswordScreen = ({ navigation, route }) => {
               <Text style={styles.resendText}>Didn't receive the code? </Text>
               <TouchableOpacity
                 onPress={() => {
-                  navigation.navigate("ForgotPWD");
+                  navigation.navigate("ForgotPassword");
                 }}
               >
                 <Text style={styles.resendLink}>Resend Code</Text>

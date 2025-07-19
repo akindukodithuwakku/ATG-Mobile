@@ -405,7 +405,7 @@ const ClientDashboard = ({ navigation }) => {
           {/* Documents Upload Button */}
           <TouchableOpacity
             style={styles.documentsButton}
-            onPress={() => navigateToScreen("DocumentC")}
+            onPress={() => navigateToScreen("Documents")}
           >
             <Ionicons name="document-text-outline" size={24} color="white" />
             <Text style={styles.documentsButtonText}>Documents Upload</Text>

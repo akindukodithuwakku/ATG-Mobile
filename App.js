@@ -73,6 +73,9 @@ import ChatScreen from "./screens/Messaging";
 import NotificationsClient from "./screens/NotificationsClient";
 import NotificationsCN from "./screens/NotificationsCN";
 
+// Auto Logout Screen
+import AutoLogout from "./screens/AutoLogout";
+
 const Stack = createStackNavigator();
 
 const AppNavigator = () => {
@@ -157,6 +160,13 @@ const AppNavigator = () => {
         {/* Documents */}
         <Stack.Screen name="Documents" component={Documents} />
         <Stack.Screen name="DocumentsCN" component={DocumentsCN} />
+
+        {/* Forgot Password Flow */}
+        <Stack.Screen name="ResetCodeSent" component={ResetCodeSentScreen} />
+        <Stack.Screen name="ResetPassword" component={ResetPasswordScreen} />
+
+        {/* Auto Logout */}
+        <Stack.Screen name="AutomaticLogout" component={AutoLogout} />
       </Stack.Navigator>
     </NavigationContainer>
   );

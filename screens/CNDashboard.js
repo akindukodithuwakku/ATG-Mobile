@@ -165,7 +165,7 @@ const CNDashboard = ({ navigation }) => {
 
           <TouchableOpacity
             style={styles.card}
-            onPress={() => navigateToScreen("AppointmentHandling")}
+            onPress={() => navigateToScreen("HandleAppointmentsCN")}
           >
             <LinearGradient
               colors={["#1FA2FF", "#12D8FA"]}
@@ -183,7 +183,7 @@ const CNDashboard = ({ navigation }) => {
           {/* View Documents Button */}
           <TouchableOpacity
             style={styles.documentsButton}
-            onPress={() => navigateToScreen("DocumentCN")}
+            onPress={() => navigateToScreen("DocumentsCN")}
           >
             <Ionicons name="document-text-outline" size={24} color="white" />
             <Text style={styles.documentsButtonText}>View Documents</Text>
