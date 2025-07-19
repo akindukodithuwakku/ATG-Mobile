@@ -34,7 +34,7 @@ const ProfileScreenC = ({ navigation }) => {
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [profileData, setProfileData] = useState({
-    fullName: "Jane Doe",
+    fullName: "Trevin Perera",
     profileImage: null,
   });
   const defaultImage = require("../../assets/ChatAvatar.png");
@@ -110,7 +110,6 @@ const ProfileScreenC = ({ navigation }) => {
               profileImage: currentUserProfile.profileImage || null,
             });
           } else {
-            console.log("hello");
             // Fallback to stored data or default
             setProfileData({
               fullName: currentUserProfile.fullName || "User",

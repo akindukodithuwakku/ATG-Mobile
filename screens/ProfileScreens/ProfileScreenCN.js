@@ -64,9 +64,9 @@ const ProfileScreenCN = ({ navigation }) => {
         }
 
         // Get the client username from AsyncStorage
-        const clientUsername = await AsyncStorage.getItem("appUser");
+        const cnUsername = await AsyncStorage.getItem("appUser");
 
-        if (clientUsername) {
+        if (cnUsername) {
           // Fetch client details from database
           const dbResponse = await fetch(DB_API_ENDPOINT, {
             method: "POST",
@@ -74,9 +74,9 @@ const ProfileScreenCN = ({ navigation }) => {
               "Content-Type": "application/json",
             },
             body: JSON.stringify({
-              action: "get_client_details",
+              action: "get_cn_details",
               data: {
-                username: clientUsername,
+                username: cnUsername,
               },
             }),
           });
@@ -110,7 +110,6 @@ const ProfileScreenCN = ({ navigation }) => {
               profileImage: currentUserProfile.profileImage || null,
             });
           } else {
-            console.log("hello");
             // Fallback to stored data or default
             setProfileData({
               fullName: currentUserProfile.fullName || "User",
