@@ -101,12 +101,7 @@ npm install -g vercel
         }
       ]
     }
-  ],
-  "functions": {
-    "api/**/*.js": {
-      "runtime": "nodejs18.x"
-    }
-  }
+  ]
 }
 ```
 
@@ -126,12 +121,12 @@ vercel --prod
 
 ### Alternative: Static Site Deployment
 
-If you encounter issues, use the static site configuration:
+If you encounter runtime errors, use the simplified static configuration:
 
-1. Rename `vercel-static.json` to `vercel.json`:
+1. Rename `vercel-simple.json` to `vercel.json`:
 
 ```bash
-mv vercel-static.json vercel.json
+mv vercel-simple.json vercel.json
 ```
 
 2. Deploy:
@@ -140,11 +135,34 @@ mv vercel-static.json vercel.json
 vercel --prod
 ```
 
+### Alternative: No Configuration File
+
+You can also deploy without a `vercel.json` file:
+
+1. Delete `vercel.json`:
+
+```bash
+rm vercel.json
+```
+
+2. Deploy and follow prompts:
+
+```bash
+vercel --prod
+```
+
+3. When prompted:
+   - **Framework**: Select "Other" or "No Framework"
+   - **Build Command**: `npm run build:web`
+   - **Output Directory**: `web-build`
+
 ### Troubleshooting Vercel Issues
 
 - **Framework Error**: Remove the `framework` field from `vercel.json`
+- **Runtime Error**: Remove the `functions` section from `vercel.json`
 - **Build Failures**: Ensure `npm run build:web` works locally first
 - **Routing Issues**: Check that all routes redirect to `index.html`
+- **Environment Variables**: Set up in Vercel dashboard (see VERCEL_ENV_SETUP.md)
 
 ## Option 3: Netlify Deployment
 
