@@ -64,128 +64,94 @@ import Task from "./screens/Task";
 import Documents from "./screens/Documents";
 import DocumentsCN from "./screens/DocumentsCN";
 
-// Communication Screens
-import Messaging from "./screens/Messaging";
+// Messaging Screen
+import ChatScreen from "./screens/Messaging";
 
 // Notification Screens
 import NotificationsClient from "./screens/NotificationsClient";
 import NotificationsCN from "./screens/NotificationsCN";
 
-// Utility Screens
-import { AutomaticLogoutScreen, LogoutProvider } from "./screens/AutoLogout";
-
 const Stack = createStackNavigator();
 
 const AppNavigator = () => {
   return (
-    <LogoutProvider>
-      <NavigationContainer>
-        <Stack.Navigator
-          initialRouteName="Welcome"
-          screenOptions={{ headerShown: false }}
-        >
-          {/* Welcome and Authentication Screens */}
-          <Stack.Screen name="Welcome" component={WelcomeScreen} />
-          <Stack.Screen name="Login" component={LoginScreen} />
-          <Stack.Screen name="Signup" component={SignUpScreen} />
-          <Stack.Screen
-            name="VerificationSent"
-            component={VerificationSentScreen}
-          />
-          <Stack.Screen
-            name="ForgotPassword"
-            component={ForgotPasswordScreen}
-          />
-          <Stack.Screen name="ForgotPWDCode" component={ResetCodeSentScreen} />
-          <Stack.Screen name="ForgotPWDReset" component={ResetPasswordScreen} />
-          <Stack.Screen name="ResetCodeSent" component={ResetCodeSentScreen} />
-          <Stack.Screen name="ResetPassword" component={ResetPasswordScreen} />
-          <Stack.Screen name="ForgotPWD" component={ForgotPasswordScreen} />
+    <NavigationContainer>
+      <Stack.Navigator
+        initialRouteName="Welcome"
+        screenOptions={{ headerShown: false }}
+      >
+        <Stack.Screen name="Welcome" component={WelcomeScreen} />
+        <Stack.Screen name="Login" component={LoginScreen} />
+        <Stack.Screen name="Signup" component={SignUpScreen} />
+        <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
+        <Stack.Screen name="ProfileC" component={ProfileScreenC} />
+        <Stack.Screen name="ProfileCN" component={ProfileScreenCN} />
+        <Stack.Screen name="EditProfile" component={EditProfile} />
+        <Stack.Screen name="UserProfile" component={UserProfile} />
+        <Stack.Screen name="PasswordReset" component={PasswordReset} />
+        <Stack.Screen name="ContactUs" component={ContactUs} />
+        <Stack.Screen name="TermsAndPrivacy" component={TermsAndPrivacy} />
 
-          {/* Profile Screens */}
-          <Stack.Screen name="ProfileC" component={ProfileScreenC} />
-          <Stack.Screen name="ProfileCN" component={ProfileScreenCN} />
-          <Stack.Screen name="EditProfile" component={EditProfile} />
-          <Stack.Screen name="UserProfile" component={UserProfile} />
-          <Stack.Screen name="PasswordReset" component={PasswordReset} />
-          <Stack.Screen name="PWDReset" component={PasswordReset} />
-          <Stack.Screen name="ContactUs" component={ContactUs} />
-          <Stack.Screen name="TermsAndPrivacy" component={TermsAndPrivacy} />
+        {/* Care Intake Flow */}
+        <Stack.Screen
+          name="ReadinessQuestionnaire"
+          component={ReadinessQuestionnaire}
+        />
+        <Stack.Screen name="Personalinfo" component={Personalinfo} />
+        <Stack.Screen name="HealthConditions" component={HealthConditions} />
+        <Stack.Screen
+          name="CareNeedsPreferences"
+          component={CareNeedsPreferences}
+        />
+        <Stack.Screen name="EmergencyContact" component={EmergencyContact} />
+        <Stack.Screen name="CareIntakeReview" component={CareIntakeReview} />
+        <Stack.Screen
+          name="AdditionalDetails"
+          component={AdditionalDetailsScreen}
+        />
+        <Stack.Screen name="SubmissionSuccess" component={SubmissionSuccess} />
 
-          {/* Care Intake Flow Screens */}
-          <Stack.Screen
-            name="ReadinessQuestionnaire"
-            component={ReadinessQuestionnaire}
-          />
-          <Stack.Screen name="Personalinfo" component={Personalinfo} />
-          <Stack.Screen name="HealthConditions" component={HealthConditions} />
-          <Stack.Screen
-            name="CareNeedsPreferences"
-            component={CareNeedsPreferences}
-          />
-          <Stack.Screen name="EmergencyContact" component={EmergencyContact} />
-          <Stack.Screen name="CareIntakeReview" component={CareIntakeReview} />
-          <Stack.Screen
-            name="AdditionalDetailsScreen"
-            component={AdditionalDetailsScreen}
-          />
-          <Stack.Screen
-            name="SubmissionSuccess"
-            component={SubmissionSuccess}
-          />
+        {/* Appointment Screens */}
+        <Stack.Screen
+          name="AppointmentScheduling"
+          component={AppointmentScheduling}
+        />
+        <Stack.Screen name="CalendarCN" component={CalendarCN} />
+        <Stack.Screen
+          name="HandleAppointmentsCN"
+          component={HandleAppointmentsCN}
+        />
+        <Stack.Screen name="MarkAppointment" component={MarkAppointment} />
 
-          {/* Appointment Screens */}
-          <Stack.Screen
-            name="AppointmentScheduling"
-            component={AppointmentScheduling}
-          />
-          <Stack.Screen name="CalendarCN" component={CalendarCN} />
-          <Stack.Screen
-            name="HandleAppointmentsCN"
-            component={HandleAppointmentsCN}
-          />
-          <Stack.Screen
-            name="AppointmentHandling"
-            component={HandleAppointmentsCN}
-          />
-          <Stack.Screen name="MarkAppointment" component={MarkAppointment} />
+        {/* Dashboard Screens */}
+        <Stack.Screen name="ClientDashboard" component={ClientDashboard} />
+        <Stack.Screen name="CNDashboard" component={CNDashboard} />
 
-          {/* Dashboard Screens */}
-          <Stack.Screen name="ClientDashboard" component={ClientDashboard} />
-          <Stack.Screen name="CNDashboard" component={CNDashboard} />
+        {/* Care Plan Management */}
+        <Stack.Screen name="CarePlanC" component={CarePlanMgtClient} />
+        <Stack.Screen name="CarePlanCN" component={CarePlanMgtCN} />
 
-          {/* Care Plan Management Screens */}
-          <Stack.Screen name="CarePlanC" component={CarePlanMgtClient} />
-          <Stack.Screen name="CarePlanCN" component={CarePlanMgtCN} />
+        {/* Medication Management */}
+        <Stack.Screen name="MedicationC" component={MedicationMgtClient} />
+        <Stack.Screen name="MedicationCN" component={MedicationMgtCN} />
 
-          {/* Medication Management Screens */}
-          <Stack.Screen name="MedicationC" component={MedicationMgtClient} />
-          <Stack.Screen name="MedicationCN" component={MedicationMgtCN} />
+        {/* Task Management */}
+        <Stack.Screen name="AddTask" component={AddTaskScreen} />
+        <Stack.Screen name="UpdateTask" component={UpdateTaskScreen} />
+        <Stack.Screen name="Task" component={Task} />
 
-          {/* Task Management Screens */}
-          <Stack.Screen name="AddTaskScreen" component={AddTaskScreen} />
-          <Stack.Screen name="UpdateTaskScreen" component={UpdateTaskScreen} />
-          <Stack.Screen name="Task" component={Task} />
+        {/* Notifications */}
+        <Stack.Screen name="NotificationsC" component={NotificationsClient} />
+        <Stack.Screen name="NotificationsCN" component={NotificationsCN} />
 
-          {/* Document Management Screens */}
-          <Stack.Screen name="DocumentC" component={Documents} />
-          <Stack.Screen name="DocumentCN" component={DocumentsCN} />
+        {/* Messaging */}
+        <Stack.Screen name="Chat" component={ChatScreen} />
 
-          {/* Communication Screens */}
-          <Stack.Screen name="Chat" component={Messaging} />
-
-          {/* Notification Screens */}
-          <Stack.Screen name="NotificationsC" component={NotificationsClient} />
-          <Stack.Screen name="NotificationsCN" component={NotificationsCN} />
-
-          {/* Utility Screens */}
-          <Stack.Screen
-            name="AutomaticLogout"
-            component={AutomaticLogoutScreen}
-          />
-        </Stack.Navigator>
-      </NavigationContainer>
-    </LogoutProvider>
+        {/* Documents */}
+        <Stack.Screen name="Documents" component={Documents} />
+        <Stack.Screen name="DocumentsCN" component={DocumentsCN} />
+      </Stack.Navigator>
+    </NavigationContainer>
   );
 };
 
