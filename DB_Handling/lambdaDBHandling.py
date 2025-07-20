@@ -318,6 +318,60 @@ def lambda_handler(event, context):
                         return response(200, result)
                     else:
                         return response(404, {"error": "Care Navigator details not found"})
+                    
+                elif action == "update_client_details":
+                    # Validate required fields
+                    required_fields = ["username", "full_name", "date_of_birth", "gender", "contact_number", "home_address"]
+                    for field in required_fields:
+                        if field not in data:
+                            return response(400, {"error": f"Missing required field '{field}'"})
+                        
+                    sql = """
+                        UPDATE client_details 
+                        SET full_name = %s, 
+                            date_of_birth = %s, 
+                            gender = %s, 
+                            contact_number = %s, 
+                            home_address = %s
+                        WHERE client_username = %s
+                    """
+                    cursor.execute(sql, (
+                        data["full_name"],
+                        data.get("date_of_birth", None),
+                        data.get("gender", None),
+                        data["contact_number"],
+                        data.get("home_address", None),
+                        data["username"]
+                    ))
+                    conn.commit()
+                    return response(200, {"message": "Client details updated successfully", "username": data["username"]})
+                    
+                elif action == "update_cn_details":
+                    # Validate required fields
+                    required_fields = ["username", "full_name", "date_of_birth", "gender", "contact_number", "home_address"]
+                    for field in required_fields:
+                        if field not in data:
+                            return response(400, {"error": f"Missing required field '{field}'"})
+                        
+                    sql = """
+                        UPDATE cn_details 
+                        SET full_name = %s, 
+                            date_of_birth = %s, 
+                            gender = %s, 
+                            contact_number = %s, 
+                            home_address = %s
+                        WHERE cn_username = %s
+                    """
+                    cursor.execute(sql, (
+                        data["full_name"],
+                        data.get("date_of_birth", None),
+                        data.get("gender", None),
+                        data["contact_number"],
+                        data.get("home_address", None),
+                        data["username"]
+                    ))
+                    conn.commit()
+                    return response(200, {"message": "Care navigator details updated successfully", "username": data["username"]})
 
                 elif action == "get_client_care_navigator":
                     if "client_username" not in data:
