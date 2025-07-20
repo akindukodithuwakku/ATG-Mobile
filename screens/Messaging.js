@@ -1,3 +1,4 @@
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import React, { useState, useEffect, useRef } from "react";
 import {
   View,
@@ -11,6 +12,7 @@ import {
   Image,
   StatusBar,
   useColorScheme,
+  Alert,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -18,13 +20,11 @@ import SideNavigationClient from "../Components/SideNavigationClient";
 import SideNavigationCN from "../Components/SideNavigationCN";
 import BottomNavigationClient from "../Components/BottomNavigationClient";
 import BottomNavigationCN from "../Components/BottomNavigationCN";
-import { database } from "../firebaseConfig.js";
+import { database } from "../firebaseConfig.js"; // 👈 Adjust this path if firebaseConfig.js is elsewhere
 import { ref, onValue, push } from "firebase/database";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const ChatScreen = ({ navigation, route }) => {
-  const { userId } = route.params || {}; // <-- Receive userId from LoginScreen
-  const [userType, setUserType] = useState(null); // 'client' or 'cn'
+  const { userId } = route.params; // <-- Receive userId from LoginScreen
 
   const currentUser = {
     id: userId,
@@ -38,8 +38,12 @@ const ChatScreen = ({ navigation, route }) => {
   const [messages, setMessages] = useState([]);
   const [inputText, setInputText] = useState("");
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [userType, setUserType] = useState("client");
   const scheme = useColorScheme();
   const scrollViewRef = useRef(null);
+
+  // Define receiver ID based on user type
+  const RECEIVER_ID = userType === "cn" ? "client_user" : "cn_user";
 
   // Detect user type on component mount
   useEffect(() => {
@@ -92,8 +96,10 @@ const ChatScreen = ({ navigation, route }) => {
 
     const newMessage = {
       text: inputText,
-      sender: "You",
-      avatar: "https://i.pravatar.cc/150?img=2",
+      senderId: currentUser.id,
+      senderName: currentUser.name,
+      receiverId: RECEIVER_ID,
+      avatar: currentUser.avatar,
       isUser: true,
       timestamp: Date.now(), // optional, for sorting later
     };
@@ -104,7 +110,28 @@ const ChatScreen = ({ navigation, route }) => {
     setInputText(""); // Clear the input field
   };
 
-  // Render appropriate navigation components based on user type
+  // Handle long press on messages
+  const handleLongPress = (message) => {
+    Alert.alert(
+      "Message Options",
+      "What would you like to do with this message?",
+      [
+        {
+          text: "Copy",
+          onPress: () => {
+            // Copy message text to clipboard
+            console.log("Copy message:", message.text);
+          },
+        },
+        {
+          text: "Cancel",
+          style: "cancel",
+        },
+      ]
+    );
+  };
+
+  // Render side navigation based on user type
   const renderSideNavigation = () => {
     if (userType === "cn") {
       return <SideNavigationCN navigation={navigation} onClose={toggleMenu} />;
@@ -115,6 +142,7 @@ const ChatScreen = ({ navigation, route }) => {
     }
   };
 
+  // Render bottom navigation based on user type
   const renderBottomNavigation = () => {
     if (userType === "cn") {
       return <BottomNavigationCN navigation={navigation} />;
@@ -168,22 +196,29 @@ const ChatScreen = ({ navigation, route }) => {
           }
         >
           {messages.map((message) => (
-            <View
+            <TouchableOpacity
               key={message.id}
-              style={[
-                styles.messageContainer,
-                message.isUser ? styles.userMessage : styles.otherMessage,
-              ]}
+              onLongPress={() => handleLongPress(message)}
+              delayLongPress={500}
             >
-              {/* Profile Photo */}
-              <Image source={{ uri: message.avatar }} style={styles.avatar} />
+              <View
+                style={[
+                  styles.messageContainer,
+                  message.senderId === currentUser.id
+                    ? styles.userMessage
+                    : styles.otherMessage,
+                ]}
+              >
+                {/* Profile Photo
+                <Image source={{ uri: message.avatar }} style={styles.avatar} /> */}
 
-              {/* Message Bubble */}
-              <View style={styles.messageBubble}>
-                <Text style={styles.senderName}>{message.sender}</Text>
-                <Text style={styles.messageText}>{message.text}</Text>
+                {/* Message Bubble */}
+                <View style={styles.messageBubble}>
+                  <Text style={styles.senderName}>{message.senderName}</Text>
+                  <Text style={styles.messageText}>{message.text}</Text>
+                </View>
               </View>
-            </View>
+            </TouchableOpacity>
           ))}
         </ScrollView>
 
@@ -258,12 +293,12 @@ const styles = StyleSheet.create({
   otherMessage: {
     alignSelf: "flex-start",
   },
-  avatar: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    marginRight: 10,
-  },
+  // avatar: {
+  //   width: 40,
+  //   height: 40,
+  //   borderRadius: 20,
+  //   marginRight: 10,
+  // },
   messageBubble: {
     padding: 10,
     borderRadius: 10,

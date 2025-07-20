@@ -29,7 +29,7 @@ export const LogoutProvider = ({ children }) => {
     const checkInactivity = () => {
       const timeSinceLastActivity = Date.now() - lastActivity;
       // 15 seconds for testing
-      if (isTimerActive && timeSinceLastActivity > 15000) {
+      if (isTimerActive && timeSinceLastActivity > 1500000) {
         setIsTimerActive(false);
         autoLogoutOccurred.current = true;
       }

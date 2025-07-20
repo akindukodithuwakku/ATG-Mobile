@@ -27,13 +27,13 @@ import { initializeApp } from "firebase/app";
 import { getDatabase } from "firebase/database"; // For Realtime Database
 
 const firebaseConfig = {
-  apiKey: "AIzaSyDESUeWqrx1tzZqpXruFS0O-QHm3RSSanA",
-  authDomain: "chatapp-44c28.firebaseapp.com",
-  databaseURL: "https://chatapp-44c28-default-rtdb.asia-southeast1.firebasedatabase.app/",
-  projectId: "chatapp-44c28",
-  storageBucket: "chatapp-44c28.firebasestorage.app",
-  messagingSenderId: "87802594985",
-  appId: "1:87802594985:web:174268d970c50fdc6a0bb8",
+  apiKey: "AIzaSyAiy8U60lkidLF1U2ghUbkWZmj3xYU5Fyo",
+  authDomain: "chat-8e6e6.firebaseapp.com",
+  databaseURL: "https://chat-8e6e6-default-rtdb.asia-southeast1.firebasedatabase.app/",
+  projectId: "chat-8e6e6",
+  storageBucket: "chat-8e6e6.firebasestorage.app",
+  messagingSenderId: "185365783971",
+  appId: "1:185365783971:web:9b11d942de2466bae26616",
 };
 
 const app = initializeApp(firebaseConfig);
