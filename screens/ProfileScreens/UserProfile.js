@@ -18,11 +18,11 @@ import { useFocusEffect } from "@react-navigation/native";
 const UserProfile = ({ navigation }) => {
   const { resetTimer } = useAutomaticLogout();
   const [profileData, setProfileData] = useState({
-    fullName: "Trevin Perera",
-    email: "trevin.perera@gmail.com",
-    phone: "+94 77 360 4872",
-    address: "64/A, Flower Street, Colombo, Sri Lanka",
-    bio: "Software developer.",
+    fullName: "User",
+    contactNumber: "N/A",
+    homeAddress: "N/A",
+    dateOfBirth: "N/A",
+    gender: "N/A",
     profileImage: null,
   });
 
@@ -32,7 +32,15 @@ const UserProfile = ({ navigation }) => {
     try {
       const storedProfileData = await AsyncStorage.getItem("userProfile");
       if (storedProfileData !== null) {
-        setProfileData(JSON.parse(storedProfileData));
+        const parsedData = JSON.parse(storedProfileData);
+        setProfileData({
+          fullName: parsedData.fullName || "User",
+          contactNumber: parsedData.contactNumber || "N/A",
+          homeAddress: parsedData.homeAddress || "N/A",
+          dateOfBirth: parsedData.dateOfBirth || "N/A",
+          gender: parsedData.gender || "N/A",
+          profileImage: parsedData.profileImage || null,
+        });
       }
     } catch (error) {
       console.error("Error loading profile data:", error);
@@ -52,24 +60,24 @@ const UserProfile = ({ navigation }) => {
 
   const detailItems = [
     {
-      icon: "mail",
-      title: "Email",
-      value: profileData.email,
-    },
-    {
       icon: "phone",
       title: "Phone",
-      value: profileData.phone,
+      value: profileData.contactNumber,
     },
     {
       icon: "map-pin",
       title: "Address",
-      value: profileData.address,
+      value: profileData.homeAddress,
     },
     {
-      icon: "file-text",
-      title: "Bio",
-      value: profileData.bio,
+      icon: "calendar",
+      title: "Date of Birth",
+      value: profileData.dateOfBirth,
+    },
+    {
+      icon: "user",
+      title: "Gender",
+      value: profileData.gender,
     },
   ];
 
