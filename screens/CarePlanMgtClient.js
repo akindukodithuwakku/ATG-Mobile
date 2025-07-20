@@ -1,61 +1,174 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from 'react';
 import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  StatusBar,
-  useColorScheme,
-} from "react-native";
-import SideNavigationClient from "../Components/SideNavigationClient";
+  View, Text, TextInput, FlatList, StyleSheet,
+  TouchableOpacity, StatusBar, ActivityIndicator, ScrollView
+} from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { useIsFocused } from '@react-navigation/native';
 import BottomNavigationClient from "../Components/BottomNavigationClient";
-import { Ionicons } from "@expo/vector-icons";
+import SideNavigationClient from '../Components/SideNavigationClient';
+import ArticleCard from '../Components/ArticleCard';
+import TimelineItemClient from '../Components/TimelineItemClient';
 
-const CarePlanMgtClient = ({ navigation }) => {
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const scheme = useColorScheme();
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+  'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
-  const toggleMenu = () => {
-    setIsMenuOpen(!isMenuOpen);
+const CarePlanClientScreen = ({ navigation }) => {
+  const [tasks, setTasks] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
+  const [searchText, setSearchText] = useState('');
+  const [isSideNavVisible, setIsSideNavVisible] = useState(false);
+  const carePlanId = 2; // Hardcoded for now
+  const isFocused = useIsFocused();
+
+  const fetchTasks = async () => {
+    try {
+      const response = await fetch(
+        `https://sue7dsbf09.execute-api.ap-south-1.amazonaws.com/dev/tasks?care_plan_id=${carePlanId}`
+      );
+      const result = await response.json();
+      const sortedTasks = (result.data || []).sort((a, b) => new Date(a.start) - new Date(b.start));
+      setTasks(sortedTasks);
+    } catch (error) {
+      console.error("Error fetching tasks:", error);
+    } finally {
+      setLoading(false);
+    }
   };
+
+  useEffect(() => {
+    if (isFocused) {
+      fetchTasks();
+    }
+  }, [isFocused]);
+
+  const articleData = [
+    { id: '1', type: 'Article', duration: '5 min', title: 'What is a care plan?' },
+  ];
+
+  const renderArticleItem = ({ item }) => (
+    <ArticleCard
+      title={item.title}
+      duration={item.duration}
+      type={item.type}
+      content={item.content}
+    />
+  );
+
+  const filteredTasks = tasks.filter(task => {
+    if (!task.start) return false;
+    const taskDate = new Date(task.start.replace(' ', 'T'));
+    const matchesMonth = taskDate.getMonth() === selectedMonth;
+    const taskDateString = task.start.split(' ')[0];
+    return matchesMonth && (searchText.trim() === '' || taskDateString.includes(searchText.trim()));
+  });
+
+  const renderTaskItem = ({ item, index }) => (
+    <TimelineItemClient
+      id={item.id}
+      title={item.title}
+      description={item.description}
+      start={item.start}
+      end={item.end}
+      status={item.status}
+      isLast={index === filteredTasks.length - 1}
+      onEdit={null} // Clients cannot edit
+      onDelete={null} // Clients cannot delete
+      onMarkComplete={() => {
+        // You can implement mark complete here if needed
+      }}
+      isClientView={true}
+    />
+  );
 
   return (
     <View style={styles.container}>
-      <StatusBar
-        barStyle={scheme === "dark" ? "light-content" : "dark-content"}
-        translucent={true}
-        backgroundColor={scheme === "dark" ? "black" : "transparent"}
-      />
+      <StatusBar barStyle="dark-content" backgroundColor="#00BCD4" />
 
-      {/* Header with Hamburger Icon */}
+      {/* Header with menu button */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={toggleMenu}>
-          <Ionicons
-            name={isMenuOpen ? "close" : "menu"}
-            size={30}
-            color="black"
-          />
+        <TouchableOpacity
+          onPress={() => setIsSideNavVisible(!isSideNavVisible)}
+          style={{ position: 'absolute', left: 20, top: 45, zIndex: 10 }}
+        >
+          <Ionicons name="menu" size={28} color="white" />
         </TouchableOpacity>
-        <Text style={styles.headerText}>CarePlan ManagementC</Text>
+        <Text style={styles.headerTitle}>Your Care Plan</Text>
+        <Text style={styles.headerSubtitle}>View and track your tasks</Text>
       </View>
 
-      {/* Overlay for Side Navigation */}
-      {isMenuOpen && (
-        <View style={styles.overlay}>
-          <SideNavigationClient navigation={navigation} onClose={toggleMenu} />
-          <TouchableOpacity
-            style={styles.overlayBackground}
-            onPress={toggleMenu}
-          />
-        </View>
+      {/* Side Navigation */}
+      {isSideNavVisible && (
+        <SideNavigationClient navigation={navigation} onClose={() => setIsSideNavVisible(false)} />
       )}
 
-      {/* Dashboard Content */}
-      <View style={styles.content}>
-        <Text style={styles.dashboardText}>
-          Welcome to the CarePlan ManagementC
-        </Text>
+      <ScrollView contentContainerStyle={{ paddingBottom: 120 }}>
+        {/* Articles Section */}
+        <View style={{ marginVertical: 5 }}>
+          <FlatList
+            data={articleData}
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            keyExtractor={item => item.id}
+            contentContainerStyle={{ paddingHorizontal: 10 }}
+            renderItem={({ item }) => (
+              <View style={{ minHeight: 180 , justifyContent: 'center' }}>
+                <ArticleCard
+                  title={item.title}
+                  duration={item.duration}
+                  type={item.type}
+                  content={item.content}
+                />
       </View>
+  )}  
+/>
+
+        </View>
+
+        {/* Tasks Section */}
+        <Text style={styles.taskHeader}>Tasks for {MONTHS[selectedMonth]}</Text>
+
+        <View style={styles.monthRow}>
+          {MONTHS.map((m, idx) => (
+            <TouchableOpacity
+              key={m}
+              style={[styles.monthButton, selectedMonth === idx && styles.monthButtonSelected]}
+              onPress={() => setSelectedMonth(idx)}
+            >
+              <Text style={[styles.monthButtonText, selectedMonth === idx && styles.monthButtonTextSelected]}>
+                {m}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+
+        <View style={styles.searchContainer}>
+          <Ionicons name="search" size={20} color="#B3E5FC" style={styles.searchIcon} />
+          <TextInput
+            style={styles.searchInput}
+            placeholder="Search by date (YYYY-MM-DD)..."
+            value={searchText}
+            onChangeText={setSearchText}
+          />
+        </View>
+
+        {loading ? (
+          <ActivityIndicator size="large" color="#00BCD4" />
+        ) : (
+          <FlatList
+            data={filteredTasks}
+            renderItem={renderTaskItem}
+            keyExtractor={item => item.id.toString()}
+            ListEmptyComponent={
+              <Text style={{ textAlign: 'center', marginTop: 20, color: '#888' }}>
+                No tasks found for this month.
+              </Text>
+            }
+            scrollEnabled={false} // disable scrolling inside FlatList because inside ScrollView
+          />
+        )}
+      </ScrollView>
 
       {/* Bottom Navigation */}
       <BottomNavigationClient navigation={navigation} />
@@ -64,46 +177,83 @@ const CarePlanMgtClient = ({ navigation }) => {
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#fff",
-  },
+  container: { flex: 1, backgroundColor: '#F8FDFF' },
   header: {
-    flexDirection: "row",
-    alignItems: "center",
-    padding: 15,
-    backgroundColor: "#f8f9fa",
-    marginTop: 30,
+    paddingTop: 40,
+    paddingBottom: 10,
+    paddingHorizontal: 20,
+    backgroundColor: '#00BCD4',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  headerText: {
+  headerTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#fff',
+  },
+  headerSubtitle: {
+    fontSize: 16,
+    color: '#fff',
+    marginTop: 4,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    paddingHorizontal: 20,
+    marginBottom: 5,
+    color: '#007C91',
+  },
+  taskHeader: {
     fontSize: 20,
-    fontWeight: "bold",
-    marginLeft: 15,
+    fontWeight: 'bold',
+    paddingHorizontal: 20,
+    marginTop: 10,
+    marginBottom: 5,
+    color: '#0a0efff3',
   },
-  content: {
+  monthRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    marginVertical: 10,
+    flexWrap: 'wrap',
+  },
+  monthButton: {
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#00BCD4',
+    marginHorizontal: 4,
+    marginBottom: 4,
+    backgroundColor: '#fff',
+  },
+  monthButtonSelected: {
+    backgroundColor: '#00BCD4',
+  },
+  monthButtonText: {
+    color: '#00BCD4',
+    fontWeight: 'bold',
+  },
+  monthButtonTextSelected: {
+    color: '#fff',
+  },
+  searchContainer: {
+    flexDirection: 'row', alignItems: 'center', width: '100%', height: 60,
+    marginTop: 0, marginBottom: 10, backgroundColor: '#00BCD4', paddingHorizontal: 10,
+  },
+  searchInput: {
+    height: 40,
     flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    marginBottom: 60,
+    borderColor: '#CCCCCC',
+    borderWidth: 2,
+    borderRadius: 10,
+    paddingHorizontal: 10,
+    backgroundColor: '#E0F7FA',
+    color: '#000',
   },
-  dashboardText: {
-    fontSize: 20,
-    fontWeight: "bold",
-    textAlign: "center",
-  },
-  overlay: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    width: "100%",
-    height: "100%",
-    flexDirection: "row",
-    zIndex: 1,
-  },
-  overlayBackground: {
-    flex: 1,
-    backgroundColor: "rgba(0,0,0,0.4)",
+  searchIcon: {
+    marginRight: 10,
   },
 });
 
-export default CarePlanMgtClient;
+export default CarePlanClientScreen;

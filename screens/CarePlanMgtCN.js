@@ -9,30 +9,36 @@ import TaskCard from '../Components/TaskCard';
 import { useIsFocused } from '@react-navigation/native';
 import TimelineItem from '../Components/TimelineItem';
 
+const MONTHS = [
+  'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+  'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+];
+
 const CarePlanOverview = ({ navigation, carePlanId }) => {
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
+  const [searchText, setSearchText] = useState('');
   const isFocused = useIsFocused();
 
   const fetchTasks = async () => {
-  try {
-    const response = await fetch(
-      `https://sue7dsbf09.execute-api.ap-south-1.amazonaws.com/dev/tasks?care_plan_id=${carePlanId}`
-    );
-    const result = await response.json();
+    try {
+      const response = await fetch(
+        `https://sue7dsbf09.execute-api.ap-south-1.amazonaws.com/dev/tasks?care_plan_id=${carePlanId}`
+      );
+      const result = await response.json();
 
-    const sortedTasks = (result.data || []).sort((a, b) => {
-      return new Date(a.start) - new Date(b.start);
-    });
+      const sortedTasks = (result.data || []).sort((a, b) => {
+        return new Date(a.start) - new Date(b.start);
+      });
 
-    setTasks(sortedTasks);
-  } catch (error) {
-    console.error("Error fetching tasks:", error);
-  } finally {
-    setLoading(false);
-  }
-};
-
+      setTasks(sortedTasks);
+    } catch (error) {
+      console.error("Error fetching tasks:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
     if (isFocused) {
@@ -53,17 +59,37 @@ const CarePlanOverview = ({ navigation, carePlanId }) => {
     />
   );
 
+  // Filter tasks by selected month and search text (date)
+  const filteredTasks = tasks.filter(task => {
+    if (!task.start) return false;
+    const taskDate = new Date(task.start.replace(' ', 'T'));
+    const matchesMonth = taskDate.getMonth() === selectedMonth;
+
+    if (searchText.trim() === '') {
+      return matchesMonth;
+    }
+
+    // Check if searchText matches the date part of the task (YYYY-MM-DD)
+    const taskDateString = task.start.split(' ')[0];
+    return matchesMonth && taskDateString.includes(searchText.trim());
+  });
+
   const renderTaskItem = ({ item, index }) => (
-    <TimelineItem
-      title={item.title}
-      description={item.description}
-      start={item.start}
-      end={item.end} // <-- Add this line
-      status={item.status}
-      isLast={index === tasks.length - 1}
-      onEdit={() => navigation.navigate('UpdateTaskScreen', { task: item })}
-    />
-  );
+  <TimelineItem
+    id={item.id}
+    title={item.title}
+    description={item.description}
+    start={item.start}
+    end={item.end}
+    status={item.status}
+    isLast={index === filteredTasks.length - 1}
+    onEdit={() => navigation.navigate('UpdateTaskScreen', { task: item })}
+    onDelete={(deletedId) => {
+      setTasks(prev => prev.filter(task => task.id !== deletedId));
+    }}
+  />
+);
+;
 
   return (
     <View>
@@ -74,15 +100,53 @@ const CarePlanOverview = ({ navigation, carePlanId }) => {
         showsVerticalScrollIndicator={false}
       />
 
-      <Text style={styles.taskHeader}>Tasks</Text>
+      <Text style={styles.taskHeader}>Tasks for {MONTHS[selectedMonth]}</Text>
+
+      {/* Month filter row */}
+      <View style={styles.monthRow}>
+        {MONTHS.map((m, idx) => (
+          <TouchableOpacity
+            key={m}
+            style={[
+              styles.monthButton,
+              selectedMonth === idx && styles.monthButtonSelected
+            ]}
+            onPress={() => setSelectedMonth(idx)}
+          >
+            <Text style={[
+              styles.monthButtonText,
+              selectedMonth === idx && styles.monthButtonTextSelected
+            ]}>
+              {m}
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+
+      {/* Search bar for date */}
+      <View style={styles.searchContainer}>
+        <Ionicons name="search" size={20} color="#B3E5FC" style={styles.searchIcon} />
+        <TextInput
+          style={styles.searchInput}
+          placeholder="Search by date (YYYY-MM-DD)..."
+          value={searchText}
+          onChangeText={setSearchText}
+        />
+      </View>
+
       {loading ? (
         <ActivityIndicator size="large" color="#00BCD4" />
       ) : (
         <FlatList
-          data={tasks}
+          data={filteredTasks}
           renderItem={renderTaskItem}
           keyExtractor={item => item.id.toString()}
           showsVerticalScrollIndicator={false}
+          ListEmptyComponent={
+            <Text style={{ textAlign: 'center', marginTop: 20, color: '#888' }}>
+              No tasks for this month.
+            </Text>
+          }
         />
       )}
     </View>
@@ -114,10 +178,7 @@ const CarePlanScreen = ({ navigation }) => {
         </View>
       </View>
 
-      <View style={styles.searchContainer}>
-        <Ionicons name="search" size={20} color="#B3E5FC" style={styles.searchIcon} />
-        <TextInput style={styles.searchInput} placeholder="Search..." />
-      </View>
+      {/* The search bar is now inside CarePlanOverview */}
 
       {isSideNavVisible && (
         <SideNavigationCN navigation={navigation} onClose={closeSideNav} />
@@ -158,7 +219,7 @@ const styles = StyleSheet.create({
   headerText: { fontSize: 25, fontWeight: "bold", color: "white", textAlign: 'center' },
   headersec: { fontSize: 15, paddingTop: 20, fontWeight: "bold", color: "white", textAlign: 'center' },
   searchContainer: {
-    flexDirection: 'row', alignItems: 'center', width: '100%', height: 90,
+    flexDirection: 'row', alignItems: 'center', width: '100%', height: 60,
     marginTop: 0, marginBottom: 10, backgroundColor: '#00BCD4', paddingHorizontal: 10,
   },
   searchInput: {
@@ -178,7 +239,33 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     paddingHorizontal: 20,
     paddingTop: 10,
-    color: '#007B9F',
+    color: '#0a0efff3',
+  },
+  monthRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    marginVertical: 10,
+    flexWrap: 'wrap',
+  },
+  monthButton: {
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#00BCD4',
+    marginHorizontal: 4,
+    marginBottom: 4,
+    backgroundColor: '#fff',
+  },
+  monthButtonSelected: {
+    backgroundColor: '#00BCD4',
+  },
+  monthButtonText: {
+    color: '#00BCD4',
+    fontWeight: 'bold',
+  },
+  monthButtonTextSelected: {
+    color: '#fff',
   },
 });
 

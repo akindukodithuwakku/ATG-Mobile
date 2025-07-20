@@ -39,7 +39,7 @@ export default function App() {
   return (
     <NavigationContainer>
       <Stack.Navigator
-        initialRouteName="Personalinfo"
+        initialRouteName="CarePlanMgtClient"
         screenOptions={{ headerShown: false }}
       >
         <Stack.Screen name="Welcome" component={WelcomeScreen} />
@@ -50,7 +50,7 @@ export default function App() {
         {/* <Stack.Screen name="ReadinessQuestionnaire" component={ReadinessQuestionnaireScreen} />
         <Stack.Screen name="AppointmentScheduling" component={AppointmentSchedulingScreen} /> */}
         <Stack.Screen name="Appointments" component={Appointments} />
-        <Stack.Screen name="CarePlanC" component={CarePlanMgtClient} />
+        <Stack.Screen name="CarePlanMgtClient" component={CarePlanMgtClient} />
         <Stack.Screen name="MedicationC" component={MedicationMgtClient} />
         <Stack.Screen name="CarePlanMgtCN" component={CarePlanMgtCN} />
         <Stack.Screen name="MedicationCN" component={MedicationMgtCN} />

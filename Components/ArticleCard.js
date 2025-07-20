@@ -52,6 +52,7 @@ const styles = StyleSheet.create({
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.1,
         shadowRadius: 4,
+          minWidth: 320,
         elevation: 2, // For Android
     },
     header: {
