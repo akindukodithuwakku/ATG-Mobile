@@ -13,16 +13,19 @@ import TimelineItemClient from '../Components/TimelineItemClient';
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
   'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
-const CarePlanClientScreen = ({ navigation }) => {
+const CarePlanClientScreen = ({ route, navigation }) => {
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
   const [searchText, setSearchText] = useState('');
   const [isSideNavVisible, setIsSideNavVisible] = useState(false);
-  const carePlanId = 2; // Hardcoded for now
+
+  // Get carePlanId from route params, fallback to 2 if not passed
+  const carePlanId = route?.params?.carePlanId || 2;
   const isFocused = useIsFocused();
 
   const fetchTasks = async () => {
+    setLoading(true);
     try {
       const response = await fetch(
         `https://sue7dsbf09.execute-api.ap-south-1.amazonaws.com/dev/tasks?care_plan_id=${carePlanId}`
@@ -37,24 +40,16 @@ const CarePlanClientScreen = ({ navigation }) => {
     }
   };
 
+  // Reload tasks when screen focused or carePlanId changes
   useEffect(() => {
     if (isFocused) {
       fetchTasks();
     }
-  }, [isFocused]);
+  }, [isFocused, carePlanId]);
 
   const articleData = [
     { id: '1', type: 'Article', duration: '5 min', title: 'What is a care plan?' },
   ];
-
-  const renderArticleItem = ({ item }) => (
-    <ArticleCard
-      title={item.title}
-      duration={item.duration}
-      type={item.type}
-      content={item.content}
-    />
-  );
 
   const filteredTasks = tasks.filter(task => {
     if (!task.start) return false;
@@ -76,7 +71,14 @@ const CarePlanClientScreen = ({ navigation }) => {
       onEdit={null} // Clients cannot edit
       onDelete={null} // Clients cannot delete
       onMarkComplete={() => {
-        // You can implement mark complete here if needed
+        navigation.navigate('TaskScreen', {
+          taskId: item.id,
+          taskTitle: item.title,
+          taskDescription: item.description,
+          taskStart: item.start,
+          taskEnd: item.end,
+          carePlanId, // pass carePlanId here!
+        });
       }}
       isClientView={true}
     />
@@ -94,7 +96,7 @@ const CarePlanClientScreen = ({ navigation }) => {
         >
           <Ionicons name="menu" size={28} color="white" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Your Care Plan</Text>
+        <Text style={styles.headerTitle}>Your Care Plan Tasks</Text>
         <Text style={styles.headerSubtitle}>View and track your tasks</Text>
       </View>
 
@@ -113,17 +115,16 @@ const CarePlanClientScreen = ({ navigation }) => {
             keyExtractor={item => item.id}
             contentContainerStyle={{ paddingHorizontal: 10 }}
             renderItem={({ item }) => (
-              <View style={{ minHeight: 180 , justifyContent: 'center' }}>
+              <View style={{ minHeight: 180, justifyContent: 'center' }}>
                 <ArticleCard
                   title={item.title}
                   duration={item.duration}
                   type={item.type}
                   content={item.content}
                 />
-      </View>
-  )}  
-/>
-
+              </View>
+            )}
+          />
         </View>
 
         {/* Tasks Section */}
@@ -195,13 +196,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#fff',
     marginTop: 4,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    paddingHorizontal: 20,
-    marginBottom: 5,
-    color: '#007C91',
   },
   taskHeader: {
     fontSize: 20,

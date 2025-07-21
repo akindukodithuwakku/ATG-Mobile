@@ -19,6 +19,7 @@ const TaskScreen = ({ route, navigation }) => {
     taskDescription,
     taskStart,
     taskEnd,
+    carePlanId,  // carePlanId passed here
   } = route.params || {};
 
   const bubbleScale = useRef(new Animated.Value(0)).current;
@@ -44,52 +45,50 @@ const TaskScreen = ({ route, navigation }) => {
     });
   };
 
- const handleComplete = () => {
-  Alert.alert(
-    "Confirm",
-    `Are you sure you want to mark "${taskTitle}" as completed?`,
-    [
-      {
-        text: "Cancel",
-        style: "cancel",
-        onPress: () => {
-          // Do nothing, just close alert
-        }
-      },
-      {
-        text: "OK",
-        onPress: async () => {
-          try {
-            const response = await fetch("https://sue7dsbf09.execute-api.ap-south-1.amazonaws.com/dev/tasks/mark-completed", {
-              method: "PUT",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ id: taskId })
-            });
-            const data = await response.json();
-            if (response.ok) {
-              Alert.alert(
-                "✅ Task Completed",
-                `“${taskTitle}” has been successfully marked as completed.`,
-                [
-                  { text: "OK", onPress: () => navigation.navigate('CarePlanMgtClient') }
-                ],
-                { cancelable: false }
-              );
-            } else {
-              Alert.alert("❌ Error", data.error || "Unable to complete the task. Please try again.");
+  const handleComplete = () => {
+    Alert.alert(
+      "Confirm",
+      `Are you sure you want to mark "${taskTitle}" as completed?`,
+      [
+        {
+          text: "Cancel",
+          style: "cancel",
+        },
+        {
+          text: "OK",
+          onPress: async () => {
+            try {
+              const response = await fetch("https://sue7dsbf09.execute-api.ap-south-1.amazonaws.com/dev/tasks/mark-completed", {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ id: taskId })
+              });
+              const data = await response.json();
+              if (response.ok) {
+                Alert.alert(
+                  "✅ Task Completed",
+                  `“${taskTitle}” has been successfully marked as completed.`,
+                  [
+                    {
+                      text: "OK",
+                      onPress: () => navigation.goBack(),
+                    }
+                  ],
+                  { cancelable: false }
+                );
+              } else {
+                Alert.alert("❌ Error", data.error || "Unable to complete the task. Please try again.");
+              }
+            } catch (error) {
+              console.error(error);
+              Alert.alert("Network Error", "Failed to connect to server. Please check your internet connection.");
             }
-          } catch (error) {
-            console.error(error);
-            Alert.alert("Network Error", "Failed to connect to server. Please check your internet connection.");
           }
         }
-      }
-    ],
-    { cancelable: false }
-  );
-};
-
-
+      ],
+      { cancelable: false }
+    );
+  };
 
   return (
     <View style={styles.container}>
