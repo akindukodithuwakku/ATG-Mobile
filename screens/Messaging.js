@@ -26,26 +26,25 @@ import { ref, onValue, push } from "firebase/database";
 const ChatScreen = ({ navigation, route }) => {
   const { userId } = route.params; // <-- Receive userId from LoginScreen
 
-  const currentUser = {
+  const [currentUser, setCurrentUser] = useState({
     id: userId,
-    name: userId === "user1" ? "Caretaker John" : "Caregiver Mary",
-    avatar:
-      userId === "user1"
-        ? "https://i.pravatar.cc/150?img=2"
-        : "https://i.pravatar.cc/150?img=3",
-  };
+    name: "User",
+    avatar: "https://i.pravatar.cc/150?img=1",
+  });
 
   const [messages, setMessages] = useState([]);
   const [inputText, setInputText] = useState("");
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [userType, setUserType] = useState("client");
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
   const scheme = useColorScheme();
   const scrollViewRef = useRef(null);
 
   // Define receiver ID based on user type
   const RECEIVER_ID = userType === "cn" ? "client_user" : "cn_user";
 
-  // Detect user type on component mount
+  // Detect user type and set current user info on component mount
   useEffect(() => {
     const detectUserType = async () => {
       try {
@@ -54,8 +53,18 @@ const ChatScreen = ({ navigation, route }) => {
           // Check if username contains 'cn_' prefix for care navigators
           if (username.startsWith("cn_")) {
             setUserType("cn");
+            setCurrentUser({
+              id: userId,
+              name: username.replace("cn_", "").replace(/_/g, " "),
+              avatar: "https://i.pravatar.cc/150?img=2",
+            });
           } else {
             setUserType("client");
+            setCurrentUser({
+              id: userId,
+              name: username.replace(/_/g, " "),
+              avatar: "https://i.pravatar.cc/150?img=3",
+            });
           }
         }
       } catch (error) {
@@ -65,7 +74,7 @@ const ChatScreen = ({ navigation, route }) => {
     };
 
     detectUserType();
-  }, []);
+  }, [userId]);
 
   // Toggle side menu
   const toggleMenu = () => {
@@ -76,22 +85,52 @@ const ChatScreen = ({ navigation, route }) => {
   useEffect(() => {
     const messagesRef = ref(database, "messages");
 
-    const unsubscribe = onValue(messagesRef, (snapshot) => {
-      const data = snapshot.val();
-      if (data) {
-        const parsedMessages = Object.keys(data).map((key) => ({
-          id: key,
-          ...data[key],
-        }));
-        setMessages(parsedMessages);
+    const unsubscribe = onValue(
+      messagesRef,
+      (snapshot) => {
+        try {
+          const data = snapshot.val();
+          if (data) {
+            const parsedMessages = Object.keys(data).map((key) => ({
+              id: key,
+              ...data[key],
+            }));
+
+            // Filter messages for current conversation
+            const filteredMessages = parsedMessages.filter(
+              (message) =>
+                (message.senderId === currentUser.id &&
+                  message.receiverId === RECEIVER_ID) ||
+                (message.senderId === RECEIVER_ID &&
+                  message.receiverId === currentUser.id)
+            );
+
+            // Sort messages by timestamp
+            const sortedMessages = filteredMessages.sort(
+              (a, b) => a.timestamp - b.timestamp
+            );
+            setMessages(sortedMessages);
+          }
+          setIsLoading(false);
+          setError(null);
+        } catch (err) {
+          console.error("Error loading messages:", err);
+          setError("Failed to load messages");
+          setIsLoading(false);
+        }
+      },
+      (error) => {
+        console.error("Firebase error:", error);
+        setError("Connection error");
+        setIsLoading(false);
       }
-    });
+    );
 
     return () => unsubscribe();
-  }, []);
+  }, [currentUser.id, RECEIVER_ID]);
 
   // Handle sending new messages
-  const handleSend = () => {
+  const handleSend = async () => {
     if (inputText.trim() === "") return;
 
     const newMessage = {
@@ -104,10 +143,14 @@ const ChatScreen = ({ navigation, route }) => {
       timestamp: Date.now(), // optional, for sorting later
     };
 
-    const messagesRef = ref(database, "messages");
-    push(messagesRef, newMessage);
-
-    setInputText(""); // Clear the input field
+    try {
+      const messagesRef = ref(database, "messages");
+      await push(messagesRef, newMessage);
+      setInputText(""); // Clear the input field
+    } catch (error) {
+      console.error("Error sending message:", error);
+      Alert.alert("Error", "Failed to send message. Please try again.");
+    }
   };
 
   // Handle long press on messages
@@ -195,31 +238,84 @@ const ChatScreen = ({ navigation, route }) => {
             scrollViewRef.current?.scrollToEnd({ animated: true })
           }
         >
-          {messages.map((message) => (
-            <TouchableOpacity
-              key={message.id}
-              onLongPress={() => handleLongPress(message)}
-              delayLongPress={500}
-            >
-              <View
-                style={[
-                  styles.messageContainer,
-                  message.senderId === currentUser.id
-                    ? styles.userMessage
-                    : styles.otherMessage,
-                ]}
+          {isLoading && (
+            <View style={styles.centerContainer}>
+              <Text style={styles.loadingText}>Loading messages...</Text>
+            </View>
+          )}
+
+          {error && (
+            <View style={styles.centerContainer}>
+              <Text style={styles.errorText}>{error}</Text>
+              <TouchableOpacity
+                style={styles.retryButton}
+                onPress={() => window.location.reload()}
               >
-                {/* Profile Photo
+                <Text style={styles.retryButtonText}>Retry</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+
+          {!isLoading && !error && messages.length === 0 && (
+            <View style={styles.centerContainer}>
+              <Text style={styles.emptyText}>
+                No messages yet. Start a conversation!
+              </Text>
+            </View>
+          )}
+
+          {!isLoading &&
+            !error &&
+            messages.map((message) => (
+              <TouchableOpacity
+                key={message.id}
+                onLongPress={() => handleLongPress(message)}
+                delayLongPress={500}
+              >
+                <View
+                  style={[
+                    styles.messageContainer,
+                    message.senderId === currentUser.id
+                      ? styles.userMessage
+                      : styles.otherMessage,
+                  ]}
+                >
+                  {/* Profile Photo
                 <Image source={{ uri: message.avatar }} style={styles.avatar} /> */}
 
-                {/* Message Bubble */}
-                <View style={styles.messageBubble}>
-                  <Text style={styles.senderName}>{message.senderName}</Text>
-                  <Text style={styles.messageText}>{message.text}</Text>
+                  {/* Message Bubble */}
+                  <View
+                    style={[
+                      styles.messageBubble,
+                      message.senderId === currentUser.id
+                        ? styles.userMessageBubble
+                        : styles.otherMessageBubble,
+                    ]}
+                  >
+                    <Text
+                      style={[
+                        styles.senderName,
+                        message.senderId === currentUser.id
+                          ? styles.userSenderName
+                          : styles.otherSenderName,
+                      ]}
+                    >
+                      {message.senderName}
+                    </Text>
+                    <Text
+                      style={[
+                        styles.messageText,
+                        message.senderId === currentUser.id
+                          ? styles.userMessageText
+                          : styles.otherMessageText,
+                      ]}
+                    >
+                      {message.text}
+                    </Text>
+                  </View>
                 </View>
-              </View>
-            </TouchableOpacity>
-          ))}
+              </TouchableOpacity>
+            ))}
         </ScrollView>
 
         {/* Input Field and Send Button */}
@@ -303,14 +399,34 @@ const styles = StyleSheet.create({
     padding: 10,
     borderRadius: 10,
     maxWidth: "80%",
-    backgroundColor: "#E5E5EA", // Default bubble color
+  },
+  userMessageBubble: {
+    backgroundColor: "#007AFF",
+    borderBottomRightRadius: 2,
+  },
+  otherMessageBubble: {
+    backgroundColor: "#E5E5EA",
+    borderBottomLeftRadius: 2,
   },
   senderName: {
     fontWeight: "bold",
     marginBottom: 5,
+    fontSize: 12,
+  },
+  userSenderName: {
+    color: "#fff",
+  },
+  otherSenderName: {
+    color: "#333",
   },
   messageText: {
     fontSize: 16,
+  },
+  userMessageText: {
+    color: "#fff",
+  },
+  otherMessageText: {
+    color: "#333",
   },
   inputContainer: {
     flexDirection: "row",
@@ -334,6 +450,38 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     padding: 10,
+  },
+  centerContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 20,
+  },
+  loadingText: {
+    fontSize: 16,
+    color: "#666",
+  },
+  errorText: {
+    fontSize: 16,
+    color: "#ff0000",
+    textAlign: "center",
+    marginBottom: 10,
+  },
+  retryButton: {
+    backgroundColor: "#007AFF",
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 5,
+  },
+  retryButtonText: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "bold",
+  },
+  emptyText: {
+    fontSize: 16,
+    color: "#666",
+    textAlign: "center",
   },
 });
 
