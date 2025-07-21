@@ -19,7 +19,7 @@ const SideNavigationCN = ({ navigation, onClose }) => {
     {
       name: "CarePlan",
       icon: require("../assets/CarePlanIcon.png"),
-      route: "CarePlanCN",
+      route: "CNCarePlansScreen",
     },
     {
       name: "Medication",

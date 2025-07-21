@@ -15,10 +15,9 @@ import DateTimePicker from "@react-native-community/datetimepicker";
 import BottomNavigationCN from "../Components/BottomNavigationCN";
 import SideNavigationCN from "../Components/SideNavigationCN";
 
-const AddTask = ({ navigation }) => {
-  // Hardcoded values for now
-  const care_plan_id = 2;
-  const updated_by = "testuser_01";
+const AddTask = ({ navigation, route }) => {
+  const { care_plan_id, updated_by } = route.params;
+
 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");

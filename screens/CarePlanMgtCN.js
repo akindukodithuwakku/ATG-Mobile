@@ -153,10 +153,12 @@ const CarePlanOverview = ({ navigation, carePlanId }) => {
   );
 };
 
-const CarePlanScreen = ({ navigation }) => {
+const CarePlanScreen = ({ route, navigation }) => {
   const scheme = useColorScheme();
   const [isSideNavVisible, setIsSideNavVisible] = useState(false);
-  const carePlanId = 2; // Hardcoded for now
+
+  // ✅ Get dynamic care plan ID and client username
+  const { carePlanId, clientUsername } = route.params;
 
   const closeSideNav = () => setIsSideNavVisible(false);
 
@@ -178,25 +180,28 @@ const CarePlanScreen = ({ navigation }) => {
         </View>
       </View>
 
-      {/* The search bar is now inside CarePlanOverview */}
-
       {isSideNavVisible && (
         <SideNavigationCN navigation={navigation} onClose={closeSideNav} />
       )}
 
       <ScrollView contentContainerStyle={styles.scrollContainer}>
+        {/* ✅ Pass dynamic carePlanId to the overview */}
         <CarePlanOverview navigation={navigation} carePlanId={carePlanId} />
       </ScrollView>
 
       <BottomNavigationCN navigation={navigation} />
 
       <TouchableOpacity
-        style={styles.fab}
-        onPress={() => navigation.navigate('AddTaskScreen', {
-          care_plan_id: carePlanId,
-        })}>
-        <Ionicons name="add" size={24} color="white" />
-      </TouchableOpacity>
+  style={styles.fab}
+  onPress={() =>
+    navigation.navigate('AddTaskScreen', {
+      care_plan_id: carePlanId,              // Pass care plan ID
+      updated_by: 'cn_alecbenjamin',         // Hardcoded CN username for now
+    })
+  }
+>
+  <Ionicons name="add" size={24} color="white" />
+</TouchableOpacity>
     </View>
   );
 };

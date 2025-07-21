@@ -31,6 +31,7 @@ import CarePlan from "./screens/CarePlanMgtCN";
 import MarkAppointment from "./screens/MarkAppointment";
 import UpdateTaskScreen from "./screens/UpdateTaskScreen";
 import AdditionalDetailsScreen from "./screens/AdditionalDetailsScreen";
+import CNCarePlansScreen from "./screens/CNCarePlansScreen";
 
 
 const Stack = createStackNavigator();
@@ -39,7 +40,7 @@ export default function App() {
   return (
     <NavigationContainer>
       <Stack.Navigator
-        initialRouteName="CarePlanMgtClient"
+        initialRouteName="CNCarePlansScreen"
         screenOptions={{ headerShown: false }}
       >
         <Stack.Screen name="Welcome" component={WelcomeScreen} />
@@ -70,7 +71,7 @@ export default function App() {
 <Stack.Screen name="MarkAppointment" component={MarkAppointment} />
 <Stack.Screen name="UpdateTaskScreen" component={UpdateTaskScreen} />
 <Stack.Screen name="AdditionalDetailsScreen" component={AdditionalDetailsScreen} />
-
+<Stack.Screen name="CNCarePlansScreen" component={CNCarePlansScreen} />
 
       </Stack.Navigator>
     </NavigationContainer>
