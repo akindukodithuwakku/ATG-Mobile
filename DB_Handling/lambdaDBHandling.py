@@ -416,6 +416,76 @@ def lambda_handler(event, context):
                             "clients": [],
                             "total_clients": 0
                         })
+                
+                elif action == "assign_care_navigator":
+                    # Requires client_username to be passed
+                    if "client_username" not in data:
+                        return response(400, {"error": "Missing required field 'client_username'"})
+                    
+                    client_username = data["client_username"]
+                    
+                    try:
+                        # Check if client already has a care navigator assigned
+                        check_existing_sql = """
+                            SELECT care_navigator_username 
+                            FROM client_details 
+                            WHERE client_username = %s
+                        """
+                        cursor.execute(check_existing_sql, (client_username,))
+                        existing_assignment = cursor.fetchone()
+                        
+                        if not existing_assignment:
+                            return response(404, {"error": "Client not found in client_details table"})
+                        
+                        if existing_assignment["care_navigator_username"] and existing_assignment["care_navigator_username"].strip():
+                            return response(200, {
+                                "message": "Client already has a care navigator assigned",
+                                "assigned_navigator": existing_assignment["care_navigator_username"]
+                            })
+                        
+                        # Get care navigator with least assignments (active care navigators: role = 1, status = 2)
+                        get_least_assigned_sql = """
+                            SELECT 
+                                u.username,
+                                COALESCE(COUNT(cd.client_username), 0) as assignment_count
+                            FROM users u
+                            LEFT JOIN client_details cd ON u.username = cd.care_navigator_username
+                            WHERE u.role = 1 AND u.status = 2
+                            GROUP BY u.username
+                            ORDER BY assignment_count ASC, u.username ASC
+                            LIMIT 1
+                        """
+                        cursor.execute(get_least_assigned_sql)
+                        least_assigned = cursor.fetchone()
+                        
+                        if not least_assigned:
+                            return response(404, {"error": "No active care navigators found"})
+                        
+                        assigned_navigator = least_assigned["username"]
+                        
+                        # Update the client_details table with the assigned care navigator
+                        update_sql = """
+                            UPDATE client_details 
+                            SET care_navigator_username = %s 
+                            WHERE client_username = %s
+                        """
+                        
+                        affected_rows = cursor.execute(update_sql, (assigned_navigator, client_username))
+                        
+                        if affected_rows > 0:
+                            conn.commit()
+                            return response(200, {
+                                "message": "Care navigator assigned successfully",
+                                "client_username": client_username,
+                                "assigned_navigator": assigned_navigator,
+                                "previous_assignment_count": least_assigned["assignment_count"]
+                            })
+                        else:
+                            return response(500, {"error": "Failed to update client assignment"})
+                        
+                    except Exception as e:
+                        conn.rollback()
+                        return response(500, {"error": f"Database error: {str(e)}"})
 
                 else:
                     return response(400, {"error": f"Invalid action: '{action}'"})
