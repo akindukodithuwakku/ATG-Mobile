@@ -417,6 +417,53 @@ def lambda_handler(event, context):
                             "total_clients": 0
                         })
                 
+                elif action == "get_navigator_clients":
+                    if "care_navigator_username" not in data:
+                        return response(400, {"error": "Missing 'care_navigator_username'"})
+                    
+                    sql = "SELECT DISTINCT client_username FROM client_details WHERE care_navigator_username = %s"
+                    cursor.execute(sql, (data["care_navigator_username"],))
+                    results = cursor.fetchall()
+                    
+                    if results:
+                        clients = [{"client_username": row["client_username"]} for row in results]  # Fixed: use dictionary key
+                        return response(200, {"data": clients})
+                    else:
+                        return response(200, {"data": []})
+
+                elif action == "get_client_readiness_details":
+                    if "client_username" not in data:
+                        return response(400, {"error": "Missing 'client_username'"})
+                    
+                    sql = """
+                        SELECT questionnaire_data, client_note, appointment_date_time 
+                        FROM client_appointments 
+                        WHERE client_username = %s AND status = 'active'
+                        ORDER BY created_timestamp DESC 
+                        LIMIT 1
+                    """
+                    cursor.execute(sql, (data["client_username"],))
+                    result = cursor.fetchone()
+                    
+                    if result:
+                        # Handle the datetime conversion properly - use dictionary keys, not tuple indices
+                        appointment_datetime = None
+                        if result["appointment_date_time"]:  # Changed from result[2]
+                            if hasattr(result["appointment_date_time"], 'isoformat'):
+                                appointment_datetime = result["appointment_date_time"].isoformat()
+                            else:
+                                appointment_datetime = str(result["appointment_date_time"])
+                        
+                        readiness_data = {
+                            "questionnaire_data": result["questionnaire_data"],  # Changed from result[0]
+                            "client_note": result["client_note"],                # Changed from result[1]
+                            "appointment_date_time": appointment_datetime
+                        }
+                        result = serialize_result(readiness_data)
+                        return response(200, result)
+                    else:
+                        return response(404, {"error": "No active appointment found for this client"})
+                
                 elif action == "assign_care_navigator":
                     # Requires client_username to be passed
                     if "client_username" not in data:
