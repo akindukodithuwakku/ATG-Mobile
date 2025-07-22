@@ -41,8 +41,57 @@ import DocumentsCN from "./screens/DocumentsCN";
 import { LogoutProvider, AutomaticLogoutScreen } from "./screens/AutoLogout";
 import Messaging from "./screens/Messaging";
 import MessagingCN from "./screens/MessagingCN";
+import MarkMedicationTakenScreen from "./screens/MedicationMarkAsTaken";
+import MedicationLogScreen from "./screens/MedicationLogScreen";
 
 const Stack = createStackNavigator();
+
+const AppNavigator = () => {
+  return (
+    <Stack.Navigator
+      initialRouteName="Welcome"
+      screenOptions={{ headerShown: false, gestureEnabled: false }}
+    >
+      <Stack.Screen name="Welcome" component={WelcomeScreen} />
+      <Stack.Screen name="Login" component={LoginScreen} />
+      <Stack.Screen name="Signup" component={SignUpScreen} />
+      <Stack.Screen
+        name="VerificationSent"
+        component={VerificationSentScreen}
+      />
+      <Stack.Screen name="ForgotPWD" component={ForgotPasswordScreen} />
+      <Stack.Screen name="ForgotPWDCode" component={ResetCodeSentScreen} />
+      <Stack.Screen name="ForgotPWDReset" component={ResetPasswordScreen} />
+      <Stack.Screen name="ProfileC" component={ProfileScreenC} />
+      <Stack.Screen name="ProfileCN" component={ProfileScreenCN} />
+      <Stack.Screen name="EditProfile" component={EditProfile} />
+      <Stack.Screen name="UserProfile" component={UserProfile} />
+      <Stack.Screen name="PWDReset" component={PasswordReset} />
+      <Stack.Screen name="ContactUs" component={ContactUs} />
+      <Stack.Screen name="TermsPrivacy" component={TermsAndPrivacy} />
+      <Stack.Screen name="Readiness" component={ReadinessQuestionnaire} />
+      <Stack.Screen
+        name="AppointmentScheduling"
+        component={AppointmentScheduling}
+      />
+      <Stack.Screen name="CalendarCN" component={CalendarCN} />
+      <Stack.Screen name="AppointmentHandling" component={HandleAppointmentsCN} />
+      <Stack.Screen name="CarePlanC" component={CarePlanMgtClient} />
+      <Stack.Screen name="MedicationC" component={MedicationMgtClient} />
+      <Stack.Screen name="CarePlanCN" component={CarePlanMgtCN} />
+      <Stack.Screen name="MedicationCN" component={MedicationMgtCN} />
+      <Stack.Screen name="NotificationsC" component={NotificationsClient} />
+      <Stack.Screen name="NotificationsCN" component={NotificationsCN} />
+      <Stack.Screen name="ClientDashboard" component={ClientDashboard} />
+      <Stack.Screen name="CNDashboard" component={CNDashboard} />
+      <Stack.Screen name="AutomaticLogout" component={AutomaticLogoutScreen} />
+      <Stack.Screen name="Documents" component={Documents} />
+      <Stack.Screen name="DocumentsCN" component={DocumentsCN} />
+      <Stack.Screen name="Messaging" component={Messaging} />
+      <Stack.Screen name="MessagingCN" component={MessagingCN} />
+    </Stack.Navigator>
+  );
+};
 
 const AppNavigator = () => {
   return (
