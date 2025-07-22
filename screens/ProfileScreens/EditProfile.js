@@ -20,7 +20,7 @@ import * as ImagePicker from "expo-image-picker";
 import { useAutomaticLogout } from "../../screens/AutoLogout";
 import { useFocusEffect } from "@react-navigation/native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import DateTimePicker from '@react-native-community/datetimepicker';
+import DateTimePicker from "@react-native-community/datetimepicker";
 
 const DB_API_ENDPOINT =
   "https://uqzl6jyqvg.execute-api.ap-south-1.amazonaws.com/dev/dbHandling";
@@ -41,17 +41,12 @@ const EditProfile = ({ navigation }) => {
   const [newImage, setNewImage] = useState(null);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showGenderModal, setShowGenderModal] = useState(false);
-  const [userType, setUserType] = useState(''); // 'client' or 'cn'
-  const [username, setUsername] = useState('');
+  const [userType, setUserType] = useState(""); // 'client' or 'cn'
+  const [username, setUsername] = useState("");
 
   const defaultImage = require("../../assets/ChatAvatar.png"); // Default image fallback
-  
-  const genderOptions = [
-    "Male",
-    "Female", 
-    "Other",
-    "Prefer Not to Say"
-  ];
+
+  const genderOptions = ["Male", "Female", "Other", "Prefer Not to Say"];
 
   // Reset timer when screen comes into focus
   useFocusEffect(
@@ -71,16 +66,16 @@ const EditProfile = ({ navigation }) => {
       try {
         // Get username to determine user type
         const appUser = await AsyncStorage.getItem("appUser");
-        
+
         if (appUser) {
           setUsername(appUser);
           const isCareNavigator = appUser.startsWith("cn_");
-          setUserType(isCareNavigator ? 'cn' : 'client');
-          
+          setUserType(isCareNavigator ? "cn" : "client");
+
           // Load from AsyncStorage first
           const storedProfileData = await AsyncStorage.getItem("userProfile");
           let currentUserProfile = {};
-          
+
           if (storedProfileData !== null) {
             currentUserProfile = JSON.parse(storedProfileData);
           }
@@ -100,15 +95,25 @@ const EditProfile = ({ navigation }) => {
           });
 
           const dbData = await dbResponse.json();
-          const dbDataBody = typeof dbData.body === "string" ? JSON.parse(dbData.body) : dbData.body;
+          const dbDataBody =
+            typeof dbData.body === "string"
+              ? JSON.parse(dbData.body)
+              : dbData.body;
 
           if (dbResponse.ok && dbDataBody) {
             // Merge database data with local profile data
             const updatedProfile = {
-              fullName: dbDataBody.full_name || currentUserProfile.fullName || "",
-              phone: dbDataBody.contact_number || currentUserProfile.phone || "",
-              address: dbDataBody.home_address || currentUserProfile.address || "",
-              dateOfBirth: dbDataBody.date_of_birth ? new Date(dbDataBody.date_of_birth) : (currentUserProfile.dateOfBirth ? new Date(currentUserProfile.dateOfBirth) : null),
+              fullName:
+                dbDataBody.full_name || currentUserProfile.fullName || "",
+              phone:
+                dbDataBody.contact_number || currentUserProfile.phone || "",
+              address:
+                dbDataBody.home_address || currentUserProfile.address || "",
+              dateOfBirth: dbDataBody.date_of_birth
+                ? new Date(dbDataBody.date_of_birth)
+                : currentUserProfile.dateOfBirth
+                ? new Date(currentUserProfile.dateOfBirth)
+                : null,
               gender: dbDataBody.gender || currentUserProfile.gender || "",
               profileImage: currentUserProfile.profileImage || null,
             };
@@ -119,18 +124,23 @@ const EditProfile = ({ navigation }) => {
             }
 
             // Update AsyncStorage with fresh data
-            await AsyncStorage.setItem("userProfile", JSON.stringify(updatedProfile));
+            await AsyncStorage.setItem(
+              "userProfile",
+              JSON.stringify(updatedProfile)
+            );
           } else {
             // Use stored data as fallback
             setProfileData({
               fullName: currentUserProfile.fullName || "",
               phone: currentUserProfile.phone || "",
               address: currentUserProfile.address || "",
-              dateOfBirth: currentUserProfile.dateOfBirth ? new Date(currentUserProfile.dateOfBirth) : null,
+              dateOfBirth: currentUserProfile.dateOfBirth
+                ? new Date(currentUserProfile.dateOfBirth)
+                : null,
               gender: currentUserProfile.gender || "",
               profileImage: currentUserProfile.profileImage || null,
             });
-            
+
             if (currentUserProfile.profileImage) {
               setNewImage(currentUserProfile.profileImage);
             }
@@ -244,11 +254,69 @@ const EditProfile = ({ navigation }) => {
   // Update database
   const updateDatabase = async (updatedProfile) => {
     try {
-      const action = userType === 'cn' ? "update_cn_details" : "update_client_details";
-      
+      const statusResponse = await fetch(DB_API_ENDPOINT, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          action: "get_user_status",
+          data: {
+            username: username.trim(),
+          },
+        }),
+      });
+
+      const statusResult = await statusResponse.json();
+
+      if (!statusResult.body) {
+        throw new Error("Invalid server response format");
+      }
+
+      const parsedStatusResult =
+        typeof statusResult.body === "string"
+          ? JSON.parse(statusResult.body)
+          : statusResult.body;
+
+      if (
+        parsedStatusResult.status !== undefined &&
+        parsedStatusResult.status !== null
+      ) {
+        const status = parsedStatusResult.status;
+
+        if (status === 4) {
+          const appUser = await AsyncStorage.getItem("appUser");
+          const activeCNResponse = await fetch(DB_API_ENDPOINT, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              action: "active_user",
+              data: {
+                username: appUser.trim().toLowerCase(),
+              },
+            }),
+          });
+
+          const responseResult = await activeCNResponse.json();
+
+          if (!activeCNResponse.ok) {
+            const errorMessage =
+              responseResult.error || "An unknown error occurred";
+            throw new Error(errorMessage);
+          }
+
+          console.log("User status changed to active successfully.");
+        }
+      }
+
+      const action =
+        userType === "cn" ? "update_cn_details" : "update_client_details";
+
       // Format date for database (YYYY-MM-DD)
-      const formattedDate = updatedProfile.dateOfBirth 
-        ? updatedProfile.dateOfBirth.toISOString().split('T')[0] 
+      const formattedDate = updatedProfile.dateOfBirth
+        ? updatedProfile.dateOfBirth.toISOString().split("T")[0]
         : null;
 
       const response = await fetch(DB_API_ENDPOINT, {
@@ -270,14 +338,18 @@ const EditProfile = ({ navigation }) => {
       });
 
       const data = await response.json();
-      const responseBody = typeof data.body === "string" ? JSON.parse(data.body) : data.body;
+      const responseBody =
+        typeof data.body === "string" ? JSON.parse(data.body) : data.body;
 
       if (response.ok) {
         console.log("Database updated successfully");
         return true;
       } else {
         console.error("Database update failed:", responseBody);
-        Alert.alert("Error", responseBody.error || "Failed to update profile in database");
+        Alert.alert(
+          "Error",
+          responseBody.error || "Failed to update profile in database"
+        );
         return false;
       }
     } catch (error) {
@@ -302,7 +374,7 @@ const EditProfile = ({ navigation }) => {
 
         // Save to AsyncStorage
         const storageSuccess = await saveProfileToStorage(updatedProfile);
-        
+
         if (!storageSuccess) {
           setIsLoading(false);
           Alert.alert("Error", "Failed to save profile data locally");
@@ -311,7 +383,7 @@ const EditProfile = ({ navigation }) => {
 
         // Update database
         const dbSuccess = await updateDatabase(updatedProfile);
-        
+
         if (dbSuccess) {
           setTimeout(() => {
             setIsLoading(false);
@@ -324,7 +396,9 @@ const EditProfile = ({ navigation }) => {
                   onPress: () => {
                     navigation.reset({
                       index: 0,
-                      routes: [{ name: userType === 'cn' ? "ProfileCN" : "ProfileC" }],
+                      routes: [
+                        { name: userType === "cn" ? "ProfileCN" : "ProfileC" },
+                      ],
                     });
                   },
                 },
@@ -344,7 +418,7 @@ const EditProfile = ({ navigation }) => {
 
   const formatDateForDisplay = (date) => {
     if (!date) return "";
-    return date.toLocaleDateString('en-GB'); // DD/MM/YYYY format
+    return date.toLocaleDateString("en-GB"); // DD/MM/YYYY format
   };
 
   return (
@@ -399,7 +473,7 @@ const EditProfile = ({ navigation }) => {
                   style={styles.cameraIcon}
                   onPress={() => {
                     resetTimer();
-                    pickImage(); 
+                    pickImage();
                   }}
                 >
                   <View style={styles.iconCircle}>
@@ -448,11 +522,15 @@ const EditProfile = ({ navigation }) => {
               }}
             >
               <View style={styles.datePickerButton}>
-                <Text style={[
-                  styles.datePickerText, 
-                  !profileData.dateOfBirth && styles.placeholderText
-                ]}>
-                  {profileData.dateOfBirth ? formatDateForDisplay(profileData.dateOfBirth) : "Select date of birth"}
+                <Text
+                  style={[
+                    styles.datePickerText,
+                    !profileData.dateOfBirth && styles.placeholderText,
+                  ]}
+                >
+                  {profileData.dateOfBirth
+                    ? formatDateForDisplay(profileData.dateOfBirth)
+                    : "Select date of birth"}
                 </Text>
                 <MaterialIcons name="date-range" size={24} color="#0C6478" />
               </View>
@@ -470,10 +548,12 @@ const EditProfile = ({ navigation }) => {
               }}
             >
               <View style={styles.genderPickerButton}>
-                <Text style={[
-                  styles.genderPickerText,
-                  !profileData.gender && styles.placeholderText
-                ]}>
+                <Text
+                  style={[
+                    styles.genderPickerText,
+                    !profileData.gender && styles.placeholderText,
+                  ]}
+                >
                   {profileData.gender || "Select gender"}
                 </Text>
                 <Ionicons name="chevron-down" size={24} color="#0C6478" />
@@ -517,7 +597,7 @@ const EditProfile = ({ navigation }) => {
         <DateTimePicker
           value={profileData.dateOfBirth || new Date()}
           mode="date"
-          display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+          display={Platform.OS === "ios" ? "spinner" : "default"}
           onChange={handleDateChange}
           maximumDate={new Date()} // Prevent future dates
           minimumDate={new Date(1900, 0, 1)} // Reasonable minimum date
@@ -535,28 +615,32 @@ const EditProfile = ({ navigation }) => {
           <View style={styles.genderModalContent}>
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>Select Gender</Text>
-              <TouchableOpacity 
+              <TouchableOpacity
                 onPress={() => setShowGenderModal(false)}
                 style={styles.closeButton}
               >
                 <Ionicons name="close" size={24} color="#666" />
               </TouchableOpacity>
             </View>
-            
+
             <ScrollView style={styles.genderOptionsContainer}>
               {genderOptions.map((option, index) => (
                 <TouchableOpacity
                   key={index}
                   style={[
                     styles.genderOption,
-                    profileData.gender === option && styles.selectedGenderOption
+                    profileData.gender === option &&
+                      styles.selectedGenderOption,
                   ]}
                   onPress={() => handleGenderSelect(option)}
                 >
-                  <Text style={[
-                    styles.genderOptionText,
-                    profileData.gender === option && styles.selectedGenderOptionText
-                  ]}>
+                  <Text
+                    style={[
+                      styles.genderOptionText,
+                      profileData.gender === option &&
+                        styles.selectedGenderOptionText,
+                    ]}
+                  >
                     {option}
                   </Text>
                   {profileData.gender === option && (
