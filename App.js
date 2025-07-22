@@ -40,6 +40,7 @@ import Documents from "./screens/Documents";
 import DocumentsCN from "./screens/DocumentsCN";
 import { LogoutProvider, AutomaticLogoutScreen } from "./screens/AutoLogout";
 import Messaging from "./screens/Messaging";
+import MessagingCN from "./screens/MessagingCN";
 
 const Stack = createStackNavigator();
 
@@ -85,6 +86,7 @@ const AppNavigator = () => {
       <Stack.Screen name="Documents" component={Documents} />
       <Stack.Screen name="DocumentsCN" component={DocumentsCN} />
       <Stack.Screen name="Messaging" component={Messaging} />
+      <Stack.Screen name="MessagingCN" component={MessagingCN} />
     </Stack.Navigator>
   );
 };

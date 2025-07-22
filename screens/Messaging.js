@@ -13,57 +13,96 @@ import {
   StatusBar,
   useColorScheme,
   Alert,
+  ActivityIndicator,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { SafeAreaView } from "react-native-safe-area-context"; // Import SafeAreaView
+import { SafeAreaView } from "react-native-safe-area-context";
 import SideNavigationCN from "../Components/SideNavigationCN";
 import BottomNavigationCN from "../Components/BottomNavigationCN";
-import { database } from "../firebaseConfig.js"; // 👈 Adjust this path if firebaseConfig.js is elsewhere
+import { database } from "../firebaseConfig.js";
 import { ref, onValue, push, remove, ref as dbRef } from "firebase/database";
-// import { addNotification } from "../utils/NotificationHandler";
 
-
+const API_ENDPOINT = "https://uqzl6jyqvg.execute-api.ap-south-1.amazonaws.com/dev";
 
 const ChatScreen = ({ navigation, route }) => {
   const [currentUser, setCurrentUser] = useState(null);
+  const [receiverId, setReceiverId] = useState(null);
+  const [loadingReceiver, setLoadingReceiver] = useState(true);
+  const [receiverError, setReceiverError] = useState(null);
 
-  const RECEIVER_ID = "user2"; // Temporary placeholder
-
+  // Detect user type and fetch care navigator if client
   useEffect(() => {
     const loadUser = async () => {
       const storedId = await AsyncStorage.getItem("appUser");
       const userId = storedId || "defaultUser";
-
+      const isCareNavigator = userId.startsWith("cn_");
       setCurrentUser({
         id: userId,
         name: "You",
         avatar: "https://i.pravatar.cc/150?img=2",
+        isCareNavigator,
       });
-    };
 
+      if (!isCareNavigator) {
+        // Fetch care navigator for this client
+        setLoadingReceiver(true);
+        setReceiverError(null);
+        try {
+          const response = await fetch(`${API_ENDPOINT}/dbHandling`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              action: "get_client_care_navigator",
+              data: { client_username: userId },
+            }),
+          });
+          const result = await response.json();
+          const parsedBody = typeof result.body === 'string' ? JSON.parse(result.body) : result.body;
+          if (result.statusCode === 200 && parsedBody.care_navigator_username) {
+            setReceiverId(parsedBody.care_navigator_username);
+          } else {
+            setReceiverError(parsedBody.error || "Care navigator not found");
+          }
+        } catch (err) {
+          setReceiverError("Failed to fetch care navigator");
+        } finally {
+          setLoadingReceiver(false);
+        }
+      } else {
+        // For care navigator, receiverId will be set via props (when opening a chat with a client)
+        setLoadingReceiver(false);
+      }
+    };
     loadUser();
   }, []);
-  
-//sample notification trigger 
-// useEffect(() => {
-//   addNotification("A new case has been added.");
-// }, []);
 
+  // If care navigator, get clientId from route params
+  useEffect(() => {
+    if (currentUser && currentUser.isCareNavigator && route?.params?.clientId) {
+      setReceiverId(route.params.clientId);
+    }
+  }, [currentUser, route]);
+
+  // Compose chat path (sorted)
+  const chatPath = currentUser && receiverId
+    ? [currentUser.id, receiverId].sort().join('_')
+    : null;
+
+  // Chat logic
   const [messages, setMessages] = useState([]);
   const [inputText, setInputText] = useState("");
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const scheme = useColorScheme();
   const scrollViewRef = useRef(null);
 
-  // Toggle side menu
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
   };
 
-  // Load initial messages
+  // Load messages for this chat
   useEffect(() => {
-    const messagesRef = ref(database, "messages");
-    
+    if (!chatPath) return;
+    const messagesRef = ref(database, `messages/${chatPath}`);
     const unsubscribe = onValue(messagesRef, (snapshot) => {
       const data = snapshot.val();
       if (data) {
@@ -72,37 +111,32 @@ const ChatScreen = ({ navigation, route }) => {
           ...data[key],
         }));
         setMessages(parsedMessages);
+      } else {
+        setMessages([]);
       }
     });
-  
     return () => unsubscribe();
-  }, []);
-
-  
+  }, [chatPath]);
 
   // Handle sending new messages
   const handleSend = () => {
-    if (inputText.trim() === "") return;
-  
+    if (inputText.trim() === "" || !currentUser || !receiverId) return;
     const newMessage = {
       text: inputText,
       senderId: currentUser.id,
       senderName: currentUser.name,
-      receiverId: RECEIVER_ID,
+      receiverId: receiverId,
       avatar: currentUser.avatar,
-      isUser: true,
-      timestamp: Date.now(), // optional, for sorting later
+      isUser: !currentUser.isCareNavigator,
+      timestamp: Date.now(),
     };
-  
-    const messagesRef = ref(database, "messages");
+    const messagesRef = ref(database, `messages/${chatPath}`);
     push(messagesRef, newMessage);
-  
-    setInputText(""); // Clear the input field
+    setInputText("");
   };
 
   const handleLongPress = (message) => {
     if (message.senderId !== currentUser.id) return;
-
     Alert.alert(
       "Delete Message",
       "Are you sure you want to delete this message?",
@@ -118,7 +152,7 @@ const ChatScreen = ({ navigation, route }) => {
   };
 
   const deleteMessage = async (messageId) => {
-    const messageRef = dbRef(database, `messages/${messageId}`);
+    const messageRef = dbRef(database, `messages/${chatPath}/${messageId}`);
     try {
       await remove(messageRef);
     } catch (error) {
@@ -126,12 +160,32 @@ const ChatScreen = ({ navigation, route }) => {
     }
   };
 
-  if (!currentUser) {
-    return <View style={styles.container}><Text>Loading...</Text></View>;
+  // Loading and error states
+  if (!currentUser || loadingReceiver) {
+    return (
+      <View style={styles.container}>
+        <ActivityIndicator size="large" color="#007AFF" />
+        <Text>Loading chat...</Text>
+      </View>
+    );
+  }
+  if (!currentUser.isCareNavigator && receiverError) {
+    return (
+      <View style={styles.container}>
+        <Text style={{ color: 'red', textAlign: 'center', marginTop: 40 }}>{receiverError}</Text>
+      </View>
+    );
+  }
+  if (!receiverId) {
+    return (
+      <View style={styles.container}>
+        <Text style={{ color: 'gray', textAlign: 'center', marginTop: 40 }}>Waiting for chat partner...</Text>
+      </View>
+    );
   }
 
   return (
-    <SafeAreaView style={styles.safeAreaContainer}> {/* Wrap everything in SafeAreaView */}
+    <SafeAreaView style={styles.safeAreaContainer}>
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         style={styles.container}
@@ -186,9 +240,6 @@ const ChatScreen = ({ navigation, route }) => {
                   message.senderId === currentUser.id ? styles.userMessage : styles.otherMessage,
                 ]}
               >
-                {/* Profile Photo
-                <Image source={{ uri: message.avatar }} style={styles.avatar} /> */}
-
                 {/* Message Bubble */}
                 <View style={styles.messageBubble}>
                   <Text style={styles.senderName}>{message.senderName}</Text>
@@ -206,16 +257,13 @@ const ChatScreen = ({ navigation, route }) => {
             onChangeText={setInputText}
             placeholder="Type a message..."
             style={styles.inputField}
-            multiline={false} // Prevents multi-line input
+            multiline={false}
           />
           <TouchableOpacity onPress={handleSend} style={styles.sendButton}>
             <Ionicons name="send" size={24} color="#007AFF" />
           </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
-
-      {/* Bottom Navigation */}
-      {/* <BottomNavigationCN navigation={navigation} /> */}
     </SafeAreaView>
   );
 };
@@ -270,17 +318,11 @@ const styles = StyleSheet.create({
   otherMessage: {
     alignSelf: "flex-start",
   },
-  // avatar: {
-  //   width: 40,
-  //   height: 40,
-  //   borderRadius: 20,
-  //   marginRight: 10,
-  // },
   messageBubble: {
     padding: 10,
     borderRadius: 10,
     maxWidth: "80%",
-    backgroundColor: "#E5E5EA", // Default bubble color
+    backgroundColor: "#E5E5EA",
   },
   senderName: {
     fontWeight: "bold",
