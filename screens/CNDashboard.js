@@ -184,7 +184,7 @@ const CNDashboard = ({ navigation }) => {
           {/* View Documents Button */}
           <TouchableOpacity
             style={styles.documentsButton}
-            onPress={() => navigateToScreen("DocumentCN")}
+            onPress={() => navigateToScreen("DocumentsCN")}
           >
             <Ionicons name="document-text-outline" size={24} color="white" />
             <Text style={styles.documentsButtonText}>View Documents</Text>
