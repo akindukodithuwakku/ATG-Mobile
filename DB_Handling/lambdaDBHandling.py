@@ -390,6 +390,7 @@ def lambda_handler(event, context):
                     else:
                         return response(404, {"error": "Care navigator not found for this client"})
 
+                # For messaging and notifications
                 elif action == "get_care_navigator_clients":
                     if "care_navigator_username" not in data:
                         return response(400, {"error": "Missing 'care_navigator_username'"})
@@ -416,7 +417,8 @@ def lambda_handler(event, context):
                             "clients": [],
                             "total_clients": 0
                         })
-                
+
+                # For readiness                
                 elif action == "get_navigator_clients":
                     if "care_navigator_username" not in data:
                         return response(400, {"error": "Missing 'care_navigator_username'"})
@@ -426,7 +428,7 @@ def lambda_handler(event, context):
                     results = cursor.fetchall()
                     
                     if results:
-                        clients = [{"client_username": row["client_username"]} for row in results]  # Fixed: use dictionary key
+                        clients = [{"client_username": row["client_username"]} for row in results]
                         return response(200, {"data": clients})
                     else:
                         return response(200, {"data": []})
@@ -446,23 +448,70 @@ def lambda_handler(event, context):
                     result = cursor.fetchone()
                     
                     if result:
-                        # Handle the datetime conversion properly - use dictionary keys, not tuple indices
+                        # Handle the datetime conversion properly - use dictionary keys
                         appointment_datetime = None
-                        if result["appointment_date_time"]:  # Changed from result[2]
+                        if result["appointment_date_time"]:
                             if hasattr(result["appointment_date_time"], 'isoformat'):
                                 appointment_datetime = result["appointment_date_time"].isoformat()
                             else:
                                 appointment_datetime = str(result["appointment_date_time"])
                         
                         readiness_data = {
-                            "questionnaire_data": result["questionnaire_data"],  # Changed from result[0]
-                            "client_note": result["client_note"],                # Changed from result[1]
+                            "questionnaire_data": result["questionnaire_data"],
+                            "client_note": result["client_note"],
                             "appointment_date_time": appointment_datetime
                         }
                         result = serialize_result(readiness_data)
                         return response(200, result)
                     else:
                         return response(404, {"error": "No active appointment found for this client"})
+                    
+                elif action == "get_client_appointment_history":
+                    if "client_username" not in data:
+                        return response(400, {"error": "Missing 'client_username'"})
+                    
+                    sql = """
+                        SELECT appointment_id, client_username, appointment_date_time, 
+                            status, created_timestamp, client_note
+                        FROM client_appointments 
+                        WHERE client_username = %s
+                        ORDER BY appointment_date_time DESC
+                    """
+                    cursor.execute(sql, (data["client_username"],))
+                    results = cursor.fetchall()
+                    
+                    if results:
+                        appointments = []
+                        for row in results:
+                            appointment = serialize_result(row)
+                            appointments.append(appointment)
+                        return response(200, {"data": appointments})
+                    else:
+                        return response(404, {"error": "No appointment history found for this client"})
+
+                elif action == "get_navigator_appointment_history":
+                    if "care_navigator_username" not in data:
+                        return response(400, {"error": "Missing 'care_navigator_username'"})
+                    
+                    sql = """
+                        SELECT ca.appointment_id, ca.client_username, ca.appointment_date_time, 
+                            ca.status, ca.created_timestamp, ca.client_note
+                        FROM client_appointments ca
+                        INNER JOIN client_details cd ON ca.client_username = cd.client_username
+                        WHERE cd.care_navigator_username = %s
+                        ORDER BY ca.appointment_date_time DESC
+                    """
+                    cursor.execute(sql, (data["care_navigator_username"],))
+                    results = cursor.fetchall()
+                    
+                    if results:
+                        appointments = []
+                        for row in results:
+                            appointment = serialize_result(row)
+                            appointments.append(appointment)
+                        return response(200, {"data": appointments})
+                    else:
+                        return response(404, {"error": "No appointment history found for this care navigator"})
                 
                 elif action == "assign_care_navigator":
                     # Requires client_username to be passed
