@@ -15,6 +15,7 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import SideNavigationClient from "../Components/SideNavigationClient";
 import BottomNavigationClient from "../Components/BottomNavigationClient";
+import { markMedicationAsTaken } from "../utils/MedicationNotificationService";
 
 const MarkMedicationTakenScreen = ({ navigation }) => {
   const [medications, setMedications] = useState([]);
@@ -73,6 +74,13 @@ const MarkMedicationTakenScreen = ({ navigation }) => {
       return;
     }
 
+    // Find the medication details
+    const medication = medications.find(med => med.id === medication_id);
+    if (!medication) {
+      Alert.alert("Error", "Medication not found.");
+      return;
+    }
+
     try {
       const response = await fetch(
         "https://rsxn7kxzr6.execute-api.ap-south-1.amazonaws.com/prod/markTaken",
@@ -88,6 +96,7 @@ const MarkMedicationTakenScreen = ({ navigation }) => {
       const data = await response.json();
 
       if (response.ok) {
+        // Update local state
         setMedications((prev) =>
           prev.map((item) =>
             item.id === medication_id
@@ -95,6 +104,16 @@ const MarkMedicationTakenScreen = ({ navigation }) => {
               : item
           )
         );
+
+        // Mark as taken in notification system to prevent future notifications
+        const scheduleType = determineScheduleType(medication.schedule_time);
+        await markMedicationAsTaken(
+          medication.name,
+          medication.dosage,
+          scheduleType,
+          new Date(taken_time)
+        );
+
         Alert.alert("Success", "Medication marked as taken.");
       } else {
         throw new Error(data.error || "Failed to mark as taken");
@@ -106,6 +125,28 @@ const MarkMedicationTakenScreen = ({ navigation }) => {
         "Could not mark medication as taken. Please try again."
       );
     }
+  };
+
+  // Helper function to determine schedule type from schedule_time
+  const determineScheduleType = (schedule_time) => {
+    if (!schedule_time) return "Unknown";
+    
+    // If it's a standard time string like "Morning", "Evening", "Night"
+    if (typeof schedule_time === 'string' && !schedule_time.includes('T')) {
+      return schedule_time;
+    }
+    
+    // If it's a timestamp, determine based on hour
+    const parsedTime = new Date(schedule_time);
+    if (!isNaN(parsedTime.getTime())) {
+      const hour = parsedTime.getHours();
+      if (hour >= 6 && hour < 12) return "Morning";
+      if (hour >= 12 && hour < 18) return "Afternoon";
+      if (hour >= 18 && hour < 22) return "Evening";
+      return "Night";
+    }
+    
+    return "Custom";
   };
 
   // Updated schedule formatter to handle varchar schedule_info correctly
