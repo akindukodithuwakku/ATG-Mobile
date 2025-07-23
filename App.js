@@ -1,4 +1,3 @@
-import React from "react";
 import { NavigationContainer } from "@react-navigation/native";
 import { createStackNavigator } from "@react-navigation/stack";
 
@@ -25,6 +24,7 @@ import PasswordReset from "./screens/ProfileScreens/PasswordReset";
 import ContactUs from "./screens/ProfileScreens/ContactUs";
 import TermsAndPrivacy from "./screens/ProfileScreens/TermsAndPrivacy";
 import ReadinessQuestionnaire from "./screens/ReadinessQuestionnaire";
+import ViewReadinessDetailsCN from "./screens/ViewReadinessDetailsCN";
 import AppointmentScheduling from "./screens/AppointmentScheduling";
 import CalendarCN from "./screens/CalendarCN";
 import HandleAppointmentsCN from "./screens/HandleAppointmentsCN";
@@ -64,6 +64,7 @@ const AppNavigator = () => {
       <Stack.Screen name="ContactUs" component={ContactUs} />
       <Stack.Screen name="TermsPrivacy" component={TermsAndPrivacy} />
       <Stack.Screen name="Readiness" component={ReadinessQuestionnaire} />
+      <Stack.Screen name="ViewReadiness" component={ViewReadinessDetailsCN} />
       <Stack.Screen
         name="AppointmentScheduling"
         component={AppointmentScheduling}
