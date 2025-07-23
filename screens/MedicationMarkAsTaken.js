@@ -75,7 +75,7 @@ const MarkMedicationTakenScreen = ({ navigation }) => {
     }
 
     // Find the medication details
-    const medication = medications.find(med => med.id === medication_id);
+    const medication = medications.find((med) => med.id === medication_id);
     if (!medication) {
       Alert.alert("Error", "Medication not found.");
       return;
@@ -130,12 +130,12 @@ const MarkMedicationTakenScreen = ({ navigation }) => {
   // Helper function to determine schedule type from schedule_time
   const determineScheduleType = (schedule_time) => {
     if (!schedule_time) return "Unknown";
-    
+
     // If it's a standard time string like "Morning", "Evening", "Night"
-    if (typeof schedule_time === 'string' && !schedule_time.includes('T')) {
+    if (typeof schedule_time === "string" && !schedule_time.includes("T")) {
       return schedule_time;
     }
-    
+
     // If it's a timestamp, determine based on hour
     const parsedTime = new Date(schedule_time);
     if (!isNaN(parsedTime.getTime())) {
@@ -145,7 +145,7 @@ const MarkMedicationTakenScreen = ({ navigation }) => {
       if (hour >= 18 && hour < 22) return "Evening";
       return "Night";
     }
-    
+
     return "Custom";
   };
 
@@ -172,7 +172,9 @@ const MarkMedicationTakenScreen = ({ navigation }) => {
     <View style={styles.card}>
       <Text style={styles.medName}>{item.name}</Text>
       <Text style={styles.detail}>💊 Dosage: {item.dosage}</Text>
-      <Text style={styles.detail}>🕒 Schedule: {formatSchedule(item.schedule_time)}</Text>
+      <Text style={styles.detail}>
+        🕒 Schedule: {formatSchedule(item.schedule_time)}
+      </Text>
 
       {!item.taken ? (
         <TouchableOpacity
@@ -214,7 +216,10 @@ const MarkMedicationTakenScreen = ({ navigation }) => {
       {isMenuOpen && (
         <Animated.View style={[styles.overlay, { opacity: menuAnimation }]}>
           <SideNavigationClient navigation={navigation} onClose={toggleMenu} />
-          <TouchableOpacity style={styles.overlayBackground} onPress={toggleMenu} />
+          <TouchableOpacity
+            style={styles.overlayBackground}
+            onPress={toggleMenu}
+          />
         </Animated.View>
       )}
 
