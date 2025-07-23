@@ -24,7 +24,6 @@ const API_ENDPOINT =
 
 const ViewReadinessDetailsCN = ({ navigation }) => {
   const { resetTimer } = useAutomaticLogout();
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [searchUsername, setSearchUsername] = useState("");
   const [clientsList, setClientsList] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -53,11 +52,6 @@ const ViewReadinessDetailsCN = ({ navigation }) => {
   const handleUserInteraction = useCallback(() => {
     resetTimer();
   }, [resetTimer]);
-
-  const toggleMenu = () => {
-    resetTimer();
-    setIsMenuOpen(!isMenuOpen);
-  };
 
   // Helper function to parse API response
   const parseApiResponse = (result) => {
@@ -437,7 +431,7 @@ const styles = StyleSheet.create({
     padding: 15,
   },
   backButton: {
-    padding: 10,
+    padding: 5,
   },
   headerText: {
     fontSize: 24,
