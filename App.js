@@ -25,6 +25,7 @@ import ContactUs from "./screens/ProfileScreens/ContactUs";
 import TermsAndPrivacy from "./screens/ProfileScreens/TermsAndPrivacy";
 import ReadinessQuestionnaire from "./screens/ReadinessQuestionnaire";
 import ViewReadinessDetailsCN from "./screens/ViewReadinessDetailsCN";
+import AppointmentHistoryCN from "./screens/AppointmentHistoryCN";
 import AppointmentScheduling from "./screens/AppointmentScheduling";
 import CalendarCN from "./screens/CalendarCN";
 import HandleAppointmentsCN from "./screens/HandleAppointmentsCN";
@@ -66,11 +67,18 @@ const AppNavigator = () => {
       <Stack.Screen name="Readiness" component={ReadinessQuestionnaire} />
       <Stack.Screen name="ViewReadiness" component={ViewReadinessDetailsCN} />
       <Stack.Screen
+        name="AppointmentHistory"
+        component={AppointmentHistoryCN}
+      />
+      <Stack.Screen
         name="AppointmentScheduling"
         component={AppointmentScheduling}
       />
       <Stack.Screen name="CalendarCN" component={CalendarCN} />
-      <Stack.Screen name="AppointmentHandling" component={HandleAppointmentsCN} />
+      <Stack.Screen
+        name="AppointmentHandling"
+        component={HandleAppointmentsCN}
+      />
       <Stack.Screen name="CarePlanC" component={CarePlanMgtClient} />
       <Stack.Screen name="MedicationC" component={MedicationMgtClient} />
       <Stack.Screen name="CarePlanCN" component={CarePlanMgtCN} />
