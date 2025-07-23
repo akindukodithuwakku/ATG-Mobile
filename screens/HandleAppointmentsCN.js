@@ -9,6 +9,7 @@ import {
   TextInput,
   ScrollView,
   Alert,
+  RefreshControl,
 } from "react-native";
 import SideNavigationCN from "../Components/SideNavigationCN";
 import BottomNavigationCN from "../Components/BottomNavigationCN";
@@ -26,6 +27,7 @@ const HandleAppointmentsCN = ({ navigation }) => {
   const [clientUsername, setClientUsername] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   // Reset timer when screen comes into focus
   useFocusEffect(
@@ -43,6 +45,13 @@ const HandleAppointmentsCN = ({ navigation }) => {
     resetTimer();
     setIsMenuOpen(!isMenuOpen);
   };
+
+  // Handle refresh
+  const handleRefresh = useCallback(async () => {
+    setIsRefreshing(true);
+    await loadClientsList();
+    setIsRefreshing(false);
+  }, []);
 
   const handleCancelAppointment = async () => {
     resetTimer();
@@ -102,6 +111,12 @@ const HandleAppointmentsCN = ({ navigation }) => {
     navigation.navigate("ViewReadiness");
   };
 
+  const handleViewAppointmentHistory = () => {
+    console.log("Navigating to appointment history screen.");
+    resetTimer();
+    navigation.navigate("AppointmentHistory");
+  };
+
   return (
     <View style={styles.container} onTouchStart={handleUserInteraction}>
       <StatusBar
@@ -143,6 +158,9 @@ const HandleAppointmentsCN = ({ navigation }) => {
         onScrollBeginDrag={handleUserInteraction}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
+        refreshControl={
+          <RefreshControl refreshing={isRefreshing} onRefresh={handleRefresh} />
+        }
       >
         <View style={styles.infoBox}>
           <Ionicons
@@ -228,14 +246,33 @@ const HandleAppointmentsCN = ({ navigation }) => {
           </LinearGradient>
         </TouchableOpacity>
 
+        <TouchableOpacity
+          style={styles.appointmentHistoryButton}
+          onPress={handleViewAppointmentHistory}
+        >
+          <LinearGradient
+            colors={["#FF6B35", "#F7931E"]}
+            style={styles.gradientButton}
+          >
+            <Ionicons
+              name="navigate-outline"
+              size={20}
+              color="#FFFFFF"
+              style={styles.buttonIcon}
+            />
+            <Text style={styles.buttonText}>View Appointments History</Text>
+          </LinearGradient>
+        </TouchableOpacity>
+
         <View style={styles.helpSection}>
           <Text style={styles.helpTitle}>Appointment Management</Text>
           <Text style={styles.helpText}>
             This screen allows you to cancel appointments that have been
             scheduled by clients. You can view upcoming appointments in your
-            calendar and view readiness details of active appointments. If you
-            need to discuss an appointment with a client before cancelling,
-            please use the chat feature to contact them directly.
+            calendar, view readiness details of active appointments, and view
+            appointments history. If you need to discuss an appointment with a
+            client before cancelling, please use the chat feature to contact
+            them directly.
           </Text>
         </View>
       </ScrollView>
@@ -339,6 +376,12 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   readinessButton: {
+    height: 50,
+    borderRadius: 25,
+    overflow: "hidden",
+    marginBottom: 20,
+  },
+  appointmentHistoryButton: {
     height: 50,
     borderRadius: 25,
     overflow: "hidden",
