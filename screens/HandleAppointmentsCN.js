@@ -65,10 +65,10 @@ const HandleAppointmentsCN = ({ navigation }) => {
           action: "cancel_appointment",
           data: {
             client_username: clientUsername.trim().toLowerCase(),
-          }
+          },
         }),
       });
-      
+
       const result = await response.json();
       console.log("Appointment cancellation result:", result);
       if (result.statusCode === 200) {
@@ -91,9 +91,15 @@ const HandleAppointmentsCN = ({ navigation }) => {
   };
 
   const handleGoToCalendar = () => {
-    console.log("Calendar! Navigating to Google Calendar screen.")
+    console.log("Calendar! Navigating to Google Calendar screen.");
     resetTimer();
     navigation.navigate("CalendarCN");
+  };
+
+  const handleViewReadinessDetails = () => {
+    console.log("Navigating to View Readiness Details screen.");
+    resetTimer();
+    navigation.navigate("ViewReadiness");
   };
 
   return (
@@ -204,13 +210,32 @@ const HandleAppointmentsCN = ({ navigation }) => {
           </LinearGradient>
         </TouchableOpacity>
 
+        <TouchableOpacity
+          style={styles.readinessButton}
+          onPress={handleViewReadinessDetails}
+        >
+          <LinearGradient
+            colors={["#6C5CE7", "#A29BFE"]}
+            style={styles.gradientButton}
+          >
+            <Ionicons
+              name="document-text-outline"
+              size={20}
+              color="#FFFFFF"
+              style={styles.buttonIcon}
+            />
+            <Text style={styles.buttonText}>View Readiness Details</Text>
+          </LinearGradient>
+        </TouchableOpacity>
+
         <View style={styles.helpSection}>
           <Text style={styles.helpTitle}>Appointment Management</Text>
           <Text style={styles.helpText}>
             This screen allows you to cancel appointments that have been
             scheduled by clients. You can view upcoming appointments in your
-            calendar. If you need to discuss an appointment with a client before
-            cancelling, please use the chat feature to contact them directly.
+            calendar and view readiness details of active appointments. If you
+            need to discuss an appointment with a client before cancelling,
+            please use the chat feature to contact them directly.
           </Text>
         </View>
       </ScrollView>
@@ -308,6 +333,12 @@ const styles = StyleSheet.create({
     marginBottom: 15,
   },
   calendarButton: {
+    height: 50,
+    borderRadius: 25,
+    overflow: "hidden",
+    marginBottom: 20,
+  },
+  readinessButton: {
     height: 50,
     borderRadius: 25,
     overflow: "hidden",
