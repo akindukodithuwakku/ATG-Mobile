@@ -8,6 +8,9 @@ import awsConfig from "./aws-config";
 // Initialize AWS Amplify
 Amplify.configure(awsConfig);
 
+// Import notification service
+import { startMedicationMonitoring } from "./utils/MedicationNotificationService";
+
 // Import screens
 import WelcomeScreen from "./screens/WelcomeScreen";
 import LoginScreen from "./screens/LoginScreen";
@@ -55,7 +58,10 @@ const AppNavigator = () => {
       <Stack.Screen name="Welcome" component={WelcomeScreen} />
       <Stack.Screen name="Login" component={LoginScreen} />
       <Stack.Screen name="Signup" component={SignUpScreen} />
-      <Stack.Screen name="VerificationSent" component={VerificationSentScreen} />
+      <Stack.Screen
+        name="VerificationSent"
+        component={VerificationSentScreen}
+      />
       <Stack.Screen name="ForgotPWD" component={ForgotPasswordScreen} />
       <Stack.Screen name="ForgotPWDCode" component={ResetCodeSentScreen} />
       <Stack.Screen name="ForgotPWDReset" component={ResetPasswordScreen} />
@@ -67,9 +73,15 @@ const AppNavigator = () => {
       <Stack.Screen name="ContactUs" component={ContactUs} />
       <Stack.Screen name="TermsPrivacy" component={TermsAndPrivacy} />
       <Stack.Screen name="Readiness" component={ReadinessQuestionnaire} />
-      <Stack.Screen name="AppointmentScheduling" component={AppointmentScheduling} />
+      <Stack.Screen
+        name="AppointmentScheduling"
+        component={AppointmentScheduling}
+      />
       <Stack.Screen name="CalendarCN" component={CalendarCN} />
-      <Stack.Screen name="AppointmentHandling" component={HandleAppointmentsCN} />
+      <Stack.Screen
+        name="AppointmentHandling"
+        component={HandleAppointmentsCN}
+      />
       <Stack.Screen name="CarePlanC" component={CarePlanMgtClient} />
       <Stack.Screen name="MedicationC" component={MedicationMgtClient} />
       <Stack.Screen name="CarePlanCN" component={CarePlanMgtCN} />
@@ -83,16 +95,26 @@ const AppNavigator = () => {
       <Stack.Screen name="DocumentsCN" component={DocumentsCN} />
       <Stack.Screen name="Messaging" component={Messaging} />
       <Stack.Screen name="MessagingCN" component={MessagingCN} />
-      
+
       {/* ✅ Renamed to "MarkMedication" to match your navigation call */}
-      <Stack.Screen name="MarkMedication" component={MarkMedicationTakenScreen} />
-      
+      <Stack.Screen
+        name="MarkMedication"
+        component={MarkMedicationTakenScreen}
+      />
+
       <Stack.Screen name="MedicationLog" component={MedicationLogScreen} />
     </Stack.Navigator>
   );
 };
 
 export default function App() {
+  React.useEffect(() => {
+    // Start medication monitoring service when app loads
+    const cleanup = startMedicationMonitoring();
+
+    return cleanup; // Cleanup when app unmounts
+  }, []);
+
   return (
     <NavigationContainer>
       <LogoutProvider>
