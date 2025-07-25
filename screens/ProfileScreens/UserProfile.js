@@ -15,6 +15,16 @@ import { Ionicons, Feather } from "@expo/vector-icons";
 import { useAutomaticLogout } from "../../screens/AutoLogout";
 import { useFocusEffect } from "@react-navigation/native";
 
+const AVATAR_MAP = {
+  default: require("../../assets/avatars/Default.png"),
+  young_man: require("../../assets/avatars/YoungMan.jpeg"),
+  mid_man: require("../../assets/avatars/MidMan.jpeg"),
+  old_man: require("../../assets/avatars/OldMan.jpeg"),
+  young_woman: require("../../assets/avatars/YoungWoman.jpeg"),
+  mid_woman: require("../../assets/avatars/MidWoman.jpeg"),
+  old_woman: require("../../assets/avatars/OldWoman.jpeg"),
+};
+
 const UserProfile = ({ navigation }) => {
   const { resetTimer } = useAutomaticLogout();
   const [profileData, setProfileData] = useState({
@@ -24,22 +34,30 @@ const UserProfile = ({ navigation }) => {
     dateOfBirth: "N/A",
     gender: "N/A",
     profileImage: null,
+    profileImageKey: "default",
   });
-
-  const defaultImage = require("../../assets/ChatAvatar.png");
 
   const loadProfileData = useCallback(async () => {
     try {
       const storedProfileData = await AsyncStorage.getItem("userProfile");
       if (storedProfileData !== null) {
         const parsedData = JSON.parse(storedProfileData);
+        const profileImgKey = parsedData.profileImageKey || "default";
+
         setProfileData({
           fullName: parsedData.fullName || "User",
-          contactNumber: parsedData.contactNumber || "N/A",
-          homeAddress: parsedData.homeAddress || "N/A",
-          dateOfBirth: parsedData.dateOfBirth || "N/A",
+          contactNumber: parsedData.contactNumber || parsedData.phone || "N/A",
+          homeAddress: parsedData.homeAddress || parsedData.address || "N/A",
+          dateOfBirth: parsedData.dateOfBirth
+            ? typeof parsedData.dateOfBirth === "string"
+              ? new Date(parsedData.dateOfBirth).toLocaleDateString("en-GB")
+              : parsedData.dateOfBirth.toLocaleDateString
+              ? parsedData.dateOfBirth.toLocaleDateString("en-GB")
+              : parsedData.dateOfBirth
+            : "N/A",
           gender: parsedData.gender || "N/A",
-          profileImage: parsedData.profileImage || null,
+          profileImage: AVATAR_MAP[profileImgKey] || AVATAR_MAP["default"],
+          profileImageKey: profileImgKey,
         });
       }
     } catch (error) {
@@ -127,11 +145,7 @@ const UserProfile = ({ navigation }) => {
         <View style={styles.profileHeader}>
           <View style={styles.profileImageContainer}>
             <Image
-              source={
-                profileData.profileImage
-                  ? { uri: profileData.profileImage }
-                  : defaultImage
-              }
+              source={profileData.profileImage || AVATAR_MAP["default"]}
               style={styles.profileImage}
             />
           </View>
