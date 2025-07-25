@@ -28,16 +28,26 @@ const DB_API_ENDPOINT =
 const REFRESH_TOKEN_API_ENDPOINT =
   "https://uqzl6jyqvg.execute-api.ap-south-1.amazonaws.com/dev/mobile/refreshToken";
 
+const AVATAR_MAP = {
+  default: require("../../assets/avatars/Default.png"),
+  young_man: require("../../assets/avatars/YoungMan.jpeg"),
+  mid_man: require("../../assets/avatars/MidMan.jpeg"),
+  old_man: require("../../assets/avatars/OldMan.jpeg"),
+  young_woman: require("../../assets/avatars/YoungWoman.jpeg"),
+  mid_woman: require("../../assets/avatars/MidWoman.jpeg"),
+  old_woman: require("../../assets/avatars/OldWoman.jpeg"),
+};
+
 const ProfileScreenC = ({ navigation }) => {
   const { resetTimer } = useAutomaticLogout();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [profileData, setProfileData] = useState({
-    fullName: "Trevin Perera",
+    fullName: "User",
     profileImage: null,
+    profileImageKey: "default",
   });
-  const defaultImage = require("../../assets/ChatAvatar.png");
 
   // Reset timer and modal states when screen comes into focus
   useFocusEffect(
@@ -88,14 +98,17 @@ const ProfileScreenC = ({ navigation }) => {
               : dbData.body;
 
           if (dbResponse.ok && dbDataBody.full_name) {
+            // Get profile image key from database or use default
+            const profileImgKey = dbDataBody.profile_img_key || "default";
             // Update userProfile with all fetched details
             const updatedUserProfile = {
-              ...currentUserProfile, // Keep existing data (like profileImage)
+              ...currentUserProfile, // Keep existing data
               fullName: dbDataBody.full_name,
               dateOfBirth: dbDataBody.date_of_birth,
               gender: dbDataBody.gender,
               contactNumber: dbDataBody.contact_number,
               homeAddress: dbDataBody.home_address,
+              profileImageKey: profileImgKey,
             };
 
             // Save updated profile to AsyncStorage
@@ -107,20 +120,26 @@ const ProfileScreenC = ({ navigation }) => {
             // Update state
             setProfileData({
               fullName: dbDataBody.full_name,
-              profileImage: currentUserProfile.profileImage || null,
+              profileImage: AVATAR_MAP[profileImgKey] || AVATAR_MAP["default"],
+              profileImageKey: profileImgKey,
             });
           } else {
             // Fallback to stored data or default
+            const profileImgKey =
+              currentUserProfile.profileImageKey || "default";
             setProfileData({
               fullName: currentUserProfile.fullName || "User",
-              profileImage: currentUserProfile.profileImage || null,
+              profileImage: AVATAR_MAP[profileImgKey] || AVATAR_MAP["default"],
+              profileImageKey: profileImgKey,
             });
           }
         } else {
           // If no clientUsername is found
+          const profileImgKey = currentUserProfile.profileImageKey || "default";
           setProfileData({
             fullName: currentUserProfile.fullName || "User",
-            profileImage: currentUserProfile.profileImage || null,
+            profileImage: AVATAR_MAP[profileImgKey] || AVATAR_MAP["default"],
+            profileImageKey: profileImgKey,
           });
         }
       } catch (error) {
@@ -430,7 +449,8 @@ const ProfileScreenC = ({ navigation }) => {
         "accessToken",
         "refreshToken",
         "tokenExpiry",
-        "userData",
+        "sessionString",
+        "userProfile",
       ];
       await Promise.all(
         keysToRemove.map((key) => AsyncStorage.removeItem(key))
@@ -521,11 +541,7 @@ const ProfileScreenC = ({ navigation }) => {
         >
           <View style={styles.profileImageContainer}>
             <Image
-              source={
-                profileData.profileImage
-                  ? { uri: profileData.profileImage }
-                  : defaultImage
-              }
+              source={profileData.profileImage || AVATAR_MAP["default"]}
               style={styles.profileImage}
             />
             <TouchableOpacity
