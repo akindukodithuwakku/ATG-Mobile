@@ -7,13 +7,12 @@ import {
 
 const MEDICATION_REMINDERS_KEY = "@medication_reminders";
 const MEDICATION_SCHEDULE_KEY = "@medication_schedule";
-const TAKEN_MEDICATIONS_KEY = "@taken_medications";
 
 // Default times for medication schedules
 export const DEFAULT_TIMES = {
-  Morning: { hour: 9, minute: 54 }, // 9:53 AM
+  Morning: { hour: 8, minute: 0 }, // 8:00 AM
   Evening: { hour: 18, minute: 0 }, // 6:00 PM
-  Night: { hour: 21, minute: 0 }, // 12:25 AM
+  Night: { hour: 0, minute: 25 }, // 12:25 AM
 };
 
 // Medication reminder structure
@@ -56,137 +55,36 @@ export const loadMedicationReminders = async () => {
   }
 };
 
-// Taken medications management
-export const saveTakenMedications = async (takenMeds) => {
-  try {
-    await AsyncStorage.setItem(
-      TAKEN_MEDICATIONS_KEY,
-      JSON.stringify(takenMeds)
-    );
-  } catch (error) {
-    console.error("Error saving taken medications:", error);
-  }
-};
-
-export const loadTakenMedications = async () => {
-  try {
-    const stored = await AsyncStorage.getItem(TAKEN_MEDICATIONS_KEY);
-    return stored ? JSON.parse(stored) : [];
-  } catch (error) {
-    console.error("Error loading taken medications:", error);
-    return [];
-  }
-};
-
-// Mark medication as taken (prevents notification)
-export const markMedicationAsTaken = async (
-  medicationName,
-  dosage,
-  scheduleType,
-  takenTime = new Date()
-) => {
-  try {
-    const takenMeds = await loadTakenMedications();
-
-    // Create a unique key for this medication dose
-    const dateKey = takenTime.toDateString(); // e.g., "Wed Jul 23 2025"
-    const medicationKey = `${medicationName}_${dosage}_${scheduleType}`;
-
-    // Find or create entry for this date
-    let dateEntry = takenMeds.find((entry) => entry.date === dateKey);
-    if (!dateEntry) {
-      dateEntry = { date: dateKey, medications: {} };
-      takenMeds.push(dateEntry);
-    }
-
-    // Mark this specific medication as taken
-    dateEntry.medications[medicationKey] = {
-      medicationName,
-      dosage,
-      scheduleType,
-      takenTime: takenTime.toISOString(),
-      timestamp: Date.now(),
-    };
-
-    await saveTakenMedications(takenMeds);
-
-    // Add notification about successful marking
-    await addNotification(
-      `✅ Marked as taken: ${medicationName} (${dosage}) - ${scheduleType}`,
-      "success",
-      {
-        type: "medication_taken",
-        medicationName,
-        dosage,
-        scheduleType,
-        takenTime: takenTime.toISOString(),
-      }
-    );
-
-    console.log(`✅ Marked ${medicationName} as taken for ${scheduleType}`);
-    return true;
-  } catch (error) {
-    console.error("Error marking medication as taken:", error);
-    return false;
-  }
-};
-
-// Check if medication is already taken for specific time
-export const isMedicationAlreadyTaken = async (
-  medicationName,
-  dosage,
-  scheduleType,
-  checkTime = new Date()
-) => {
-  try {
-    const takenMeds = await loadTakenMedications();
-    const dateKey = checkTime.toDateString();
-    const medicationKey = `${medicationName}_${dosage}_${scheduleType}`;
-
-    const dateEntry = takenMeds.find((entry) => entry.date === dateKey);
-    if (!dateEntry) return false;
-
-    return !!dateEntry.medications[medicationKey];
-  } catch (error) {
-    console.error("Error checking if medication is taken:", error);
-    return false;
-  }
-};
-
 // Parse custom frequency text and return interval in minutes
 export const parseCustomFrequency = (frequencyText) => {
   if (!frequencyText) return null;
-
+  
   const text = frequencyText.toLowerCase().trim();
-
+  
   // Parse common frequency patterns
-  if (text.includes("every")) {
+  if (text.includes('every')) {
     // "Every 4 hours", "Every 6 hours", "Every 30 minutes"
-    const numberMatch = text.match(
-      /every\s+(\d+)\s*(hour|hours|minute|minutes|hr|hrs|min|mins)/
-    );
+    const numberMatch = text.match(/every\s+(\d+)\s*(hour|hours|minute|minutes|hr|hrs|min|mins)/);
     if (numberMatch) {
       const value = parseInt(numberMatch[1]);
       const unit = numberMatch[2];
-
-      if (unit.includes("hour") || unit.includes("hr")) {
+      
+      if (unit.includes('hour') || unit.includes('hr')) {
         return value * 60; // Convert hours to minutes
-      } else if (unit.includes("minute") || unit.includes("min")) {
+      } else if (unit.includes('minute') || unit.includes('min')) {
         return value;
       }
     }
   }
-
+  
   // "Twice a day", "3 times a day"
-  if (text.includes("day")) {
-    const numberMatch = text.match(
-      /(\d+)\s*times?\s*a?\s*day|twice\s*a?\s*day|three\s*times?\s*a?\s*day/
-    );
+  if (text.includes('day')) {
+    const numberMatch = text.match(/(\d+)\s*times?\s*a?\s*day|twice\s*a?\s*day|three\s*times?\s*a?\s*day/);
     if (numberMatch) {
       let timesPerDay = 1;
-      if (text.includes("twice")) {
+      if (text.includes('twice')) {
         timesPerDay = 2;
-      } else if (text.includes("three")) {
+      } else if (text.includes('three')) {
         timesPerDay = 3;
       } else {
         timesPerDay = parseInt(numberMatch[1]) || 1;
@@ -194,42 +92,36 @@ export const parseCustomFrequency = (frequencyText) => {
       return Math.floor((24 * 60) / timesPerDay); // Distribute evenly throughout day
     }
   }
-
+  
   // "Once daily", "Daily"
-  if (text.includes("daily") || text.includes("once")) {
+  if (text.includes('daily') || text.includes('once')) {
     return 24 * 60; // Once every 24 hours
   }
-
+  
   // Default to 8 hours if can't parse
   return 8 * 60;
 };
 
 // Create multiple reminders for custom frequency
-export const createCustomFrequencyReminders = (
-  medicationName,
-  dosage,
-  frequencyText,
-  refillDate
-) => {
+export const createCustomFrequencyReminders = (medicationName, dosage, frequencyText, refillDate) => {
   const intervalMinutes = parseCustomFrequency(frequencyText);
   if (!intervalMinutes) return [];
-
+  
   const now = new Date();
   const reminders = [];
-
+  
   // Create first reminder starting from next hour
   const firstReminderTime = new Date(now);
   firstReminderTime.setHours(firstReminderTime.getHours() + 1, 0, 0, 0);
-
+  
   // Create reminders for the next 7 days
   const endDate = new Date(now);
   endDate.setDate(endDate.getDate() + 7);
-
+  
   let currentTime = new Date(firstReminderTime);
   let reminderCount = 0;
-
-  while (currentTime <= endDate && reminderCount < 50) {
-    // Limit to 50 reminders
+  
+  while (currentTime <= endDate && reminderCount < 50) { // Limit to 50 reminders
     const reminder = createMedicationReminder(
       medicationName,
       dosage,
@@ -237,50 +129,15 @@ export const createCustomFrequencyReminders = (
       currentTime.toISOString(),
       refillDate
     );
-
+    
     reminders.push(reminder);
-
+    
     // Add interval for next reminder
-    currentTime = new Date(currentTime.getTime() + intervalMinutes * 60 * 1000);
+    currentTime = new Date(currentTime.getTime() + (intervalMinutes * 60 * 1000));
     reminderCount++;
   }
-
+  
   return reminders;
-};
-
-// Get today's taken medications
-export const getTodaysTakenMedications = async () => {
-  try {
-    const takenMeds = await loadTakenMedications();
-    const today = new Date().toDateString();
-
-    const todaysEntry = takenMeds.find((entry) => entry.date === today);
-    return todaysEntry ? Object.values(todaysEntry.medications) : [];
-  } catch (error) {
-    console.error("Error getting today's taken medications:", error);
-    return [];
-  }
-};
-
-// Clear old taken medication records (optional - call periodically)
-export const clearOldTakenRecords = async (daysToKeep = 7) => {
-  try {
-    const takenMeds = await loadTakenMedications();
-    const cutoffDate = new Date();
-    cutoffDate.setDate(cutoffDate.getDate() - daysToKeep);
-
-    const filteredMeds = takenMeds.filter((entry) => {
-      const entryDate = new Date(entry.date);
-      return entryDate >= cutoffDate;
-    });
-
-    await saveTakenMedications(filteredMeds);
-    console.log(
-      `🧹 Cleared taken medication records older than ${daysToKeep} days`
-    );
-  } catch (error) {
-    console.error("Error clearing old taken records:", error);
-  }
 };
 
 // Get default time for schedule type
@@ -330,16 +187,16 @@ export const scheduleMedicationReminder = async (
           refillDate
         );
         newReminders.push(...customReminders);
-
+        
         // Add immediate notification about custom schedule
         addNotification(
           `Custom medication schedule set: ${medicationName} - ${customFrequency}`,
           "info",
-          {
-            type: "custom_schedule_set",
-            medicationName,
+          { 
+            type: "custom_schedule_set", 
+            medicationName, 
             frequency: customFrequency,
-            reminderCount: customReminders.length,
+            reminderCount: customReminders.length
           }
         );
       } else if (DEFAULT_TIMES[scheduleType]) {
@@ -360,20 +217,19 @@ export const scheduleMedicationReminder = async (
     await saveMedicationReminders(updatedReminders);
 
     // Create confirmation notification
-    const scheduleInfo =
-      scheduleTypes.includes("Other") && customFrequency
-        ? `custom schedule (${customFrequency})`
-        : scheduleTypes.join(", ");
-
+    const scheduleInfo = scheduleTypes.includes("Other") && customFrequency
+      ? `custom schedule (${customFrequency})`
+      : scheduleTypes.join(", ");
+      
     await addNotification(
       `Medication reminders set for ${medicationName} - ${scheduleInfo}`,
       "success",
-      {
-        type: "medication_scheduled",
-        medicationName,
+      { 
+        type: "medication_scheduled", 
+        medicationName, 
         scheduleTypes,
         customFrequency: customFrequency || null,
-        reminderCount: newReminders.length,
+        reminderCount: newReminders.length
       }
     );
 
@@ -403,38 +259,18 @@ export const checkMedicationReminders = async () => {
       }
     });
 
-    // Send notifications for due reminders (but only if not already taken)
+    // Send notifications for due reminders
     for (const reminder of dueReminders) {
-      // Check if this medication dose is already taken today
-      const isAlreadyTaken = await isMedicationAlreadyTaken(
-        reminder.medicationName,
-        reminder.dosage,
-        reminder.scheduleType,
-        now
+      await addNotification(
+        `Time to take your medication: ${reminder.medicationName} (${reminder.dosage})`,
+        "warning",
+        {
+          type: "medication_reminder",
+          medicationName: reminder.medicationName,
+          dosage: reminder.dosage,
+          scheduleType: reminder.scheduleType,
+        }
       );
-
-      if (!isAlreadyTaken) {
-        await addNotification(
-          `⏰ Time to take your medication: ${reminder.medicationName} (${reminder.dosage}) - ${reminder.scheduleType}`,
-          "warning",
-          {
-            type: "medication_reminder",
-            medicationName: reminder.medicationName,
-            dosage: reminder.dosage,
-            scheduleType: reminder.scheduleType,
-            reminderTime: reminder.time,
-            canMarkAsTaken: true,
-          }
-        );
-
-        console.log(
-          `🔔 Notification sent for ${reminder.medicationName} - ${reminder.scheduleType}`
-        );
-      } else {
-        console.log(
-          `✅ Skipped notification for ${reminder.medicationName} - ${reminder.scheduleType} (already taken)`
-        );
-      }
     }
 
     return dueReminders;
@@ -561,13 +397,13 @@ export const formatTimeDisplay = (scheduleType) => {
 export const getCustomFrequencyExamples = () => {
   return [
     "Every 4 hours",
-    "Every 6 hours",
+    "Every 6 hours", 
     "Every 8 hours",
     "Every 30 minutes",
     "Twice a day",
     "3 times a day",
     "Once daily",
-    "Every 12 hours",
+    "Every 12 hours"
   ];
 };
 
@@ -576,35 +412,33 @@ export const validateCustomFrequency = (frequencyText) => {
   if (!frequencyText || frequencyText.trim().length === 0) {
     return { isValid: false, error: "Frequency is required" };
   }
-
+  
   const intervalMinutes = parseCustomFrequency(frequencyText);
-
+  
   if (!intervalMinutes) {
-    return {
-      isValid: false,
-      error: "Please use format like 'Every 4 hours' or 'Twice a day'",
+    return { 
+      isValid: false, 
+      error: "Please use format like 'Every 4 hours' or 'Twice a day'" 
     };
   }
-
+  
   if (intervalMinutes < 15) {
-    return {
-      isValid: false,
-      error: "Minimum interval is 15 minutes",
+    return { 
+      isValid: false, 
+      error: "Minimum interval is 15 minutes" 
     };
   }
-
+  
   if (intervalMinutes > 24 * 60) {
-    return {
-      isValid: false,
-      error: "Maximum interval is 24 hours",
+    return { 
+      isValid: false, 
+      error: "Maximum interval is 24 hours" 
     };
   }
-
-  return {
-    isValid: true,
+  
+  return { 
+    isValid: true, 
     intervalMinutes,
-    description: `This will create reminders every ${Math.floor(
-      intervalMinutes / 60
-    )} hours and ${intervalMinutes % 60} minutes`,
+    description: `This will create reminders every ${Math.floor(intervalMinutes / 60)} hours and ${intervalMinutes % 60} minutes`
   };
 };
