@@ -295,7 +295,7 @@ def lambda_handler(event, context):
                     if "username" not in data:
                         return response(400, {"error": "Missing 'username'"})
                     
-                    sql = "SELECT full_name, date_of_birth, gender, contact_number, home_address FROM client_details WHERE client_username = %s"
+                    sql = "SELECT full_name, date_of_birth, gender, contact_number, home_address, profile_img_key FROM client_details WHERE client_username = %s"
                     cursor.execute(sql, (data["username"],))
                     result = cursor.fetchone()
 
@@ -309,7 +309,7 @@ def lambda_handler(event, context):
                     if "username" not in data:
                         return response(400, {"error": "Missing 'username'"})
                     
-                    sql = "SELECT full_name, date_of_birth, gender, contact_number, home_address FROM cn_details WHERE cn_username = %s"
+                    sql = "SELECT full_name, date_of_birth, gender, contact_number, home_address, profile_img_key FROM cn_details WHERE cn_username = %s"
                     cursor.execute(sql, (data["username"],))
                     result = cursor.fetchone()
 
@@ -325,6 +325,12 @@ def lambda_handler(event, context):
                     for field in required_fields:
                         if field not in data:
                             return response(400, {"error": f"Missing required field '{field}'"})
+    
+                    # Validate profile_img_key if provided
+                    profile_img_key = data.get("profile_img_key", "default")
+                    valid_keys = ['default', 'young_man', 'mid_man', 'old_man', 'young_woman', 'mid_woman', 'old_woman']
+                    if profile_img_key not in valid_keys:
+                        profile_img_key = "default"
                         
                     sql = """
                         UPDATE client_details 
@@ -332,7 +338,8 @@ def lambda_handler(event, context):
                             date_of_birth = %s, 
                             gender = %s, 
                             contact_number = %s, 
-                            home_address = %s
+                            home_address = %s,
+                            profile_img_key = %s
                         WHERE client_username = %s
                     """
                     cursor.execute(sql, (
@@ -341,6 +348,7 @@ def lambda_handler(event, context):
                         data.get("gender", None),
                         data["contact_number"],
                         data.get("home_address", None),
+                        profile_img_key,
                         data["username"]
                     ))
                     conn.commit()
@@ -352,6 +360,12 @@ def lambda_handler(event, context):
                     for field in required_fields:
                         if field not in data:
                             return response(400, {"error": f"Missing required field '{field}'"})
+    
+                    # Validate profile_img_key if provided
+                    profile_img_key = data.get("profile_img_key", "default")
+                    valid_keys = ['default', 'young_man', 'mid_man', 'old_man', 'young_woman', 'mid_woman', 'old_woman']
+                    if profile_img_key not in valid_keys:
+                        profile_img_key = "default"
                         
                     sql = """
                         UPDATE cn_details 
@@ -359,7 +373,8 @@ def lambda_handler(event, context):
                             date_of_birth = %s, 
                             gender = %s, 
                             contact_number = %s, 
-                            home_address = %s
+                            home_address = %s,
+                            profile_img_key = %s
                         WHERE cn_username = %s
                     """
                     cursor.execute(sql, (
@@ -368,6 +383,7 @@ def lambda_handler(event, context):
                         data.get("gender", None),
                         data["contact_number"],
                         data.get("home_address", None),
+                        profile_img_key,
                         data["username"]
                     ))
                     conn.commit()
