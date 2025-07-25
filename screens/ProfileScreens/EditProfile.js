@@ -25,15 +25,36 @@ import DateTimePicker from "@react-native-community/datetimepicker";
 const DB_API_ENDPOINT =
   "https://uqzl6jyqvg.execute-api.ap-south-1.amazonaws.com/dev/dbHandling";
 
+const AVATAR_MAP = {
+  default: require("../../assets/avatars/Default.png"),
+  young_man: require("../../assets/avatars/YoungMan.jpeg"),
+  mid_man: require("../../assets/avatars/MidMan.jpeg"),
+  old_man: require("../../assets/avatars/OldMan.jpeg"),
+  young_woman: require("../../assets/avatars/YoungWoman.jpeg"),
+  mid_woman: require("../../assets/avatars/MidWoman.jpeg"),
+  old_woman: require("../../assets/avatars/OldWoman.jpeg"),
+};
+
+const AVATAR_OPTIONS = [
+  { key: "default", label: "Default" },
+  { key: "young_man", label: "Young Man" },
+  { key: "mid_man", label: "Middle-aged Man" },
+  { key: "old_man", label: "Senior Man" },
+  { key: "young_woman", label: "Young Woman" },
+  { key: "mid_woman", label: "Middle-aged Woman" },
+  { key: "old_woman", label: "Senior Woman" },
+];
+
 const EditProfile = ({ navigation }) => {
   const { resetTimer } = useAutomaticLogout();
   const [profileData, setProfileData] = useState({
-    fullName: "Trevin Perera",
-    phone: "+94 77 360 4872",
-    address: "64/A, Flower Street, Colombo, Sri Lanka",
+    fullName: "User",
+    phone: "",
+    address: "",
     dateOfBirth: null,
     gender: "",
     profileImage: null,
+    profileImageKey: "default",
   });
 
   const [errors, setErrors] = useState({});
@@ -43,8 +64,7 @@ const EditProfile = ({ navigation }) => {
   const [showGenderModal, setShowGenderModal] = useState(false);
   const [userType, setUserType] = useState(""); // 'client' or 'cn'
   const [username, setUsername] = useState("");
-
-  const defaultImage = require("../../assets/ChatAvatar.png"); // Default image fallback
+  const [showAvatarModal, setShowAvatarModal] = useState(false);
 
   const genderOptions = ["Male", "Female", "Other", "Prefer Not to Say"];
 
@@ -101,6 +121,8 @@ const EditProfile = ({ navigation }) => {
               : dbData.body;
 
           if (dbResponse.ok && dbDataBody) {
+            // Get profile image key from database or use default
+            const profileImgKey = dbDataBody.profile_img_key || "default";
             // Merge database data with local profile data
             const updatedProfile = {
               fullName:
@@ -115,13 +137,12 @@ const EditProfile = ({ navigation }) => {
                 ? new Date(currentUserProfile.dateOfBirth)
                 : null,
               gender: dbDataBody.gender || currentUserProfile.gender || "",
-              profileImage: currentUserProfile.profileImage || null,
+              profileImage: AVATAR_MAP[profileImgKey] || AVATAR_MAP["default"],
+              profileImageKey: profileImgKey,
             };
 
             setProfileData(updatedProfile);
-            if (updatedProfile.profileImage) {
-              setNewImage(updatedProfile.profileImage);
-            }
+            setNewImage(updatedProfile.profileImage);
 
             // Update AsyncStorage with fresh data
             await AsyncStorage.setItem(
@@ -130,6 +151,8 @@ const EditProfile = ({ navigation }) => {
             );
           } else {
             // Use stored data as fallback
+            const profileImgKey =
+              currentUserProfile.profileImageKey || "default";
             setProfileData({
               fullName: currentUserProfile.fullName || "",
               phone: currentUserProfile.phone || "",
@@ -138,12 +161,11 @@ const EditProfile = ({ navigation }) => {
                 ? new Date(currentUserProfile.dateOfBirth)
                 : null,
               gender: currentUserProfile.gender || "",
-              profileImage: currentUserProfile.profileImage || null,
+              profileImage: AVATAR_MAP[profileImgKey] || AVATAR_MAP["default"],
+              profileImageKey: profileImgKey,
             });
 
-            if (currentUserProfile.profileImage) {
-              setNewImage(currentUserProfile.profileImage);
-            }
+            setNewImage(AVATAR_MAP[profileImgKey] || AVATAR_MAP["default"]);
           }
         }
       } catch (error) {
@@ -208,22 +230,15 @@ const EditProfile = ({ navigation }) => {
     return isValid;
   };
 
-  // Pick image from gallery
-  const pickImage = async () => {
-    try {
-      let result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaType.Images,
-        allowsEditing: true,
-        aspect: [1, 1],
-        quality: 0.8,
-      });
-
-      if (!result.canceled) {
-        setNewImage(result.assets[0].uri);
-      }
-    } catch (error) {
-      Alert.alert("Error", "Failed to select image");
-    }
+  const selectAvatar = (avatarKey) => {
+    const selectedAvatar = AVATAR_MAP[avatarKey];
+    setNewImage(selectedAvatar);
+    setProfileData({
+      ...profileData,
+      profileImage: selectedAvatar,
+      profileImageKey: avatarKey,
+    });
+    setShowAvatarModal(false);
   };
 
   // Handle date picker
@@ -333,6 +348,7 @@ const EditProfile = ({ navigation }) => {
             gender: updatedProfile.gender,
             contact_number: updatedProfile.phone,
             home_address: updatedProfile.address,
+            profile_img_key: updatedProfile.profileImageKey,
           },
         }),
       });
@@ -460,24 +476,18 @@ const EditProfile = ({ navigation }) => {
             <TouchableWithoutFeedback onPress={handleUserInteraction}>
               <View style={styles.imageContainer}>
                 <Image
-                  source={
-                    newImage
-                      ? { uri: newImage }
-                      : profileData.profileImage
-                      ? { uri: profileData.profileImage }
-                      : defaultImage
-                  }
+                  source={newImage || AVATAR_MAP["default"]}
                   style={styles.profileImage}
                 />
                 <TouchableOpacity
-                  style={styles.cameraIcon}
+                  style={styles.avatarIcon}
                   onPress={() => {
                     resetTimer();
-                    pickImage();
+                    setShowAvatarModal(true);
                   }}
                 >
                   <View style={styles.iconCircle}>
-                    <Feather name="camera" size={22} color="#0C6478" />
+                    <Feather name="user" size={22} color="#0C6478" />
                   </View>
                 </TouchableOpacity>
               </View>
@@ -652,6 +662,59 @@ const EditProfile = ({ navigation }) => {
           </View>
         </View>
       </Modal>
+
+      {/* Avatar Selection Modal */}
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={showAvatarModal}
+        onRequestClose={() => setShowAvatarModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.avatarModalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Select Avatar</Text>
+              <TouchableOpacity
+                onPress={() => setShowAvatarModal(false)}
+                style={styles.closeButton}
+              >
+                <Ionicons name="close" size={24} color="#666" />
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView style={styles.avatarOptionsContainer}>
+              <View style={styles.avatarGrid}>
+                {AVATAR_OPTIONS.map((option) => (
+                  <TouchableOpacity
+                    key={option.key}
+                    style={[
+                      styles.avatarOption,
+                      profileData.profileImageKey === option.key &&
+                        styles.selectedAvatarOption,
+                    ]}
+                    onPress={() => selectAvatar(option.key)}
+                  >
+                    <Image
+                      source={AVATAR_MAP[option.key]}
+                      style={styles.avatarOptionImage}
+                    />
+                    <Text style={styles.avatarOptionText}>{option.label}</Text>
+                    {profileData.profileImageKey === option.key && (
+                      <View style={styles.selectedIndicator}>
+                        <Ionicons
+                          name="checkmark-circle"
+                          size={24}
+                          color="#35AFEA"
+                        />
+                      </View>
+                    )}
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 };
@@ -701,11 +764,13 @@ const styles = StyleSheet.create({
     borderRadius: 60,
     borderWidth: 3,
     borderColor: "#fff",
+    backgroundColor: "#f0f0f0",
   },
-  cameraIcon: {
+  avatarIcon: {
     position: "absolute",
     bottom: 0,
     right: "35%",
+    zIndex: 1,
   },
   iconCircle: {
     backgroundColor: "#fff",
@@ -719,6 +784,64 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
     elevation: 5,
+  },
+  avatarModalContent: {
+    backgroundColor: "white",
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    paddingTop: 20,
+    maxHeight: "80%",
+  },
+  avatarOptionsContainer: {
+    paddingHorizontal: 20,
+    paddingBottom: 20,
+  },
+  avatarGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "space-between",
+    paddingTop: 10,
+  },
+  avatarOption: {
+    width: "30%",
+    alignItems: "center",
+    marginBottom: 20,
+    padding: 10,
+    borderRadius: 15,
+    backgroundColor: "#f8f9fa",
+    position: "relative",
+  },
+  selectedAvatarOption: {
+    backgroundColor: "#E9F6FE",
+    borderWidth: 2,
+    borderColor: "#35AFEA",
+  },
+  avatarOptionImage: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    marginBottom: 8,
+    borderWidth: 2,
+    borderColor: "#ddd",
+  },
+  avatarOptionText: {
+    fontSize: 12,
+    color: "#333",
+    textAlign: "center",
+    fontWeight: "500",
+  },
+  selectedIndicator: {
+    position: "absolute",
+    top: -5,
+    right: -5,
+    backgroundColor: "#fff",
+    borderRadius: 12,
+    padding: 2,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 3,
+    elevation: 3,
   },
   inputLabel: {
     fontSize: 16,
