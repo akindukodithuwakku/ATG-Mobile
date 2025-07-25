@@ -77,7 +77,8 @@ const PasswordReset = ({ navigation }) => {
         "accessToken",
         "refreshToken",
         "tokenExpiry",
-        "userData",
+        "sessionString",
+        "userProfile",
       ];
       await Promise.all(
         keysToRemove.map((key) => AsyncStorage.removeItem(key))
