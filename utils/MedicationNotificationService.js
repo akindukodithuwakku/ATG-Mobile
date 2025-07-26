@@ -247,30 +247,36 @@ export const checkMedicationReminders = async () => {
     const now = new Date();
     const dueReminders = [];
 
-    reminders.forEach((reminder) => {
-      if (!reminder.isActive) return;
+    for (const reminder of reminders) {
+      if (!reminder.isActive) continue;
 
       const reminderTime = new Date(reminder.time);
       const timeDiff = now - reminderTime;
 
-      // Check if reminder is due (within 5 minutes of scheduled time)
-      if (timeDiff >= 0 && timeDiff <= 5 * 60 * 1000) {
-        dueReminders.push(reminder);
-      }
-    });
+      // Check if reminder is due (within 10 minutes of scheduled time)
+      if (timeDiff >= 0 && timeDiff <= 10 * 60 * 1000) {
+        // Check if medication was already taken for this schedule today
+        const alreadyTaken = await isMedicationAlreadyTaken(
+          reminder.medicationName,
+          reminder.scheduleType
+        );
 
-    // Send notifications for due reminders
-    for (const reminder of dueReminders) {
-      await addNotification(
-        `Time to take your medication: ${reminder.medicationName} (${reminder.dosage})`,
-        "warning",
-        {
-          type: "medication_reminder",
-          medicationName: reminder.medicationName,
-          dosage: reminder.dosage,
-          scheduleType: reminder.scheduleType,
+        if (!alreadyTaken) {
+          dueReminders.push(reminder);
+          
+          // Send notification for due reminder
+          await addNotification(
+            `Time to take your medication: ${reminder.medicationName} (${reminder.dosage})`,
+            "warning",
+            {
+              type: "medication_reminder",
+              medicationName: reminder.medicationName,
+              dosage: reminder.dosage,
+              scheduleType: reminder.scheduleType,
+            }
+          );
         }
-      );
+      }
     }
 
     return dueReminders;
@@ -337,8 +343,8 @@ export const checkRefillReminders = async () => {
 
 // Start medication monitoring service
 export const startMedicationMonitoring = () => {
-  // Check every minute for medication reminders
-  const medicationInterval = setInterval(checkMedicationReminders, 60000);
+  // Check every 10 minutes for medication reminders (600000ms = 10 minutes)
+  const medicationInterval = setInterval(checkMedicationReminders, 600000);
 
   // Check every hour for refill reminders
   const refillInterval = setInterval(checkRefillReminders, 3600000);
@@ -441,4 +447,108 @@ export const validateCustomFrequency = (frequencyText) => {
     intervalMinutes,
     description: `This will create reminders every ${Math.floor(intervalMinutes / 60)} hours and ${intervalMinutes % 60} minutes`
   };
+};
+
+// Storage key for medication taken records
+const MEDICATION_TAKEN_KEY = "@medication_taken";
+
+// Mark medication as taken
+export const markMedicationAsTaken = async (medicationName, dosage, scheduleType) => {
+  try {
+    // Get current taken records
+    const storedTaken = await AsyncStorage.getItem(MEDICATION_TAKEN_KEY);
+    const takenRecords = storedTaken ? JSON.parse(storedTaken) : [];
+    
+    // Create new taken record
+    const takenRecord = {
+      id: Date.now() + Math.random().toString(36).substr(2, 9),
+      medicationName,
+      dosage,
+      scheduleType,
+      takenAt: new Date().toISOString(),
+      date: new Date().toDateString()
+    };
+    
+    // Add to records
+    takenRecords.push(takenRecord);
+    
+    // Save updated records
+    await AsyncStorage.setItem(MEDICATION_TAKEN_KEY, JSON.stringify(takenRecords));
+    
+    // Add success notification
+    await addNotification(
+      `✓ ${medicationName} marked as taken`,
+      "success",
+      {
+        type: "medication_taken",
+        medicationName,
+        dosage,
+        scheduleType,
+        takenAt: takenRecord.takenAt
+      }
+    );
+    
+    return takenRecord;
+  } catch (error) {
+    console.error("Error marking medication as taken:", error);
+    throw error;
+  }
+};
+
+// Check if medication is already taken today for specific schedule
+export const isMedicationAlreadyTaken = async (medicationName, scheduleType) => {
+  try {
+    const storedTaken = await AsyncStorage.getItem(MEDICATION_TAKEN_KEY);
+    const takenRecords = storedTaken ? JSON.parse(storedTaken) : [];
+    
+    const today = new Date().toDateString();
+    
+    // Check if this medication and schedule was already taken today
+    const takenToday = takenRecords.find(record => 
+      record.medicationName === medicationName &&
+      record.scheduleType === scheduleType &&
+      record.date === today
+    );
+    
+    return !!takenToday;
+  } catch (error) {
+    console.error("Error checking if medication taken:", error);
+    return false;
+  }
+};
+
+// Get medication taken records
+export const getMedicationTakenRecords = async () => {
+  try {
+    const storedTaken = await AsyncStorage.getItem(MEDICATION_TAKEN_KEY);
+    return storedTaken ? JSON.parse(storedTaken) : [];
+  } catch (error) {
+    console.error("Error getting medication taken records:", error);
+    return [];
+  }
+};
+
+// Test function to manually trigger reminder check (useful for testing)
+export const testMedicationReminderCheck = async () => {
+  try {
+    console.log("Testing medication reminder check...");
+    const dueReminders = await checkMedicationReminders();
+    console.log(`Found ${dueReminders.length} due reminders`);
+    return dueReminders;
+  } catch (error) {
+    console.error("Error in test reminder check:", error);
+    return [];
+  }
+};
+
+// Clear all medication taken records (useful for testing)
+export const clearMedicationTakenRecords = async () => {
+  try {
+    await AsyncStorage.removeItem(MEDICATION_TAKEN_KEY);
+    await addNotification("Medication taken records cleared", "info");
+    return true;
+  } catch (error) {
+    console.error("Error clearing medication taken records:", error);
+    return false;
+  }
 };
