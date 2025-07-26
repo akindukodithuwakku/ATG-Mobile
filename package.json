@@ -23,6 +23,7 @@
     "aws-amplify": "^6.15.3",
     "expo": "~52.0.23",
     "expo-document-picker": "~13.0.3",
+    "expo-file-system": "~18.0.12",
     "expo-image-picker": "^16.0.6",
     "expo-linear-gradient": "~14.0.2",
     "expo-sharing": "~13.0.1",
