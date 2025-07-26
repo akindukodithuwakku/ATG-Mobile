@@ -11,6 +11,7 @@ import {
   useColorScheme,
   FlatList,
 } from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Picker } from "@react-native-picker/picker";
 import { Ionicons } from "@expo/vector-icons";
 import * as FileSystem from "expo-file-system";
@@ -18,8 +19,10 @@ import * as Sharing from "expo-sharing";
 import SideNavigationCN from "../Components/SideNavigationCN";
 import BottomNavigationCN from "../Components/BottomNavigationCN";
 
-const API_URL = "https://pbhcgeu119.execute-api.ap-south-1.amazonaws.com/dev/UploadDocumentHandler";
-const SIGNED_URL_API = "https://pbhcgeu119.execute-api.ap-south-1.amazonaws.com/dev/DocumentDownloadHandler";
+const API_URL =
+  "https://pbhcgeu119.execute-api.ap-south-1.amazonaws.com/dev/UploadDocumentHandler";
+const SIGNED_URL_API =
+  "https://pbhcgeu119.execute-api.ap-south-1.amazonaws.com/dev/DocumentDownloadHandler";
 
 const DocumentsCN = ({ navigation }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -27,19 +30,34 @@ const DocumentsCN = ({ navigation }) => {
   const [search, setSearch] = useState("");
   const [sortedBy, setSortedBy] = useState("Client");
   const [loading, setLoading] = useState(false);
+  const [careNavigatorId, setCareNavigatorId] = useState(null);
   const scheme = useColorScheme();
 
-  // Replace this with the actual logged-in care navigator ID
-  const careNavigatorId ='cn_alecbenjamin';
+  // Get care navigator ID when component mounts
+  useEffect(() => {
+    const getCareNavigatorId = async () => {
+      try {
+        const id = await AsyncStorage.getItem("appUser");
+        setCareNavigatorId(id);
+      } catch (error) {
+        console.error("Error getting care navigator ID:", error);
+      }
+    };
+    getCareNavigatorId();
+  }, []);
 
   useEffect(() => {
-    fetchDocuments();
-  }, [search]);
+    if (careNavigatorId) {
+      fetchDocuments();
+    }
+  }, [search, careNavigatorId]);
 
   const fetchDocuments = async () => {
     setLoading(true);
     try {
-      const url = `${API_URL}?careNavigatorId=${encodeURIComponent(careNavigatorId)}&search=${encodeURIComponent(search)}`;
+      const url = `${API_URL}?careNavigatorId=${encodeURIComponent(
+        careNavigatorId
+      )}&search=${encodeURIComponent(search)}`;
 
       const res = await fetch(url);
       if (!res.ok) throw new Error("Failed to fetch documents");
@@ -125,9 +143,13 @@ const DocumentsCN = ({ navigation }) => {
       case "Client":
         return [...filtered].sort((a, b) => a.name.localeCompare(b.name));
       case "File Name":
-        return [...filtered].sort((a, b) => a.fileName.localeCompare(b.fileName));
+        return [...filtered].sort((a, b) =>
+          a.fileName.localeCompare(b.fileName)
+        );
       case "Upload Date":
-        return [...filtered].sort((a, b) => new Date(a.uploadDate) - new Date(b.uploadDate));
+        return [...filtered].sort(
+          (a, b) => new Date(a.uploadDate) - new Date(b.uploadDate)
+        );
       default:
         return filtered;
     }
@@ -156,14 +178,21 @@ const DocumentsCN = ({ navigation }) => {
 
       <View style={styles.header}>
         <TouchableOpacity onPress={() => setIsMenuOpen(!isMenuOpen)}>
-          <Ionicons name={isMenuOpen ? "close" : "menu"} size={30} color="black" />
+          <Ionicons
+            name={isMenuOpen ? "close" : "menu"}
+            size={30}
+            color="black"
+          />
         </TouchableOpacity>
         <Text style={styles.headerText}>Documents</Text>
       </View>
 
       {isMenuOpen && (
         <View style={styles.overlay}>
-          <SideNavigationCN navigation={navigation} onClose={() => setIsMenuOpen(false)} />
+          <SideNavigationCN
+            navigation={navigation}
+            onClose={() => setIsMenuOpen(false)}
+          />
           <TouchableOpacity
             style={styles.overlayBackground}
             onPress={() => setIsMenuOpen(false)}
@@ -201,7 +230,11 @@ const DocumentsCN = ({ navigation }) => {
             <Text style={[styles.columnHeader, { flex: 3 }]}>File Name</Text>
             <Text style={[styles.columnHeader, { flex: 2 }]}>Upload Date</Text>
           </View>
-          <FlatList data={sorted} keyExtractor={(item) => item.id} renderItem={renderItem} />
+          <FlatList
+            data={sorted}
+            keyExtractor={(item) => item.id}
+            renderItem={renderItem}
+          />
         </View>
       )}
 

@@ -12,6 +12,7 @@ import {
   ActivityIndicator,
   Alert,
 } from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Ionicons } from "@expo/vector-icons";
 import SideNavigationClient from "../Components/SideNavigationClient";
 import BottomNavigationClient from "../Components/BottomNavigationClient";
@@ -20,10 +21,22 @@ const MedicationLogScreen = ({ navigation }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [logs, setLogs] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [clientUsername, setClientUsername] = useState(null);
   const scheme = useColorScheme();
   const menuAnimation = new Animated.Value(isMenuOpen ? 1 : 0);
 
-  const client_username = "testuser_01"; // Replace this dynamically if needed
+  // Get client username on component mount
+  useEffect(() => {
+    const getClientUsername = async () => {
+      try {
+        const username = await AsyncStorage.getItem("appUser");
+        setClientUsername(username);
+      } catch (error) {
+        console.error("Error getting client username:", error);
+      }
+    };
+    getClientUsername();
+  }, []);
 
   const toggleMenu = () => {
     Animated.timing(menuAnimation, {
@@ -35,9 +48,15 @@ const MedicationLogScreen = ({ navigation }) => {
   };
 
   const fetchMedicationLogs = async () => {
+    if (!clientUsername) {
+      console.log("Client username not available yet");
+      setLoading(false);
+      return;
+    }
+
     try {
       const response = await fetch(
-        `https://rsxn7kxzr6.execute-api.ap-south-1.amazonaws.com/prod/getMedicationLogs?client_username=${client_username}`
+        `https://rsxn7kxzr6.execute-api.ap-south-1.amazonaws.com/prod/getMedicationLogs?client_username=${clientUsername}`
       );
       const data = await response.json();
 
@@ -55,8 +74,10 @@ const MedicationLogScreen = ({ navigation }) => {
   };
 
   useEffect(() => {
-    fetchMedicationLogs();
-  }, []);
+    if (clientUsername) {
+      fetchMedicationLogs();
+    }
+  }, [clientUsername]);
 
   const formatDateTime = (datetimeString) => {
     if (!datetimeString) return "❌ Not Taken";
@@ -74,10 +95,11 @@ const MedicationLogScreen = ({ navigation }) => {
       <Text style={styles.medName}>{item.name || item.medication_name}</Text>
       <Text style={styles.detail}>💊 Dosage: {item.dosage}</Text>
       <Text style={styles.detail}>
-        🗓 Scheduled:{" "}
-        {formatDateTime(item.schedule_time || item.scheduled_time)}
+        🗓 Scheduled: {formatDateTime(item.schedule_time || item.scheduled_time)}
       </Text>
-      <Text style={styles.detail}>🕒 Taken: {formatDateTime(item.taken_time)}</Text>
+      <Text style={styles.detail}>
+        🕒 Taken: {formatDateTime(item.taken_time)}
+      </Text>
     </View>
   );
 
@@ -102,7 +124,10 @@ const MedicationLogScreen = ({ navigation }) => {
       {isMenuOpen && (
         <Animated.View style={[styles.overlay, { opacity: menuAnimation }]}>
           <SideNavigationClient navigation={navigation} onClose={toggleMenu} />
-          <TouchableOpacity style={styles.overlayBackground} onPress={toggleMenu} />
+          <TouchableOpacity
+            style={styles.overlayBackground}
+            onPress={toggleMenu}
+          />
         </Animated.View>
       )}
 
@@ -111,12 +136,16 @@ const MedicationLogScreen = ({ navigation }) => {
           <ActivityIndicator size="large" color="#00AEEF" />
         ) : logs.length === 0 ? (
           <View style={styles.emptyState}>
-            <Text style={styles.emptyText}>No medication intake history found.</Text>
+            <Text style={styles.emptyText}>
+              No medication intake history found.
+            </Text>
           </View>
         ) : (
           <FlatList
             data={logs}
-            keyExtractor={(item, index) => (item.id ? item.id.toString() : index.toString())}
+            keyExtractor={(item, index) =>
+              item.id ? item.id.toString() : index.toString()
+            }
             renderItem={renderLogItem}
             contentContainerStyle={styles.listContent}
           />

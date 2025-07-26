@@ -10,6 +10,7 @@ import {
   FlatList,
   ActivityIndicator,
 } from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import SideNavigationCN from "../Components/SideNavigationCN";
 import BottomNavigationCN from "../Components/BottomNavigationCN";
 import { Ionicons } from "@expo/vector-icons";
@@ -19,19 +20,37 @@ const MedicationMgtCN = ({ navigation }) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [medications, setMedications] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [careNavigatorUsername, setCareNavigatorUsername] = useState(null);
   const scheme = useColorScheme();
 
-  const care_navigator_username = "cn_alecbenjamin"; // 🔒 Hardcoded ID
+  // Get care navigator username on component mount
+  useEffect(() => {
+    const getCareNavigatorUsername = async () => {
+      try {
+        const username = await AsyncStorage.getItem("appUser");
+        setCareNavigatorUsername(username);
+      } catch (error) {
+        console.error("Error getting care navigator username:", error);
+      }
+    };
+    getCareNavigatorUsername();
+  }, []);
 
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
   };
 
   const fetchMedications = async () => {
+    if (!careNavigatorUsername) {
+      console.log("Care navigator username not available yet");
+      setLoading(false);
+      return;
+    }
+
     try {
       setLoading(true);
       const response = await fetch(
-        `https://rsxn7kxzr6.execute-api.ap-south-1.amazonaws.com/dev/viewMedications?care_navigator_id=${care_navigator_username}`
+        `https://rsxn7kxzr6.execute-api.ap-south-1.amazonaws.com/dev/viewMedications?care_navigator_id=${careNavigatorUsername}`
       );
       const result = await response.json();
       const sortedData = (result.medications || []).sort((a, b) =>
@@ -46,13 +65,16 @@ const MedicationMgtCN = ({ navigation }) => {
   };
 
   useEffect(() => {
-    fetchMedications();
-  }, []);
+    if (careNavigatorUsername) {
+      fetchMedications();
+    }
+  }, [careNavigatorUsername]);
 
   const filteredMedications = medications.filter(
     (med) =>
       med.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (med.full_name && med.full_name.toLowerCase().includes(searchQuery.toLowerCase()))
+      (med.full_name &&
+        med.full_name.toLowerCase().includes(searchQuery.toLowerCase()))
   );
 
   return (
@@ -65,7 +87,11 @@ const MedicationMgtCN = ({ navigation }) => {
 
       <View style={styles.header}>
         <TouchableOpacity onPress={toggleMenu}>
-          <Ionicons name={isMenuOpen ? "close" : "menu"} size={30} color="black" />
+          <Ionicons
+            name={isMenuOpen ? "close" : "menu"}
+            size={30}
+            color="black"
+          />
         </TouchableOpacity>
         <Text style={styles.headerText}>View Medication Management</Text>
       </View>
@@ -73,7 +99,10 @@ const MedicationMgtCN = ({ navigation }) => {
       {isMenuOpen && (
         <View style={styles.overlay}>
           <SideNavigationCN navigation={navigation} onClose={toggleMenu} />
-          <TouchableOpacity style={styles.overlayBackground} onPress={toggleMenu} />
+          <TouchableOpacity
+            style={styles.overlayBackground}
+            onPress={toggleMenu}
+          />
         </View>
       )}
 
@@ -87,7 +116,11 @@ const MedicationMgtCN = ({ navigation }) => {
       </View>
 
       {loading ? (
-        <ActivityIndicator size="large" color="#00AEEF" style={{ marginTop: 50 }} />
+        <ActivityIndicator
+          size="large"
+          color="#00AEEF"
+          style={{ marginTop: 50 }}
+        />
       ) : (
         <FlatList
           data={filteredMedications}
@@ -103,16 +136,24 @@ const MedicationMgtCN = ({ navigation }) => {
           renderItem={({ item }) => (
             <View style={{ marginBottom: 10 }}>
               <View style={styles.medicationRow}>
-                <Text style={[styles.medicationText, { flex: 2 }]}>{item.name}</Text>
-                <Text style={[styles.medicationText, { flex: 1 }]}>{item.dosage}</Text>
-                <Text style={[styles.medicationText, { flex: 2 }]}>{item.schedule_time}</Text>
+                <Text style={[styles.medicationText, { flex: 2 }]}>
+                  {item.name}
+                </Text>
+                <Text style={[styles.medicationText, { flex: 1 }]}>
+                  {item.dosage}
+                </Text>
+                <Text style={[styles.medicationText, { flex: 2 }]}>
+                  {item.schedule_time}
+                </Text>
                 <Text style={[styles.medicationText, { flex: 1 }]}>
                   {item.refill_date?.split("T")[0]}
                 </Text>
               </View>
 
               <View style={styles.card}>
-                <Text style={styles.cardLabel}>Client: {item.full_name || "Unknown"}</Text>
+                <Text style={styles.cardLabel}>
+                  Client: {item.full_name || "Unknown"}
+                </Text>
                 <Text style={styles.cardLabel}>Taken Time:</Text>
                 <Text style={styles.cardText}>
                   {item.taken_time

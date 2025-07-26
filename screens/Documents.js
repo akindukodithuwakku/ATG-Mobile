@@ -11,6 +11,7 @@ import {
   Alert,
   ActivityIndicator,
 } from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Ionicons } from "@expo/vector-icons";
 import * as DocumentPicker from "expo-document-picker";
 import SideNavigationClient from "../Components/SideNavigationClient";
@@ -47,9 +48,9 @@ const DocumentUpload = ({ navigation }) => {
   };
 
   const uploadDocument = (uri, name) => {
-    return new Promise((resolve, reject) => {
+    return new Promise(async (resolve, reject) => {
       try {
-       const clientUsername = "kavindya_02"; // or fetch dynamically if you have auth
+        const clientUsername = await AsyncStorage.getItem("appUser"); // or fetch dynamically if you have auth
         setUploadingFiles((prev) => ({
           ...prev,
           [name]: { progress: 0 },

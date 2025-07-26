@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -12,6 +12,7 @@ import {
   Alert,
   Platform,
 } from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import CheckBox from "react-native-check-box";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { Ionicons } from "@expo/vector-icons";
@@ -53,7 +54,7 @@ const MedicationMgtClient = ({ navigation }) => {
   const menuAnimation = new Animated.Value(isMenuOpen ? 1 : 0);
 
   // Start medication monitoring when component mounts
-  React.useEffect(() => {
+  useEffect(() => {
     const cleanup = startMedicationMonitoring();
     return cleanup;
   }, []);
@@ -160,7 +161,9 @@ const MedicationMgtClient = ({ navigation }) => {
     setErrors(newErrors);
     if (hasError) return;
 
-    const client_username = "testuser_01";
+    // Get the client username from AsyncStorage
+
+    const client_username = await AsyncStorage.getItem("appUser");
 
     for (let med of medications) {
       try {
