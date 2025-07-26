@@ -13,7 +13,7 @@ exports.handler = async (event) => {
       database: process.env.DB_NAME || 'atghealthcare',
     });
 
-    // Get client username from query string
+    // Get client username from query string parameters
     const clientUsername = event.queryStringParameters?.client_username;
 
     if (!clientUsername) {
@@ -24,11 +24,12 @@ exports.handler = async (event) => {
       };
     }
 
-    // Query care plans for the client
+    // Query care plans for the client (select only required columns)
     const query = `
-      SELECT id, actions, care_navigator_username, date_created
+      SELECT care_plan_name, date_created, status
       FROM care_plans
       WHERE client_username = ?
+      ORDER BY date_created DESC
     `;
 
     const [rows] = await connection.execute(query, [clientUsername]);
@@ -36,7 +37,7 @@ exports.handler = async (event) => {
     return {
       statusCode: 200,
       headers: { "Access-Control-Allow-Origin": "*" },
-      body: JSON.stringify({ data: rows }),
+      body: JSON.stringify({ care_plans: rows }),
     };
 
   } catch (error) {

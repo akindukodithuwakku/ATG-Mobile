@@ -8,29 +8,37 @@ import {
   StatusBar,
   ActivityIndicator,
   useColorScheme,
-  ScrollView
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import BottomNavigationCN from '../Components/BottomNavigationCN';
 import SideNavigationCN from '../Components/SideNavigationCN';
 
-const CNCarePlansScreen = ({ route, navigation }) => {
+const CNCarePlansScreen = ({ navigation }) => {
   const [plans, setPlans] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isSideNavVisible, setIsSideNavVisible] = useState(false);
   const scheme = useColorScheme();
 
-  const careNavigatorUsername = route?.params?.username || 'cn_alecbenjamin';
+  // Hardcoded care navigator username
+  const careNavigatorUsername = 'cn_alecbenjamin';
 
   const fetchCarePlans = async () => {
     try {
       const response = await fetch(
-        `https://sue7dsbf09.execute-api.ap-south-1.amazonaws.com/dev/getcareplansbyCN?care_navigator_username=${careNavigatorUsername}`
+        `https://sue7dsbf09.execute-api.ap-south-1.amazonaws.com/dev/getcareplansbyCN?care_navigator_username=${careNavigatorUsername}`,
+        {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }
       );
       const json = await response.json();
-      setPlans(json.data || []);
+      console.log('API Response:', json);
+      setPlans(json.care_plans || []);
     } catch (error) {
       console.error('Fetch error:', error);
+      setPlans([]);
     } finally {
       setLoading(false);
     }
@@ -40,26 +48,31 @@ const CNCarePlansScreen = ({ route, navigation }) => {
     fetchCarePlans();
   }, []);
 
-const renderPlan = ({ item }) => (
-  <TouchableOpacity
-    style={styles.planCard}
-    onPress={() =>
-      navigation.navigate('CarePlanMgtCN', {
-        carePlanId: item.id,
-        clientUsername: item.client_username,
-        carePlanName: item.actions,
-        dateCreated: item.date_created,
-      })
-    }
-  >
-    <Text style={styles.planTitle}>{item.actions || 'No Care Plan Name'}</Text>
-    <Text style={styles.planDesc}>Client: {item.client_username}</Text>
-    <Text style={styles.planDate}>
-      Created: {item.date_created ? new Date(item.date_created).toLocaleDateString() : 'N/A'}
-    </Text>
-  </TouchableOpacity>
-);
+  const renderPlan = ({ item }) => {
+    const key = item.id || `${item.client_username}_${item.date_created}`;
 
+    return (
+      <TouchableOpacity
+        key={key}
+        style={styles.planCard}
+        onPress={() =>
+          navigation.navigate('CarePlanMgtCN', {
+            carePlanId: item.id,
+            clientUsername: item.client_username,
+            carePlanName: item.care_plan_name,
+            dateCreated: item.date_created,
+          })
+        }
+      >
+        <Text style={styles.planTitle}>{item.care_plan_name || 'Unnamed Plan'}</Text>
+        <Text style={styles.planClient}>Client: {item.client_username || 'N/A'}</Text>
+        <Text style={styles.planStatus}>Status: {item.status || 'N/A'}</Text>
+        <Text style={styles.planDate}>
+          Created: {item.date_created ? new Date(item.date_created).toLocaleDateString() : 'N/A'}
+        </Text>
+      </TouchableOpacity>
+    );
+  };
 
   return (
     <View style={styles.container}>
@@ -81,7 +94,7 @@ const renderPlan = ({ item }) => (
         <SideNavigationCN navigation={navigation} onClose={() => setIsSideNavVisible(false)} />
       )}
 
-      <ScrollView contentContainerStyle={styles.body}>
+      <View style={styles.body}>
         {loading ? (
           <ActivityIndicator size="large" color="#00BCD4" />
         ) : plans.length === 0 ? (
@@ -89,12 +102,14 @@ const renderPlan = ({ item }) => (
         ) : (
           <FlatList
             data={plans}
-            keyExtractor={(item) => item.id.toString()}
+            keyExtractor={(item, index) =>
+              item.id ? item.id.toString() : `${item.client_username}_${item.date_created}_${index}`
+            }
             renderItem={renderPlan}
             contentContainerStyle={styles.listContent}
           />
         )}
-      </ScrollView>
+      </View>
 
       <BottomNavigationCN navigation={navigation} />
     </View>
@@ -116,7 +131,7 @@ const styles = StyleSheet.create({
     color: 'white',
     marginLeft: 20,
   },
-  body: { padding: 20, paddingBottom: 100 },
+  body: { flex: 1, padding: 20, paddingBottom: 100 },
   emptyText: {
     fontSize: 16,
     textAlign: 'center',
@@ -135,7 +150,8 @@ const styles = StyleSheet.create({
     elevation: 6,
   },
   planTitle: { fontSize: 18, fontWeight: 'bold', color: '#333' },
-  planDesc: { fontSize: 15, color: '#666', marginVertical: 5 },
+  planClient: { fontSize: 15, color: '#444', marginVertical: 4 },
+  planStatus: { fontSize: 14, color: '#555', marginVertical: 6 },
   planDate: { fontSize: 13, color: '#999' },
   listContent: { paddingBottom: 60 },
 });

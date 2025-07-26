@@ -28,7 +28,7 @@ const ClientCarePlansScreen = ({ route, navigation }) => {
         `https://sue7dsbf09.execute-api.ap-south-1.amazonaws.com/dev/getcareplansbyClient?client_username=${clientUsername}`
       );
       const json = await response.json();
-      setPlans(json.data || []);
+      setPlans(json.care_plans || []);
     } catch (error) {
       console.error('Error fetching client care plans:', error);
     } finally {
@@ -40,25 +40,30 @@ const ClientCarePlansScreen = ({ route, navigation }) => {
     fetchCarePlans();
   }, []);
 
-  const renderPlan = ({ item }) => (
-    <TouchableOpacity
-      style={styles.planCard}
-      onPress={() =>
-        navigation.navigate('CarePlanMgtClient', {
-          carePlanId: item.id,
-          clientUsername: clientUsername,
-          carePlanName: item.actions,
-          dateCreated: item.date_created,
-        })
-      }
-    >
-      <Text style={styles.planTitle}>{item.actions || 'Unnamed Plan'}</Text>
-      <Text style={styles.planDesc}>Care Navigator: {item.care_navigator_username}</Text>
-      <Text style={styles.planDate}>
-        Created: {item.date_created ? new Date(item.date_created).toLocaleDateString() : 'N/A'}
-      </Text>
-    </TouchableOpacity>
-  );
+  const renderPlan = ({ item }) => {
+    if (!item) return null; // defensive check
+
+    return (
+      <TouchableOpacity
+        style={styles.planCard}
+        onPress={() =>
+          navigation.navigate('CarePlanMgtClient', {
+            carePlanId: item.id,
+            clientUsername: clientUsername,
+            carePlanName: item.care_plan_name,
+            dateCreated: item.date_created,
+            status: item.status,
+          })
+        }
+      >
+        <Text style={styles.planTitle}>{item.care_plan_name || 'Unnamed Plan'}</Text>
+        <Text style={styles.planDesc}>Status: {item.status || 'N/A'}</Text>
+        <Text style={styles.planDate}>
+          Created: {item.date_created ? new Date(item.date_created).toLocaleDateString() : 'N/A'}
+        </Text>
+      </TouchableOpacity>
+    );
+  };
 
   return (
     <View style={styles.container}>
@@ -88,7 +93,7 @@ const ClientCarePlansScreen = ({ route, navigation }) => {
         ) : (
           <FlatList
             data={plans}
-            keyExtractor={(item) => item.id.toString()}
+            keyExtractor={(item, index) => (item?.id ? item.id.toString() : index.toString())}
             renderItem={renderPlan}
             contentContainerStyle={styles.listContent}
           />
