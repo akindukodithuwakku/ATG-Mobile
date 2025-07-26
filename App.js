@@ -62,7 +62,7 @@ import AddTaskScreen from "./screens/AddTaskScreen";
 import UpdateTaskScreen from "./screens/UpdateTaskScreen";
 import Task from "./screens/Task";
 import CNCarePlansScreen from "./screens/CNCarePlansScreen";
-import AdditionalDetailsScreen from "./screens/AdditionalDetailsScreen";
+
 import ClientCarePlansScreen from "./screens/ClientCarePlansScreen";
 
 // Notification Screens
@@ -75,7 +75,7 @@ import Documents from "./screens/Documents";
 import DocumentsCN from "./screens/DocumentsCN";
 
 // Auto Logout
-import AutomaticLogoutScreen from "./screens/AutoLogout";
+import { AutomaticLogoutScreen } from "./screens/AutoLogout";
 
 // Context Providers
 import { LogoutProvider } from "./context/LogoutContext";
