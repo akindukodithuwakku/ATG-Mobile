@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -8,11 +8,10 @@ import {
   StatusBar,
   ActivityIndicator,
   useColorScheme,
-  ScrollView
-} from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import BottomNavigationCN from '../Components/BottomNavigationCN';
-import SideNavigationCN from '../Components/SideNavigationCN';
+} from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import BottomNavigationCN from "../Components/BottomNavigationCN";
+import SideNavigationCN from "../Components/SideNavigationCN";
 
 const CNCarePlansScreen = ({ route, navigation }) => {
   const [plans, setPlans] = useState([]);
@@ -20,7 +19,7 @@ const CNCarePlansScreen = ({ route, navigation }) => {
   const [isSideNavVisible, setIsSideNavVisible] = useState(false);
   const scheme = useColorScheme();
 
-  const careNavigatorUsername = route?.params?.username || 'cn_alecbenjamin';
+  const careNavigatorUsername = route?.params?.username || "cn_alecbenjamin";
 
   const fetchCarePlans = async () => {
     try {
@@ -30,7 +29,7 @@ const CNCarePlansScreen = ({ route, navigation }) => {
       const json = await response.json();
       setPlans(json.data || []);
     } catch (error) {
-      console.error('Fetch error:', error);
+      console.error("Fetch error:", error);
     } finally {
       setLoading(false);
     }
@@ -40,61 +39,85 @@ const CNCarePlansScreen = ({ route, navigation }) => {
     fetchCarePlans();
   }, []);
 
-const renderPlan = ({ item }) => (
-  <TouchableOpacity
-    style={styles.planCard}
-    onPress={() =>
-      navigation.navigate('CarePlanMgtCN', {
-        carePlanId: item.id,
-        clientUsername: item.client_username,
-        carePlanName: item.actions,
-        dateCreated: item.date_created,
-      })
-    }
-  >
-    <Text style={styles.planTitle}>{item.actions || 'No Care Plan Name'}</Text>
-    <Text style={styles.planDesc}>Client: {item.client_username}</Text>
-    <Text style={styles.planDate}>
-      Created: {item.date_created ? new Date(item.date_created).toLocaleDateString() : 'N/A'}
-    </Text>
-  </TouchableOpacity>
-);
+  const renderPlan = ({ item }) => (
+    <TouchableOpacity
+      style={styles.planCard}
+      onPress={() =>
+        navigation.navigate("CarePlanMgtCN", {
+          carePlanId: item.id,
+          clientUsername: item.client_username,
+          carePlanName: item.actions,
+          dateCreated: item.date_created,
+        })
+      }
+    >
+      <Text style={styles.planTitle}>
+        {item.actions || "No Care Plan Name"}
+      </Text>
+      <Text style={styles.planDesc}>Client: {item.client_username}</Text>
+      <Text style={styles.planDate}>
+        Created:{" "}
+        {item.date_created
+          ? new Date(item.date_created).toLocaleDateString()
+          : "N/A"}
+      </Text>
+    </TouchableOpacity>
+  );
 
+  const renderEmptyComponent = () => (
+    <View style={styles.emptyContainer}>
+      <Text style={styles.emptyText}>No care plans assigned yet.</Text>
+    </View>
+  );
+
+  const renderLoadingComponent = () => (
+    <View style={styles.loadingContainer}>
+      <ActivityIndicator size="large" color="#00BCD4" />
+    </View>
+  );
 
   return (
     <View style={styles.container}>
       <StatusBar
-        barStyle={scheme === 'dark' ? 'light-content' : 'dark-content'}
+        barStyle={scheme === "dark" ? "light-content" : "dark-content"}
         translucent
-        backgroundColor={scheme === 'dark' ? 'black' : 'transparent'}
+        backgroundColor={scheme === "dark" ? "black" : "transparent"}
       />
 
       {/* Header with Side Nav Toggle */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => setIsSideNavVisible(!isSideNavVisible)}>
+        <TouchableOpacity
+          onPress={() => setIsSideNavVisible(!isSideNavVisible)}
+        >
           <Ionicons name="menu" size={28} color="white" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Assigned Care Plans</Text>
       </View>
 
       {isSideNavVisible && (
-        <SideNavigationCN navigation={navigation} onClose={() => setIsSideNavVisible(false)} />
+        <SideNavigationCN
+          navigation={navigation}
+          onClose={() => setIsSideNavVisible(false)}
+        />
       )}
 
-      <ScrollView contentContainerStyle={styles.body}>
+      {/* Main Content */}
+      <View style={styles.body}>
         {loading ? (
-          <ActivityIndicator size="large" color="#00BCD4" />
-        ) : plans.length === 0 ? (
-          <Text style={styles.emptyText}>No care plans assigned yet.</Text>
+          renderLoadingComponent()
         ) : (
           <FlatList
             data={plans}
-            keyExtractor={(item) => item.id.toString()}
+            keyExtractor={(item) =>
+              item.id ? item.id.toString() : Math.random().toString()
+            }
             renderItem={renderPlan}
             contentContainerStyle={styles.listContent}
+            ListEmptyComponent={renderEmptyComponent}
+            showsVerticalScrollIndicator={false}
           />
         )}
-      </ScrollView>
+      </View>
 
       <BottomNavigationCN navigation={navigation} />
     </View>
@@ -102,42 +125,72 @@ const renderPlan = ({ item }) => (
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#E0F7FA' },
+  container: {
+    flex: 1,
+    backgroundColor: "#E0F7FA",
+  },
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     padding: 15,
     paddingTop: 40,
-    backgroundColor: '#00BCD4',
+    backgroundColor: "#00BCD4",
   },
   headerTitle: {
     fontSize: 20,
-    fontWeight: 'bold',
-    color: 'white',
+    fontWeight: "bold",
+    color: "white",
     marginLeft: 20,
   },
-  body: { padding: 20, paddingBottom: 100 },
+  body: {
+    flex: 1,
+    padding: 20,
+    paddingBottom: 100,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    marginTop: 40,
+  },
   emptyText: {
     fontSize: 16,
-    textAlign: 'center',
-    marginTop: 40,
-    color: '#777',
+    textAlign: "center",
+    color: "#777",
   },
   planCard: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: "#FFFFFF",
     padding: 16,
     borderRadius: 15,
     marginBottom: 12,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.15,
     shadowRadius: 4,
     elevation: 6,
   },
-  planTitle: { fontSize: 18, fontWeight: 'bold', color: '#333' },
-  planDesc: { fontSize: 15, color: '#666', marginVertical: 5 },
-  planDate: { fontSize: 13, color: '#999' },
-  listContent: { paddingBottom: 60 },
+  planTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "#333",
+  },
+  planDesc: {
+    fontSize: 15,
+    color: "#666",
+    marginVertical: 5,
+  },
+  planDate: {
+    fontSize: 13,
+    color: "#999",
+  },
+  listContent: {
+    paddingBottom: 60,
+  },
 });
 
 export default CNCarePlansScreen;

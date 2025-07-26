@@ -131,7 +131,9 @@ const MarkMedicationTakenScreen = ({ navigation }) => {
     <View style={styles.card}>
       <Text style={styles.medName}>{item.name}</Text>
       <Text style={styles.detail}>💊 Dosage: {item.dosage}</Text>
-      <Text style={styles.detail}>🕒 Schedule: {formatSchedule(item.schedule_time)}</Text>
+      <Text style={styles.detail}>
+        🕒 Schedule: {formatSchedule(item.schedule_time)}
+      </Text>
 
       {!item.taken ? (
         <TouchableOpacity
@@ -173,7 +175,10 @@ const MarkMedicationTakenScreen = ({ navigation }) => {
       {isMenuOpen && (
         <Animated.View style={[styles.overlay, { opacity: menuAnimation }]}>
           <SideNavigationClient navigation={navigation} onClose={toggleMenu} />
-          <TouchableOpacity style={styles.overlayBackground} onPress={toggleMenu} />
+          <TouchableOpacity
+            style={styles.overlayBackground}
+            onPress={toggleMenu}
+          />
         </Animated.View>
       )}
 
@@ -187,7 +192,9 @@ const MarkMedicationTakenScreen = ({ navigation }) => {
         ) : (
           <FlatList
             data={medications}
-            keyExtractor={(item) => item.id.toString()}
+            keyExtractor={(item) =>
+              item.id ? item.id.toString() : Math.random().toString()
+            }
             renderItem={renderMedItem}
             contentContainerStyle={styles.listContent}
           />

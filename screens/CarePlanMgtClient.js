@@ -1,23 +1,42 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState } from "react";
 import {
-  View, Text, TextInput, FlatList, StyleSheet,
-  TouchableOpacity, StatusBar, ActivityIndicator, ScrollView
-} from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { useIsFocused } from '@react-navigation/native';
+  View,
+  Text,
+  TextInput,
+  FlatList,
+  StyleSheet,
+  TouchableOpacity,
+  StatusBar,
+  ActivityIndicator,
+  ScrollView,
+} from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import { useIsFocused } from "@react-navigation/native";
 import BottomNavigationClient from "../Components/BottomNavigationClient";
-import SideNavigationClient from '../Components/SideNavigationClient';
-import ArticleCard from '../Components/ArticleCard';
-import TimelineItemClient from '../Components/TimelineItemClient';
+import SideNavigationClient from "../Components/SideNavigationClient";
+import ArticleCard from "../Components/ArticleCard";
+import TimelineItemClient from "../Components/TimelineItemClient";
 
-const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-  'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+const MONTHS = [
+  "Jan",
+  "Feb",
+  "Mar",
+  "Apr",
+  "May",
+  "Jun",
+  "Jul",
+  "Aug",
+  "Sep",
+  "Oct",
+  "Nov",
+  "Dec",
+];
 
 const CarePlanClientScreen = ({ route, navigation }) => {
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
-  const [searchText, setSearchText] = useState('');
+  const [searchText, setSearchText] = useState("");
   const [isSideNavVisible, setIsSideNavVisible] = useState(false);
 
   // Get carePlanId from route params, fallback to 2 if not passed
@@ -31,7 +50,9 @@ const CarePlanClientScreen = ({ route, navigation }) => {
         `https://sue7dsbf09.execute-api.ap-south-1.amazonaws.com/dev/tasks?care_plan_id=${carePlanId}`
       );
       const result = await response.json();
-      const sortedTasks = (result.data || []).sort((a, b) => new Date(a.start) - new Date(b.start));
+      const sortedTasks = (result.data || []).sort(
+        (a, b) => new Date(a.start) - new Date(b.start)
+      );
       setTasks(sortedTasks);
     } catch (error) {
       console.error("Error fetching tasks:", error);
@@ -48,15 +69,23 @@ const CarePlanClientScreen = ({ route, navigation }) => {
   }, [isFocused, carePlanId]);
 
   const articleData = [
-    { id: '1', type: 'Article', duration: '5 min', title: 'What is a care plan?' },
+    {
+      id: "1",
+      type: "Article",
+      duration: "5 min",
+      title: "What is a care plan?",
+    },
   ];
 
-  const filteredTasks = tasks.filter(task => {
+  const filteredTasks = tasks.filter((task) => {
     if (!task.start) return false;
-    const taskDate = new Date(task.start.replace(' ', 'T'));
+    const taskDate = new Date(task.start.replace(" ", "T"));
     const matchesMonth = taskDate.getMonth() === selectedMonth;
-    const taskDateString = task.start.split(' ')[0];
-    return matchesMonth && (searchText.trim() === '' || taskDateString.includes(searchText.trim()));
+    const taskDateString = task.start.split(" ")[0];
+    return (
+      matchesMonth &&
+      (searchText.trim() === "" || taskDateString.includes(searchText.trim()))
+    );
   });
 
   const renderTaskItem = ({ item, index }) => (
@@ -71,7 +100,7 @@ const CarePlanClientScreen = ({ route, navigation }) => {
       onEdit={null} // Clients cannot edit
       onDelete={null} // Clients cannot delete
       onMarkComplete={() => {
-        navigation.navigate('TaskScreen', {
+        navigation.navigate("TaskScreen", {
           taskId: item.id,
           taskTitle: item.title,
           taskDescription: item.description,
@@ -92,7 +121,7 @@ const CarePlanClientScreen = ({ route, navigation }) => {
       <View style={styles.header}>
         <TouchableOpacity
           onPress={() => setIsSideNavVisible(!isSideNavVisible)}
-          style={{ position: 'absolute', left: 20, top: 45, zIndex: 10 }}
+          style={{ position: "absolute", left: 20, top: 45, zIndex: 10 }}
         >
           <Ionicons name="menu" size={28} color="white" />
         </TouchableOpacity>
@@ -102,7 +131,10 @@ const CarePlanClientScreen = ({ route, navigation }) => {
 
       {/* Side Navigation */}
       {isSideNavVisible && (
-        <SideNavigationClient navigation={navigation} onClose={() => setIsSideNavVisible(false)} />
+        <SideNavigationClient
+          navigation={navigation}
+          onClose={() => setIsSideNavVisible(false)}
+        />
       )}
 
       <ScrollView contentContainerStyle={{ paddingBottom: 120 }}>
@@ -112,10 +144,10 @@ const CarePlanClientScreen = ({ route, navigation }) => {
             data={articleData}
             horizontal
             showsHorizontalScrollIndicator={false}
-            keyExtractor={item => item.id}
+            keyExtractor={(item) => item.id}
             contentContainerStyle={{ paddingHorizontal: 10 }}
             renderItem={({ item }) => (
-              <View style={{ minHeight: 180, justifyContent: 'center' }}>
+              <View style={{ minHeight: 180, justifyContent: "center" }}>
                 <ArticleCard
                   title={item.title}
                   duration={item.duration}
@@ -134,10 +166,18 @@ const CarePlanClientScreen = ({ route, navigation }) => {
           {MONTHS.map((m, idx) => (
             <TouchableOpacity
               key={m}
-              style={[styles.monthButton, selectedMonth === idx && styles.monthButtonSelected]}
+              style={[
+                styles.monthButton,
+                selectedMonth === idx && styles.monthButtonSelected,
+              ]}
               onPress={() => setSelectedMonth(idx)}
             >
-              <Text style={[styles.monthButtonText, selectedMonth === idx && styles.monthButtonTextSelected]}>
+              <Text
+                style={[
+                  styles.monthButtonText,
+                  selectedMonth === idx && styles.monthButtonTextSelected,
+                ]}
+              >
                 {m}
               </Text>
             </TouchableOpacity>
@@ -145,7 +185,12 @@ const CarePlanClientScreen = ({ route, navigation }) => {
         </View>
 
         <View style={styles.searchContainer}>
-          <Ionicons name="search" size={20} color="#B3E5FC" style={styles.searchIcon} />
+          <Ionicons
+            name="search"
+            size={20}
+            color="#B3E5FC"
+            style={styles.searchIcon}
+          />
           <TextInput
             style={styles.searchInput}
             placeholder="Search by date (YYYY-MM-DD)..."
@@ -160,9 +205,13 @@ const CarePlanClientScreen = ({ route, navigation }) => {
           <FlatList
             data={filteredTasks}
             renderItem={renderTaskItem}
-            keyExtractor={item => item.id.toString()}
+            keyExtractor={(item) =>
+              item.id ? item.id.toString() : Math.random().toString()
+            }
             ListEmptyComponent={
-              <Text style={{ textAlign: 'center', marginTop: 20, color: '#888' }}>
+              <Text
+                style={{ textAlign: "center", marginTop: 20, color: "#888" }}
+              >
                 No tasks found for this month.
               </Text>
             }
@@ -178,72 +227,78 @@ const CarePlanClientScreen = ({ route, navigation }) => {
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F8FDFF' },
+  container: { flex: 1, backgroundColor: "#F8FDFF" },
   header: {
     paddingTop: 40,
     paddingBottom: 10,
     paddingHorizontal: 20,
-    backgroundColor: '#00BCD4',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: "#00BCD4",
+    justifyContent: "center",
+    alignItems: "center",
   },
   headerTitle: {
     fontSize: 24,
-    fontWeight: 'bold',
-    color: '#fff',
+    fontWeight: "bold",
+    color: "#fff",
   },
   headerSubtitle: {
     fontSize: 16,
-    color: '#fff',
+    color: "#fff",
     marginTop: 4,
   },
   taskHeader: {
     fontSize: 20,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     paddingHorizontal: 20,
     marginTop: 10,
     marginBottom: 5,
-    color: '#0a0efff3',
+    color: "#0a0efff3",
   },
   monthRow: {
-    flexDirection: 'row',
-    justifyContent: 'center',
+    flexDirection: "row",
+    justifyContent: "center",
     marginVertical: 10,
-    flexWrap: 'wrap',
+    flexWrap: "wrap",
   },
   monthButton: {
     paddingVertical: 6,
     paddingHorizontal: 12,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: '#00BCD4',
+    borderColor: "#00BCD4",
     marginHorizontal: 4,
     marginBottom: 4,
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
   },
   monthButtonSelected: {
-    backgroundColor: '#00BCD4',
+    backgroundColor: "#00BCD4",
   },
   monthButtonText: {
-    color: '#00BCD4',
-    fontWeight: 'bold',
+    color: "#00BCD4",
+    fontWeight: "bold",
   },
   monthButtonTextSelected: {
-    color: '#fff',
+    color: "#fff",
   },
   searchContainer: {
-    flexDirection: 'row', alignItems: 'center', width: '100%', height: 60,
-    marginTop: 0, marginBottom: 10, backgroundColor: '#00BCD4', paddingHorizontal: 10,
+    flexDirection: "row",
+    alignItems: "center",
+    width: "100%",
+    height: 60,
+    marginTop: 0,
+    marginBottom: 10,
+    backgroundColor: "#00BCD4",
+    paddingHorizontal: 10,
   },
   searchInput: {
     height: 40,
     flex: 1,
-    borderColor: '#CCCCCC',
+    borderColor: "#CCCCCC",
     borderWidth: 2,
     borderRadius: 10,
     paddingHorizontal: 10,
-    backgroundColor: '#E0F7FA',
-    color: '#000',
+    backgroundColor: "#E0F7FA",
+    color: "#000",
   },
   searchIcon: {
     marginRight: 10,

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import {
   View,
   Text,
@@ -95,27 +95,32 @@ export const SignUpScreen = ({ navigation }) => {
         });
         console.log("User signed up successfully:", signUpResponse);
 
-        const createdAt = new Date().toLocaleString("sv-SE", {
-          timeZone: "Asia/Colombo"
-        }).replace(" ", "T");
+        const createdAt = new Date()
+          .toLocaleString("sv-SE", {
+            timeZone: "Asia/Colombo",
+          })
+          .replace(" ", "T");
 
-        const dbCreateUserResponse = await fetch(`${API_ENDPOINT}/dbHandling `, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            action: "create_user",
-            data: {
-              username: username.trim().toLowerCase(),
-              email: email,
-              role: 0,
-              status: 0,
-              calendly_name: null,
-              created_at: createdAt,
+        const dbCreateUserResponse = await fetch(
+          `${API_ENDPOINT}/dbHandling `,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
             },
-          }),
-        });
+            body: JSON.stringify({
+              action: "create_user",
+              data: {
+                username: username.trim().toLowerCase(),
+                email: email,
+                role: 0,
+                status: 0,
+                calendly_name: null,
+                created_at: createdAt,
+              },
+            }),
+          }
+        );
         console.log("User saved into DB:", dbCreateUserResponse);
 
         // Navigate to verification screen on success
@@ -131,7 +136,6 @@ export const SignUpScreen = ({ navigation }) => {
         });
       } catch (error) {
         setIsLoading(false);
-        console.log(`error:`, error); // Log the full error object to see its structure
 
         // Access the error name or message to determine the type of error
         if (
@@ -611,6 +615,11 @@ export const VerificationSentScreen = ({ route, navigation }) => {
     }
   };
 
+  const verificationCompletion = async () => {
+    handleVerifyEmail();
+    await AsyncStorage.setItem("appUser", username.trim().toLowerCase());
+  };
+
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
       <View style={styles.container}>
@@ -658,7 +667,7 @@ export const VerificationSentScreen = ({ route, navigation }) => {
           <View style={styles.actionsContainer}>
             <TouchableOpacity
               style={styles.primaryButton}
-              onPress={handleVerifyEmail}
+              onPress={verificationCompletion}
               disabled={isVerifying}
             >
               <LinearGradient
@@ -685,7 +694,6 @@ export const VerificationSentScreen = ({ route, navigation }) => {
               <TouchableOpacity
                 style={styles.textButton}
                 onPress={() => {
-                  // Functionality to clear any partial registration data will be added later.
                   navigation.reset({
                     index: 0,
                     routes: [{ name: "Welcome" }],

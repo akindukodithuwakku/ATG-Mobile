@@ -172,7 +172,9 @@ const CarePlanOverview = ({ navigation, carePlanId }) => {
         <FlatList
           data={filteredTasks}
           renderItem={renderTaskItem}
-          keyExtractor={(item) => item.id.toString()}
+          keyExtractor={(item) =>
+            item.id ? item.id.toString() : Math.random().toString()
+          }
           showsVerticalScrollIndicator={false}
           ListEmptyComponent={
             <Text style={{ textAlign: "center", marginTop: 20, color: "#888" }}>

@@ -22,8 +22,21 @@ import { useFocusEffect } from "@react-navigation/native";
 const SIGNOUT_API_ENDPOINT =
   "https://uqzl6jyqvg.execute-api.ap-south-1.amazonaws.com/dev/signOut";
 
+const DB_API_ENDPOINT =
+  "https://uqzl6jyqvg.execute-api.ap-south-1.amazonaws.com/dev/dbHandling";
+
 const REFRESH_TOKEN_API_ENDPOINT =
   "https://uqzl6jyqvg.execute-api.ap-south-1.amazonaws.com/dev/mobile/refreshToken";
+
+const AVATAR_MAP = {
+  default: require("../../assets/avatars/Default.png"),
+  young_man: require("../../assets/avatars/YoungMan.jpeg"),
+  mid_man: require("../../assets/avatars/MidMan.jpeg"),
+  old_man: require("../../assets/avatars/OldMan.jpeg"),
+  young_woman: require("../../assets/avatars/YoungWoman.jpeg"),
+  mid_woman: require("../../assets/avatars/MidWoman.jpeg"),
+  old_woman: require("../../assets/avatars/OldWoman.jpeg"),
+};
 
 const ProfileScreenC = ({ navigation }) => {
   const { resetTimer } = useAutomaticLogout();
@@ -31,18 +44,16 @@ const ProfileScreenC = ({ navigation }) => {
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [profileData, setProfileData] = useState({
-    fullName: "Jane Doe",
+    fullName: "User",
     profileImage: null,
+    profileImageKey: "default",
   });
-  const defaultImage = require("../../assets/ChatAvatar.png");
 
   // Reset timer and modal states when screen comes into focus
   useFocusEffect(
     React.useCallback(() => {
       resetTimer();
       setShowLogoutModal(false);
-      // Validate token when screen comes into focus
-      ensureValidToken();
     }, [])
   );
 
@@ -56,11 +67,79 @@ const ProfileScreenC = ({ navigation }) => {
     const loadProfileData = async () => {
       try {
         const storedProfileData = await AsyncStorage.getItem("userProfile");
+        let currentUserProfile = {};
+
         if (storedProfileData !== null) {
-          const userData = JSON.parse(storedProfileData);
+          currentUserProfile = JSON.parse(storedProfileData);
+        }
+
+        // Get the client username from AsyncStorage
+        const clientUsername = await AsyncStorage.getItem("appUser");
+
+        if (clientUsername) {
+          // Fetch client details from database
+          const dbResponse = await fetch(DB_API_ENDPOINT, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              action: "get_client_details",
+              data: {
+                username: clientUsername,
+              },
+            }),
+          });
+
+          const dbData = await dbResponse.json();
+          const dbDataBody =
+            typeof dbData.body === "string"
+              ? JSON.parse(dbData.body)
+              : dbData.body;
+
+          if (dbResponse.ok && dbDataBody.full_name) {
+            // Get profile image key from database or use default
+            const profileImgKey = dbDataBody.profile_img_key || "default";
+            // Update userProfile with all fetched details
+            const updatedUserProfile = {
+              ...currentUserProfile, // Keep existing data
+              fullName: dbDataBody.full_name,
+              dateOfBirth: dbDataBody.date_of_birth,
+              gender: dbDataBody.gender,
+              contactNumber: dbDataBody.contact_number,
+              homeAddress: dbDataBody.home_address,
+              profileImageKey: profileImgKey,
+            };
+
+            // Save updated profile to AsyncStorage
+            await AsyncStorage.setItem(
+              "userProfile",
+              JSON.stringify(updatedUserProfile)
+            );
+
+            // Update state
+            setProfileData({
+              fullName: dbDataBody.full_name,
+              profileImage: AVATAR_MAP[profileImgKey] || AVATAR_MAP["default"],
+              profileImageKey: profileImgKey,
+            });
+          } else {
+            // Fallback to stored data or default
+            const profileImgKey =
+              currentUserProfile.profileImageKey || "default";
+            setProfileData({
+              fullName: currentUserProfile.fullName || "User",
+              profileImage: AVATAR_MAP[profileImgKey] || AVATAR_MAP["default"],
+              profileImageKey: profileImgKey,
+            });
+          }
+        } else {
+          // If no clientUsername is found
+          const profileImgKey = currentUserProfile.profileImageKey || "default";
           setProfileData({
-            fullName: userData.fullName,
-            profileImage: userData.profileImage,
+            fullName: currentUserProfile.fullName || "User",
+            profileImage: AVATAR_MAP[profileImgKey] || AVATAR_MAP["default"],
+            profileImageKey: profileImgKey,
           });
         }
       } catch (error) {
@@ -370,7 +449,8 @@ const ProfileScreenC = ({ navigation }) => {
         "accessToken",
         "refreshToken",
         "tokenExpiry",
-        "userData",
+        "sessionString",
+        "userProfile",
       ];
       await Promise.all(
         keysToRemove.map((key) => AsyncStorage.removeItem(key))
@@ -461,11 +541,7 @@ const ProfileScreenC = ({ navigation }) => {
         >
           <View style={styles.profileImageContainer}>
             <Image
-              source={
-                profileData.profileImage
-                  ? { uri: profileData.profileImage }
-                  : defaultImage
-              }
+              source={profileData.profileImage || AVATAR_MAP["default"]}
               style={styles.profileImage}
             />
             <TouchableOpacity

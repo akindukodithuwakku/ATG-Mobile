@@ -52,7 +52,8 @@ const MedicationMgtCN = ({ navigation }) => {
   const filteredMedications = medications.filter(
     (med) =>
       med.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (med.full_name && med.full_name.toLowerCase().includes(searchQuery.toLowerCase()))
+      (med.full_name &&
+        med.full_name.toLowerCase().includes(searchQuery.toLowerCase()))
   );
 
   return (
@@ -65,7 +66,11 @@ const MedicationMgtCN = ({ navigation }) => {
 
       <View style={styles.header}>
         <TouchableOpacity onPress={toggleMenu}>
-          <Ionicons name={isMenuOpen ? "close" : "menu"} size={30} color="black" />
+          <Ionicons
+            name={isMenuOpen ? "close" : "menu"}
+            size={30}
+            color="black"
+          />
         </TouchableOpacity>
         <Text style={styles.headerText}>View Medication Management</Text>
       </View>
@@ -73,7 +78,10 @@ const MedicationMgtCN = ({ navigation }) => {
       {isMenuOpen && (
         <View style={styles.overlay}>
           <SideNavigationCN navigation={navigation} onClose={toggleMenu} />
-          <TouchableOpacity style={styles.overlayBackground} onPress={toggleMenu} />
+          <TouchableOpacity
+            style={styles.overlayBackground}
+            onPress={toggleMenu}
+          />
         </View>
       )}
 
@@ -87,11 +95,17 @@ const MedicationMgtCN = ({ navigation }) => {
       </View>
 
       {loading ? (
-        <ActivityIndicator size="large" color="#00AEEF" style={{ marginTop: 50 }} />
+        <ActivityIndicator
+          size="large"
+          color="#00AEEF"
+          style={{ marginTop: 50 }}
+        />
       ) : (
         <FlatList
           data={filteredMedications}
-          keyExtractor={(item) => item.id.toString()}
+          keyExtractor={(item) =>
+            item.id ? item.id.toString() : Math.random().toString()
+          }
           ListHeaderComponent={
             <View style={styles.tableHeader}>
               <Text style={[styles.columnHeader, { flex: 2 }]}>Medication</Text>
@@ -103,16 +117,24 @@ const MedicationMgtCN = ({ navigation }) => {
           renderItem={({ item }) => (
             <View style={{ marginBottom: 10 }}>
               <View style={styles.medicationRow}>
-                <Text style={[styles.medicationText, { flex: 2 }]}>{item.name}</Text>
-                <Text style={[styles.medicationText, { flex: 1 }]}>{item.dosage}</Text>
-                <Text style={[styles.medicationText, { flex: 2 }]}>{item.schedule_time}</Text>
+                <Text style={[styles.medicationText, { flex: 2 }]}>
+                  {item.name}
+                </Text>
+                <Text style={[styles.medicationText, { flex: 1 }]}>
+                  {item.dosage}
+                </Text>
+                <Text style={[styles.medicationText, { flex: 2 }]}>
+                  {item.schedule_time}
+                </Text>
                 <Text style={[styles.medicationText, { flex: 1 }]}>
                   {item.refill_date?.split("T")[0]}
                 </Text>
               </View>
 
               <View style={styles.card}>
-                <Text style={styles.cardLabel}>Client: {item.full_name || "Unknown"}</Text>
+                <Text style={styles.cardLabel}>
+                  Client: {item.full_name || "Unknown"}
+                </Text>
                 <Text style={styles.cardLabel}>Taken Time:</Text>
                 <Text style={styles.cardText}>
                   {item.taken_time

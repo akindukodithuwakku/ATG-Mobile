@@ -15,24 +15,50 @@ import { Ionicons, Feather } from "@expo/vector-icons";
 import { useAutomaticLogout } from "../../screens/AutoLogout";
 import { useFocusEffect } from "@react-navigation/native";
 
+const AVATAR_MAP = {
+  default: require("../../assets/avatars/Default.png"),
+  young_man: require("../../assets/avatars/YoungMan.jpeg"),
+  mid_man: require("../../assets/avatars/MidMan.jpeg"),
+  old_man: require("../../assets/avatars/OldMan.jpeg"),
+  young_woman: require("../../assets/avatars/YoungWoman.jpeg"),
+  mid_woman: require("../../assets/avatars/MidWoman.jpeg"),
+  old_woman: require("../../assets/avatars/OldWoman.jpeg"),
+};
+
 const UserProfile = ({ navigation }) => {
   const { resetTimer } = useAutomaticLogout();
   const [profileData, setProfileData] = useState({
-    fullName: "Trevin Perera",
-    email: "trevin.perera@gmail.com",
-    phone: "+94 77 360 4872",
-    address: "64/A, Flower Street, Colombo, Sri Lanka",
-    bio: "Software developer.",
+    fullName: "User",
+    contactNumber: "N/A",
+    homeAddress: "N/A",
+    dateOfBirth: "N/A",
+    gender: "N/A",
     profileImage: null,
+    profileImageKey: "default",
   });
-
-  const defaultImage = require("../../assets/ChatAvatar.png");
 
   const loadProfileData = useCallback(async () => {
     try {
       const storedProfileData = await AsyncStorage.getItem("userProfile");
       if (storedProfileData !== null) {
-        setProfileData(JSON.parse(storedProfileData));
+        const parsedData = JSON.parse(storedProfileData);
+        const profileImgKey = parsedData.profileImageKey || "default";
+
+        setProfileData({
+          fullName: parsedData.fullName || "User",
+          contactNumber: parsedData.contactNumber || parsedData.phone || "N/A",
+          homeAddress: parsedData.homeAddress || parsedData.address || "N/A",
+          dateOfBirth: parsedData.dateOfBirth
+            ? typeof parsedData.dateOfBirth === "string"
+              ? new Date(parsedData.dateOfBirth).toLocaleDateString("en-GB")
+              : parsedData.dateOfBirth.toLocaleDateString
+              ? parsedData.dateOfBirth.toLocaleDateString("en-GB")
+              : parsedData.dateOfBirth
+            : "N/A",
+          gender: parsedData.gender || "N/A",
+          profileImage: AVATAR_MAP[profileImgKey] || AVATAR_MAP["default"],
+          profileImageKey: profileImgKey,
+        });
       }
     } catch (error) {
       console.error("Error loading profile data:", error);
@@ -52,24 +78,24 @@ const UserProfile = ({ navigation }) => {
 
   const detailItems = [
     {
-      icon: "mail",
-      title: "Email",
-      value: profileData.email,
-    },
-    {
       icon: "phone",
       title: "Phone",
-      value: profileData.phone,
+      value: profileData.contactNumber,
     },
     {
       icon: "map-pin",
       title: "Address",
-      value: profileData.address,
+      value: profileData.homeAddress,
     },
     {
-      icon: "file-text",
-      title: "Bio",
-      value: profileData.bio,
+      icon: "calendar",
+      title: "Date of Birth",
+      value: profileData.dateOfBirth,
+    },
+    {
+      icon: "user",
+      title: "Gender",
+      value: profileData.gender,
     },
   ];
 
@@ -119,11 +145,7 @@ const UserProfile = ({ navigation }) => {
         <View style={styles.profileHeader}>
           <View style={styles.profileImageContainer}>
             <Image
-              source={
-                profileData.profileImage
-                  ? { uri: profileData.profileImage }
-                  : defaultImage
-              }
+              source={profileData.profileImage || AVATAR_MAP["default"]}
               style={styles.profileImage}
             />
           </View>

@@ -291,6 +291,104 @@ def lambda_handler(event, context):
                     else:
                         return response(404, {"error": "No active appointment found for this client"})
 
+                elif action == "get_client_details":
+                    if "username" not in data:
+                        return response(400, {"error": "Missing 'username'"})
+                    
+                    sql = "SELECT full_name, date_of_birth, gender, contact_number, home_address, profile_img_key FROM client_details WHERE client_username = %s"
+                    cursor.execute(sql, (data["username"],))
+                    result = cursor.fetchone()
+
+                    if result:
+                        result = serialize_result(result)
+                        return response(200, result)
+                    else:
+                        return response(404, {"error": "Client details not found"})
+
+                elif action == "get_cn_details":
+                    if "username" not in data:
+                        return response(400, {"error": "Missing 'username'"})
+                    
+                    sql = "SELECT full_name, date_of_birth, gender, contact_number, home_address, profile_img_key FROM cn_details WHERE cn_username = %s"
+                    cursor.execute(sql, (data["username"],))
+                    result = cursor.fetchone()
+
+                    if result:
+                        result = serialize_result(result)
+                        return response(200, result)
+                    else:
+                        return response(404, {"error": "Care Navigator details not found"})
+                    
+                elif action == "update_client_details":
+                    # Validate required fields
+                    required_fields = ["username", "full_name", "date_of_birth", "gender", "contact_number", "home_address"]
+                    for field in required_fields:
+                        if field not in data:
+                            return response(400, {"error": f"Missing required field '{field}'"})
+    
+                    # Validate profile_img_key if provided
+                    profile_img_key = data.get("profile_img_key", "default")
+                    valid_keys = ['default', 'young_man', 'mid_man', 'old_man', 'young_woman', 'mid_woman', 'old_woman']
+                    if profile_img_key not in valid_keys:
+                        profile_img_key = "default"
+                        
+                    sql = """
+                        UPDATE client_details 
+                        SET full_name = %s, 
+                            date_of_birth = %s, 
+                            gender = %s, 
+                            contact_number = %s, 
+                            home_address = %s,
+                            profile_img_key = %s
+                        WHERE client_username = %s
+                    """
+                    cursor.execute(sql, (
+                        data["full_name"],
+                        data.get("date_of_birth", None),
+                        data.get("gender", None),
+                        data["contact_number"],
+                        data.get("home_address", None),
+                        profile_img_key,
+                        data["username"]
+                    ))
+                    conn.commit()
+                    return response(200, {"message": "Client details updated successfully", "username": data["username"]})
+                    
+                elif action == "update_cn_details":
+                    # Validate required fields
+                    required_fields = ["username", "full_name", "date_of_birth", "gender", "contact_number", "home_address"]
+                    for field in required_fields:
+                        if field not in data:
+                            return response(400, {"error": f"Missing required field '{field}'"})
+    
+                    # Validate profile_img_key if provided
+                    profile_img_key = data.get("profile_img_key", "default")
+                    valid_keys = ['default', 'young_man', 'mid_man', 'old_man', 'young_woman', 'mid_woman', 'old_woman']
+                    if profile_img_key not in valid_keys:
+                        profile_img_key = "default"
+                        
+                    sql = """
+                        UPDATE cn_details 
+                        SET full_name = %s, 
+                            date_of_birth = %s, 
+                            gender = %s, 
+                            contact_number = %s, 
+                            home_address = %s,
+                            profile_img_key = %s
+                        WHERE cn_username = %s
+                    """
+                    cursor.execute(sql, (
+                        data["full_name"],
+                        data.get("date_of_birth", None),
+                        data.get("gender", None),
+                        data["contact_number"],
+                        data.get("home_address", None),
+                        profile_img_key,
+                        data["username"]
+                    ))
+                    conn.commit()
+                    return response(200, {"message": "Care navigator details updated successfully", "username": data["username"]})
+
                 elif action == "get_client_care_navigator":
                     if "client_username" not in data:
                         return response(400, {"error": "Missing 'client_username'"})
@@ -308,6 +406,7 @@ def lambda_handler(event, context):
                     else:
                         return response(404, {"error": "Care navigator not found for this client"})
 
+                # For messaging and notifications
                 elif action == "get_care_navigator_clients":
                     if "care_navigator_username" not in data:
                         return response(400, {"error": "Missing 'care_navigator_username'"})
@@ -334,6 +433,171 @@ def lambda_handler(event, context):
                             "clients": [],
                             "total_clients": 0
                         })
+
+                # For readiness                
+                elif action == "get_navigator_clients":
+                    if "care_navigator_username" not in data:
+                        return response(400, {"error": "Missing 'care_navigator_username'"})
+                    
+                    sql = "SELECT DISTINCT client_username FROM client_details WHERE care_navigator_username = %s"
+                    cursor.execute(sql, (data["care_navigator_username"],))
+                    results = cursor.fetchall()
+                    
+                    if results:
+                        clients = [{"client_username": row["client_username"]} for row in results]
+                        return response(200, {"data": clients})
+                    else:
+                        return response(200, {"data": []})
+
+                elif action == "get_client_readiness_details":
+                    if "client_username" not in data:
+                        return response(400, {"error": "Missing 'client_username'"})
+                    
+                    sql = """
+                        SELECT questionnaire_data, client_note, appointment_date_time 
+                        FROM client_appointments 
+                        WHERE client_username = %s AND status = 'active'
+                        ORDER BY created_timestamp DESC 
+                        LIMIT 1
+                    """
+                    cursor.execute(sql, (data["client_username"],))
+                    result = cursor.fetchone()
+                    
+                    if result:
+                        # Handle the datetime conversion properly - use dictionary keys
+                        appointment_datetime = None
+                        if result["appointment_date_time"]:
+                            if hasattr(result["appointment_date_time"], 'isoformat'):
+                                appointment_datetime = result["appointment_date_time"].isoformat()
+                            else:
+                                appointment_datetime = str(result["appointment_date_time"])
+                        
+                        readiness_data = {
+                            "questionnaire_data": result["questionnaire_data"],
+                            "client_note": result["client_note"],
+                            "appointment_date_time": appointment_datetime
+                        }
+                        result = serialize_result(readiness_data)
+                        return response(200, result)
+                    else:
+                        return response(404, {"error": "No active appointment found for this client"})
+                    
+                elif action == "get_client_appointment_history":
+                    if "client_username" not in data:
+                        return response(400, {"error": "Missing 'client_username'"})
+                    
+                    sql = """
+                        SELECT appointment_id, client_username, appointment_date_time, 
+                            status, created_timestamp, client_note
+                        FROM client_appointments 
+                        WHERE client_username = %s
+                        ORDER BY appointment_date_time DESC
+                    """
+                    cursor.execute(sql, (data["client_username"],))
+                    results = cursor.fetchall()
+                    
+                    if results:
+                        appointments = []
+                        for row in results:
+                            appointment = serialize_result(row)
+                            appointments.append(appointment)
+                        return response(200, {"data": appointments})
+                    else:
+                        return response(404, {"error": "No appointment history found for this client"})
+
+                elif action == "get_navigator_appointment_history":
+                    if "care_navigator_username" not in data:
+                        return response(400, {"error": "Missing 'care_navigator_username'"})
+                    
+                    sql = """
+                        SELECT ca.appointment_id, ca.client_username, ca.appointment_date_time, 
+                            ca.status, ca.created_timestamp, ca.client_note
+                        FROM client_appointments ca
+                        INNER JOIN client_details cd ON ca.client_username = cd.client_username
+                        WHERE cd.care_navigator_username = %s
+                        ORDER BY ca.appointment_date_time DESC
+                    """
+                    cursor.execute(sql, (data["care_navigator_username"],))
+                    results = cursor.fetchall()
+                    
+                    if results:
+                        appointments = []
+                        for row in results:
+                            appointment = serialize_result(row)
+                            appointments.append(appointment)
+                        return response(200, {"data": appointments})
+                    else:
+                        return response(404, {"error": "No appointment history found for this care navigator"})
+                
+                elif action == "assign_care_navigator":
+                    # Requires client_username to be passed
+                    if "client_username" not in data:
+                        return response(400, {"error": "Missing required field 'client_username'"})
+                    
+                    client_username = data["client_username"]
+                    
+                    try:
+                        # Check if client already has a care navigator assigned
+                        check_existing_sql = """
+                            SELECT care_navigator_username 
+                            FROM client_details 
+                            WHERE client_username = %s
+                        """
+                        cursor.execute(check_existing_sql, (client_username,))
+                        existing_assignment = cursor.fetchone()
+                        
+                        if not existing_assignment:
+                            return response(404, {"error": "Client not found in client_details table"})
+                        
+                        if existing_assignment["care_navigator_username"] and existing_assignment["care_navigator_username"].strip():
+                            return response(200, {
+                                "message": "Client already has a care navigator assigned",
+                                "assigned_navigator": existing_assignment["care_navigator_username"]
+                            })
+                        
+                        # Get care navigator with least assignments (active care navigators: role = 1, status = 2)
+                        get_least_assigned_sql = """
+                            SELECT 
+                                u.username,
+                                COALESCE(COUNT(cd.client_username), 0) as assignment_count
+                            FROM users u
+                            LEFT JOIN client_details cd ON u.username = cd.care_navigator_username
+                            WHERE u.role = 1 AND u.status = 2
+                            GROUP BY u.username
+                            ORDER BY assignment_count ASC, u.username ASC
+                            LIMIT 1
+                        """
+                        cursor.execute(get_least_assigned_sql)
+                        least_assigned = cursor.fetchone()
+                        
+                        if not least_assigned:
+                            return response(404, {"error": "No active care navigators found"})
+                        
+                        assigned_navigator = least_assigned["username"]
+                        
+                        # Update the client_details table with the assigned care navigator
+                        update_sql = """
+                            UPDATE client_details 
+                            SET care_navigator_username = %s 
+                            WHERE client_username = %s
+                        """
+                        
+                        affected_rows = cursor.execute(update_sql, (assigned_navigator, client_username))
+                        
+                        if affected_rows > 0:
+                            conn.commit()
+                            return response(200, {
+                                "message": "Care navigator assigned successfully",
+                                "client_username": client_username,
+                                "assigned_navigator": assigned_navigator,
+                                "previous_assignment_count": least_assigned["assignment_count"]
+                            })
+                        else:
+                            return response(500, {"error": "Failed to update client assignment"})
+                        
+                    except Exception as e:
+                        conn.rollback()
+                        return response(500, {"error": f"Database error: {str(e)}"})
 
                 else:
                     return response(400, {"error": f"Invalid action: '{action}'"})
