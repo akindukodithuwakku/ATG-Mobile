@@ -1,8 +1,11 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { database } from "../firebaseConfig.js";
+import { ref, push } from "firebase/database";
 import {
   addNotification,
   showWarningNotification,
   showInfoNotification,
+  sendNotificationToUser,
 } from "./NotificationHandler";
 
 const MEDICATION_REMINDERS_KEY = "@medication_reminders";
@@ -13,6 +16,54 @@ export const DEFAULT_TIMES = {
   Morning: { hour: 8, minute: 0 }, // 8:00 AM
   Evening: { hour: 18, minute: 0 }, // 6:00 PM
   Night: { hour: 0, minute: 25 }, // 12:25 AM
+};
+
+// Get current user ID for Firebase notifications
+const getCurrentUserId = async () => {
+  try {
+    return await AsyncStorage.getItem("appUser");
+  } catch (error) {
+    console.error("Error getting current user:", error);
+    return null;
+  }
+};
+
+// Save notification to Firebase for the current user
+const saveNotificationToFirebase = async (notification) => {
+  try {
+    const userId = await getCurrentUserId();
+    if (!userId) {
+      console.warn("No user ID found, falling back to local storage");
+      return await addNotification(notification.message, notification.type, notification.data);
+    }
+
+    const notificationsRef = ref(database, `notifications/${userId}`);
+    await push(notificationsRef, {
+      ...notification,
+      createdAt: Date.now(),
+      firebaseId: notification.id
+    });
+    
+    return notification;
+  } catch (error) {
+    console.error("Error saving notification to Firebase:", error);
+    // Fallback to local storage
+    return await addNotification(notification.message, notification.type, notification.data);
+  }
+};
+
+// Create notification and save to Firebase
+const createAndSaveNotification = async (message, type = 'info', data = {}) => {
+  const notification = {
+    id: Date.now() + Math.random().toString(36).substr(2, 9),
+    message,
+    type,
+    timestamp: new Date().toISOString(),
+    read: false,
+    data
+  };
+  
+  return await saveNotificationToFirebase(notification);
 };
 
 // Medication reminder structure
@@ -189,7 +240,7 @@ export const scheduleMedicationReminder = async (
         newReminders.push(...customReminders);
         
         // Add immediate notification about custom schedule
-        addNotification(
+        createAndSaveNotification(
           `Custom medication schedule set: ${medicationName} - ${customFrequency}`,
           "info",
           { 
@@ -221,7 +272,7 @@ export const scheduleMedicationReminder = async (
       ? `custom schedule (${customFrequency})`
       : scheduleTypes.join(", ");
       
-    await addNotification(
+    await createAndSaveNotification(
       `Medication reminders set for ${medicationName} - ${scheduleInfo}`,
       "success",
       { 
@@ -265,7 +316,7 @@ export const checkMedicationReminders = async () => {
           dueReminders.push(reminder);
           
           // Send notification for due reminder
-          await addNotification(
+          await createAndSaveNotification(
             `Time to take your medication: ${reminder.medicationName} (${reminder.dosage})`,
             "warning",
             {
@@ -325,7 +376,7 @@ export const checkRefillReminders = async () => {
         ? `Your ${reminder.medicationName} refill is overdue!`
         : `Your ${reminder.medicationName} needs to be refilled in ${reminder.daysUntilRefill} day(s)`;
 
-      await addNotification(message, reminder.overdue ? "error" : "warning", {
+      await createAndSaveNotification(message, reminder.overdue ? "error" : "warning", {
         type: "refill_reminder",
         medicationName: reminder.medicationName,
         refillDate: reminder.refillDate,
@@ -377,7 +428,7 @@ export const disableMedicationReminder = async (reminderId) => {
 
     await saveMedicationReminders(updatedReminders);
 
-    await addNotification("Medication reminder disabled", "info", {
+    await createAndSaveNotification("Medication reminder disabled", "info", {
       type: "reminder_disabled",
       reminderId,
     });
@@ -476,7 +527,7 @@ export const markMedicationAsTaken = async (medicationName, dosage, scheduleType
     await AsyncStorage.setItem(MEDICATION_TAKEN_KEY, JSON.stringify(takenRecords));
     
     // Add success notification
-    await addNotification(
+    await createAndSaveNotification(
       `✓ ${medicationName} marked as taken`,
       "success",
       {
@@ -545,7 +596,7 @@ export const testMedicationReminderCheck = async () => {
 export const clearMedicationTakenRecords = async () => {
   try {
     await AsyncStorage.removeItem(MEDICATION_TAKEN_KEY);
-    await addNotification("Medication taken records cleared", "info");
+    await createAndSaveNotification("Medication taken records cleared", "info");
     return true;
   } catch (error) {
     console.error("Error clearing medication taken records:", error);
