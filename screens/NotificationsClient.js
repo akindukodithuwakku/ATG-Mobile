@@ -14,6 +14,8 @@ import SideNavigationClient from "../Components/SideNavigationClient";
 import BottomNavigationClient from "../Components/BottomNavigationClient";
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { database } from "../firebaseConfig.js";
+import { ref, push, set, remove, onValue, off } from "firebase/database";
 import {
   registerNotificationHandler,
   loadNotifications,
@@ -34,14 +36,121 @@ const NotificationsClient = ({ navigation }) => {
     setIsMenuOpen(!isMenuOpen);
   };
 
+  // Load notifications from Firebase
+  const loadNotificationsFromFirebase = useCallback(async (userId) => {
+    if (!userId) return [];
+    
+    try {
+      const notificationsRef = ref(database, `notifications/${userId}`);
+      return new Promise((resolve) => {
+        onValue(notificationsRef, (snapshot) => {
+          const data = snapshot.val();
+          if (data) {
+            const notificationsArray = Object.values(data);
+            // Sort by timestamp (newest first)
+            notificationsArray.sort((a, b) => {
+              const timeA = a.timestamp ? new Date(a.timestamp).getTime() : 0;
+              const timeB = b.timestamp ? new Date(b.timestamp).getTime() : 0;
+              return timeB - timeA;
+            });
+            resolve(notificationsArray);
+          } else {
+            resolve([]);
+          }
+        }, { onlyOnce: true });
+      });
+    } catch (error) {
+      console.error('Error loading notifications from Firebase:', error);
+      return [];
+    }
+  }, []);
+
+  // Save notification to Firebase
+  const saveNotificationToFirebase = async (notification, userId) => {
+    if (!userId) return;
+    
+    try {
+      const notificationsRef = ref(database, `notifications/${userId}`);
+      await push(notificationsRef, {
+        ...notification,
+        firebaseId: notification.id,
+        createdAt: Date.now()
+      });
+    } catch (error) {
+      console.error('Error saving notification to Firebase:', error);
+    }
+  };
+
+  // Mark notification as read in Firebase
+  const markNotificationAsReadInFirebase = async (notificationId, userId) => {
+    if (!userId) return;
+    
+    try {
+      const notificationsRef = ref(database, `notifications/${userId}`);
+      onValue(notificationsRef, (snapshot) => {
+        const data = snapshot.val();
+        if (data) {
+          Object.keys(data).forEach(key => {
+            if (data[key].id === notificationId || data[key].firebaseId === notificationId) {
+              const updateRef = ref(database, `notifications/${userId}/${key}`);
+              set(updateRef, { ...data[key], read: true });
+            }
+          });
+        }
+      }, { onlyOnce: true });
+    } catch (error) {
+      console.error('Error marking notification as read in Firebase:', error);
+    }
+  };
+
+  // Delete notification from Firebase
+  const deleteNotificationFromFirebase = async (notificationId, userId) => {
+    if (!userId) return;
+    
+    try {
+      const notificationsRef = ref(database, `notifications/${userId}`);
+      onValue(notificationsRef, (snapshot) => {
+        const data = snapshot.val();
+        if (data) {
+          Object.keys(data).forEach(key => {
+            if (data[key].id === notificationId || data[key].firebaseId === notificationId) {
+              const deleteRef = ref(database, `notifications/${userId}/${key}`);
+              remove(deleteRef);
+            }
+          });
+        }
+      }, { onlyOnce: true });
+    } catch (error) {
+      console.error('Error deleting notification from Firebase:', error);
+    }
+  };
+
+  // Clear all notifications from Firebase
+  const clearAllNotificationsFromFirebase = async (userId) => {
+    if (!userId) return;
+    
+    try {
+      const notificationsRef = ref(database, `notifications/${userId}`);
+      await remove(notificationsRef);
+    } catch (error) {
+      console.error('Error clearing all notifications from Firebase:', error);
+    }
+  };
+
   const loadNotificationsData = useCallback(async () => {
     try {
-      const loadedNotifications = await loadNotifications();
-      setNotifications(loadedNotifications);
+      if (currentUser) {
+        const firebaseNotifications = await loadNotificationsFromFirebase(currentUser);
+        setNotifications(firebaseNotifications);
+      } else {
+        // Fallback to local storage if no user
+        const loadedNotifications = await loadNotifications();
+        setNotifications(loadedNotifications);
+      }
     } catch (error) {
       console.error('Error loading notifications:', error);
     }
-  }, []);
+  }, [currentUser, loadNotificationsFromFirebase]);
 
   const handleNotificationUpdate = useCallback((updatedNotifications) => {
     setNotifications(updatedNotifications);
@@ -94,7 +203,11 @@ const NotificationsClient = ({ navigation }) => {
           text: "Clear All",
           style: "destructive",
           onPress: async () => {
-            await clearAllNotifications();
+            if (currentUser) {
+              await clearAllNotificationsFromFirebase(currentUser);
+            } else {
+              await clearAllNotifications();
+            }
             setNotifications([]);
           },
         },
@@ -104,13 +217,21 @@ const NotificationsClient = ({ navigation }) => {
 
   const handleNotificationPress = async (notification) => {
     if (!notification.read) {
-      await markNotificationAsRead(notification.id);
+      if (currentUser) {
+        await markNotificationAsReadInFirebase(notification.id, currentUser);
+      } else {
+        await markNotificationAsRead(notification.id);
+      }
     }
     // You can add navigation logic here based on notification.data
   };
 
   const handleDeleteNotification = async (notificationId) => {
-    await deleteNotification(notificationId);
+    if (currentUser) {
+      await deleteNotificationFromFirebase(notificationId, currentUser);
+    } else {
+      await deleteNotification(notificationId);
+    }
   };
 
   const formatTimestamp = (timestamp) => {
