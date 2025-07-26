@@ -10,7 +10,7 @@ const SubmissionSuccess = () => {
       <Image source={require('../assets/checkmark.png')} style={styles.image} />
       <Text style={styles.title}>Your Form is successfully Submitted</Text>
       <Text style={styles.subtitle}>Thank you for getting in touch!</Text>
-      <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('Personalinfo')}>
+      <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('Welcome')}>
         <Text style={styles.buttonText}>Close</Text>
       </TouchableOpacity>
     </View>

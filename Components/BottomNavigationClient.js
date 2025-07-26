@@ -14,7 +14,7 @@ const BottomNavigationClient = ({ navigation }) => {
     {
       name: "CarePlan",
       icon: require("../assets/CarePlanIcon.png"),
-      route: "CarePlanC",
+      route: "ClientCarePlansScreen",
     },
     { name: "Medication", icon: "clipboard-notes", route: "MedicationC" },
     { name: "Profile", icon: "person-outline", route: "ProfileC" },

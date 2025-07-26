@@ -1,8 +1,9 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import axios from 'axios';
 
-const TimelineItem = ({ title, description, start, end, status, isLast, onEdit }) => {
+const TimelineItem = ({ title, description, start, end, status, isLast, onEdit, id, onDelete }) => {
   // Parse date/time as local (remove the + 'Z')
   const startObj = start ? new Date(start.replace(' ', 'T')) : null;
   const endObj = end ? new Date(end.replace(' ', 'T')) : null;
@@ -30,6 +31,35 @@ const TimelineItem = ({ title, description, start, end, status, isLast, onEdit }
     statusColor = '#F44336';
     statusIcon = <Ionicons name="close-circle" size={18} color={statusColor} />;
   }
+
+  const handleDelete = () => {
+  Alert.alert(
+    'Delete Task',
+    `Are you sure you want to delete "${title}"?`,
+    [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'OK',
+        onPress: async () => {
+          try {
+            await axios.delete(`https://sue7dsbf09.execute-api.ap-south-1.amazonaws.com/dev/tasks?id=${id}`);
+
+            // ======== Place notification code here ========
+            // e.g. await sendNotificationToClient(id);
+            // ==============================================
+
+            if (onDelete) onDelete(id);
+          } catch (error) {
+            Alert.alert('Error', 'Failed to delete task.');
+            console.error('Delete error:', error);
+          }
+        },
+      },
+    ],
+    { cancelable: true }
+  );
+};
+
 
   return (
     <View style={styles.row}>
@@ -63,9 +93,17 @@ const TimelineItem = ({ title, description, start, end, status, isLast, onEdit }
           </View>
         </View>
       </View>
-      <TouchableOpacity onPress={onEdit} style={styles.editButton}>
-        <Ionicons name="create-outline" size={24} color="#00BCD4" />
-      </TouchableOpacity>
+
+      {/* Edit and Delete buttons */}
+      <View style={{ flexDirection: 'row', marginLeft: 10 }}>
+        <TouchableOpacity onPress={onEdit} style={{ marginRight: 10 }}>
+          <Ionicons name="create-outline" size={24} color="#00BCD4" />
+        </TouchableOpacity>
+
+        <TouchableOpacity onPress={handleDelete}>
+          <Ionicons name="trash-outline" size={24} color="#D32F2F" />
+        </TouchableOpacity>
+      </View>
     </View>
   );
 };

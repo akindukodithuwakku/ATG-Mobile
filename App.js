@@ -61,20 +61,24 @@ import MarkMedicationTakenScreen from "./screens/MedicationMarkAsTaken";
 import AddTaskScreen from "./screens/AddTaskScreen";
 import UpdateTaskScreen from "./screens/UpdateTaskScreen";
 import Task from "./screens/Task";
-
-// Document Management Screens
-import Documents from "./screens/Documents";
-import DocumentsCN from "./screens/DocumentsCN";
-
-// Messaging Screen
-import ChatScreen from "./screens/Messaging";
+import CNCarePlansScreen from "./screens/CNCarePlansScreen";
+import AdditionalDetailsScreen from "./screens/AdditionalDetailsScreen";
+import ClientCarePlansScreen from "./screens/ClientCarePlansScreen";
 
 // Notification Screens
 import NotificationsClient from "./screens/NotificationsClient";
 import NotificationsCN from "./screens/NotificationsCN";
 
-// Auto Logout Screen
-import { AutomaticLogoutScreen, LogoutProvider } from "./screens/AutoLogout";
+// Messaging and Documents
+import ChatScreen from "./screens/Messaging";
+import Documents from "./screens/Documents";
+import DocumentsCN from "./screens/DocumentsCN";
+
+// Auto Logout
+import AutomaticLogoutScreen from "./screens/AutoLogout";
+
+// Context Providers
+import { LogoutProvider } from "./context/LogoutContext";
 
 const Stack = createStackNavigator();
 
@@ -142,6 +146,14 @@ const AppNavigator = () => {
           {/* Care Plan Management */}
           <Stack.Screen name="CarePlanC" component={CarePlanMgtClient} />
           <Stack.Screen name="CarePlanCN" component={CarePlanMgtCN} />
+          <Stack.Screen
+            name="CNCarePlansScreen"
+            component={CNCarePlansScreen}
+          />
+          <Stack.Screen
+            name="ClientCarePlansScreen"
+            component={ClientCarePlansScreen}
+          />
 
           {/* Medication Management */}
           <Stack.Screen name="MedicationC" component={MedicationMgtClient} />
@@ -153,8 +165,8 @@ const AppNavigator = () => {
           />
 
           {/* Task Management */}
-          <Stack.Screen name="AddTask" component={AddTaskScreen} />
-          <Stack.Screen name="UpdateTask" component={UpdateTaskScreen} />
+          <Stack.Screen name="AddTaskScreen" component={AddTaskScreen} />
+          <Stack.Screen name="UpdateTaskScreen" component={UpdateTaskScreen} />
           <Stack.Screen name="Task" component={Task} />
 
           {/* Notifications */}
