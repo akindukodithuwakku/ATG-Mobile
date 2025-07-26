@@ -17,16 +17,52 @@ import BottomNavigationCN from "../Components/BottomNavigationCN";
 import { database } from "../firebaseConfig.js";
 import { ref, onValue } from "firebase/database";
 
-const API_ENDPOINT = "https://uqzl6jyqvg.execute-api.ap-south-1.amazonaws.com/dev";
+const DB_API_ENDPOINT = "https://uqzl6jyqvg.execute-api.ap-south-1.amazonaws.com/dev/dbHandling";
 
 const MessagingCN = ({ navigation }) => {
   const [currentUser, setCurrentUser] = useState(null);
-  const [clients, setClients] = useState([]);
+  const [clients, setClients] = useState([]); // [{ id, fullName }]
   const [recentMessages, setRecentMessages] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const scheme = useColorScheme();
+
+  // Fetch full name for a client
+  const fetchClientFullName = async (clientUsername) => {
+    try {
+      const dbResponse = await fetch(DB_API_ENDPOINT, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          action: "get_client_details",
+          data: {
+            username: clientUsername,
+          },
+        }),
+      });
+      const dbData = await dbResponse.json();
+      const dbDataBody =
+        typeof dbData.body === "string"
+          ? JSON.parse(dbData.body)
+          : dbData.body;
+      return dbDataBody.full_name || clientUsername;
+    } catch (err) {
+      return clientUsername;
+    }
+  };
+
+  // Fetch all client full names
+  const fetchAllClientFullNames = async (clientUsernames) => {
+    const clientsWithNames = [];
+    for (const clientUsername of clientUsernames) {
+      const fullName = await fetchClientFullName(clientUsername);
+      clientsWithNames.push({ id: clientUsername, fullName });
+    }
+    return clientsWithNames;
+  };
 
   useEffect(() => {
     const loadCareNavigator = async () => {
@@ -41,18 +77,23 @@ const MessagingCN = ({ navigation }) => {
         }
         setCurrentUser({ id: storedId });
         // Fetch client list
-        const response = await fetch(`${API_ENDPOINT}/dbHandling`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            action: "get_care_navigator_clients",
-            data: { care_navigator_username: storedId },
-          }),
-        });
+        const response = await fetch(
+          "https://uqzl6jyqvg.execute-api.ap-south-1.amazonaws.com/dev/dbHandling",
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              action: "get_care_navigator_clients",
+              data: { care_navigator_username: storedId },
+            }),
+          }
+        );
         const result = await response.json();
         const parsedBody = typeof result.body === 'string' ? JSON.parse(result.body) : result.body;
         if (result.statusCode === 200 && Array.isArray(parsedBody.clients)) {
-          setClients(parsedBody.clients);
+          // Fetch full names for all clients
+          const clientsWithNames = await fetchAllClientFullNames(parsedBody.clients);
+          setClients(clientsWithNames);
         } else {
           setError(parsedBody.error || "No clients found.");
         }
@@ -69,8 +110,8 @@ const MessagingCN = ({ navigation }) => {
   useEffect(() => {
     if (!currentUser || clients.length === 0) return;
     const unsubscribes = [];
-    clients.forEach((clientId) => {
-      const chatPath = [currentUser.id, clientId].sort().join('_');
+    clients.forEach((client) => {
+      const chatPath = [currentUser.id, client.id].sort().join('_');
       const messagesRef = ref(database, `messages/${chatPath}`);
       const unsubscribe = onValue(messagesRef, (snapshot) => {
         const data = snapshot.val();
@@ -80,7 +121,7 @@ const MessagingCN = ({ navigation }) => {
           messagesArr.sort((a, b) => b.timestamp - a.timestamp);
           lastMsg = messagesArr[0];
         }
-        setRecentMessages((prev) => ({ ...prev, [clientId]: lastMsg }));
+        setRecentMessages((prev) => ({ ...prev, [client.id]: lastMsg }));
       });
       unsubscribes.push(unsubscribe);
     });
@@ -140,16 +181,16 @@ const MessagingCN = ({ navigation }) => {
             <Text style={styles.emptyText}>No clients found</Text>
           </View>
         ) : (
-          clients.map((clientId) => {
-            const lastMsg = recentMessages[clientId];
+          clients.map((client) => {
+            const lastMsg = recentMessages[client.id];
             return (
               <TouchableOpacity
-                key={clientId}
+                key={client.id}
                 style={styles.chatListItem}
-                onPress={() => navigation.navigate("Messaging", { clientId })}
+                onPress={() => navigation.navigate("Messaging", { clientId: client.id })}
               >
                 <View style={styles.chatListTextContainer}>
-                  <Text style={styles.clientName}>{clientId}</Text>
+                  <Text style={styles.clientName}>{client.fullName}</Text>
                   {lastMsg ? (
                     <Text style={styles.lastMessage} numberOfLines={1}>
                       {lastMsg.senderName}: {lastMsg.text}

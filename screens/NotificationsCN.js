@@ -13,18 +13,21 @@ import {
 import SideNavigationCN from "../Components/SideNavigationCN";
 import BottomNavigationCN from "../Components/BottomNavigationCN";
 import { Ionicons } from "@expo/vector-icons";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import {
   registerNotificationHandler,
   loadNotifications,
   clearAllNotifications,
   markNotificationAsRead,
   deleteNotification,
+  startFirebaseNotificationListener,
 } from "../utils/NotificationHandler";
 
 const NotificationsCN = ({ navigation }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [notifications, setNotifications] = useState([]);
   const [refreshing, setRefreshing] = useState(false);
+  const [currentUser, setCurrentUser] = useState(null);
   const scheme = useColorScheme();
 
   const toggleMenu = () => {
@@ -45,10 +48,32 @@ const NotificationsCN = ({ navigation }) => {
   }, []);
 
   useEffect(() => {
-    loadNotificationsData();
+    const initializeNotifications = async () => {
+      // Load current user
+      try {
+        const storedId = await AsyncStorage.getItem("appUser");
+        setCurrentUser(storedId);
+      } catch (error) {
+        console.error('Error loading user:', error);
+      }
+      
+      // Load notifications
+      await loadNotificationsData();
+    };
+    
+    initializeNotifications();
+    
     const unregister = registerNotificationHandler(handleNotificationUpdate);
     return unregister;
   }, [loadNotificationsData, handleNotificationUpdate]);
+
+  // Start Firebase notification listener when user is loaded
+  useEffect(() => {
+    if (currentUser) {
+      const unsubscribe = startFirebaseNotificationListener(currentUser);
+      return unsubscribe;
+    }
+  }, [currentUser]);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -99,7 +124,8 @@ const NotificationsCN = ({ navigation }) => {
     } else if (diffInHours < 24) {
       return `${Math.floor(diffInHours)} hours ago`;
     } else {
-      return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      const diffInDays = Math.floor(diffInHours / 24);
+      return `${diffInDays} days ago`;
     }
   };
 

@@ -1,4 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { database } from '../firebaseConfig.js';
+import { ref, push, set, onValue, off } from 'firebase/database';
 
 const NOTIFICATIONS_STORAGE_KEY = '@notifications';
 
@@ -11,6 +13,101 @@ export const createNotification = (message, type = 'info', data = {}) => ({
   read: false,
   data
 });
+
+// Save notification to Firebase for cross-device sync
+export const saveNotificationToFirebase = async (notification, recipientId) => {
+  try {
+    const notificationsRef = ref(database, `notifications/${recipientId}`);
+    await push(notificationsRef, {
+      ...notification,
+      createdAt: Date.now(),
+      firebaseId: notification.id
+    });
+  } catch (error) {
+    console.error('Error saving notification to Firebase:', error);
+  }
+};
+
+// Send notification to a specific user (for care navigator to client notifications)
+export const sendNotificationToUser = async (recipientId, message, type = 'info', data = {}) => {
+  try {
+    const notification = createNotification(message, type, data);
+    
+    // Save to Firebase for the recipient
+    await saveNotificationToFirebase(notification, recipientId);
+    
+    return notification;
+  } catch (error) {
+    console.error('Error sending notification to user:', error);
+  }
+};
+
+// Global function to send appointment cancellation notification
+// This can be called from HandleAppointmentsCN.js
+export const sendAppointmentCancellationNotification = async (clientUsername) => {
+  try {
+    await sendNotificationToUser(
+      clientUsername.trim().toLowerCase(),
+      `Your appointment has been cancelled by your care navigator.`,
+      'warning',
+      {
+        type: 'appointment_cancelled',
+        cancelledBy: 'care_navigator',
+        timestamp: new Date().toISOString()
+      }
+    );
+    console.log("Appointment cancellation notification sent to client:", clientUsername);
+    return true;
+  } catch (error) {
+    console.error("Error sending appointment cancellation notification:", error);
+    return false;
+  }
+};
+
+// Listen for Firebase notifications and sync to local storage
+export const startFirebaseNotificationListener = (userId) => {
+  if (!userId) return null;
+  
+  const notificationsRef = ref(database, `notifications/${userId}`);
+  
+  const unsubscribe = onValue(notificationsRef, async (snapshot) => {
+    try {
+      const firebaseNotifications = snapshot.val();
+      if (!firebaseNotifications) return;
+      
+      // Get existing local notifications
+      const localNotifications = await loadNotifications();
+      
+      // Convert Firebase data to array and filter out already processed notifications
+      const firebaseNotificationsArray = Object.values(firebaseNotifications);
+      const newNotifications = firebaseNotificationsArray.filter(firebaseNotif => {
+        // Check if this notification already exists locally
+        return !localNotifications.some(localNotif => 
+          localNotif.id === firebaseNotif.id || localNotif.firebaseId === firebaseNotif.firebaseId
+        );
+      });
+      
+      if (newNotifications.length > 0) {
+        // Add new notifications to local storage
+        const updatedNotifications = [...newNotifications, ...localNotifications];
+        await saveNotifications(updatedNotifications);
+        
+        // Trigger handlers
+        if (global.notificationHandlers) {
+          global.notificationHandlers.forEach(handler => {
+            if (handler && typeof handler === 'function') {
+              handler(updatedNotifications);
+            }
+          });
+        }
+      }
+    } catch (error) {
+      console.error('Error syncing Firebase notifications:', error);
+    }
+  });
+  
+  return unsubscribe;
+};
 
 // Storage functions
 export const saveNotifications = async (notifications) => {

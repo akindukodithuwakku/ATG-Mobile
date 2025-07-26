@@ -16,6 +16,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useFocusEffect } from "@react-navigation/native";
 import { useAutomaticLogout } from "../screens/AutoLogout";
+import { sendAppointmentCancellationNotification } from "../utils/NotificationHandler";
 
 const API_ENDPOINT =
   "https://uqzl6jyqvg.execute-api.ap-south-1.amazonaws.com/dev";
@@ -72,18 +73,37 @@ const HandleAppointmentsCN = ({ navigation }) => {
       const result = await response.json();
       console.log("Appointment cancellation result:", result);
       if (result.statusCode === 200) {
+        // Send notification to the client about appointment cancellation
+        const notificationSent = await sendAppointmentCancellationNotification(clientUsername);
+        
+        if (notificationSent) {
+          console.log("Notification sent to client about appointment cancellation");
+        } else {
+          console.error("Failed to send notification to client");
+        }
+
         setIsLoading(false);
         console.log("Appointment marked as cancelled");
         Alert.alert(
           "Success",
-          `Appointment for client "${clientUsername}" has been cancelled.`,
+          `Appointment for client "${clientUsername}" has been cancelled and notification sent.`,
           [{ text: "OK", onPress: () => resetTimer() }]
         );
       } else {
         console.warn("Failed to mark appointment as cancelled:", result);
+        Alert.alert(
+          "Error",
+          "Failed to cancel appointment. Please try again.",
+          [{ text: "OK", onPress: () => resetTimer() }]
+        );
       }
     } catch (error) {
       console.error("Error cancelling appointment:", error);
+      Alert.alert(
+        "Error",
+        "An error occurred while cancelling the appointment. Please try again.",
+        [{ text: "OK", onPress: () => resetTimer() }]
+      );
     } finally {
       setIsLoading(false);
       setClientUsername("");
@@ -146,7 +166,7 @@ const HandleAppointmentsCN = ({ navigation }) => {
             style={styles.infoIcon}
           />
           <Text style={styles.infoText}>
-            Enter a client's username to cancel their scheduled appointment
+            Enter a client's username to cancel their scheduled appointment. The client will receive a notification about the cancellation.
           </Text>
         </View>
 
@@ -208,9 +228,10 @@ const HandleAppointmentsCN = ({ navigation }) => {
           <Text style={styles.helpTitle}>Appointment Management</Text>
           <Text style={styles.helpText}>
             This screen allows you to cancel appointments that have been
-            scheduled by clients. You can view upcoming appointments in your
-            calendar. If you need to discuss an appointment with a client before
-            cancelling, please use the chat feature to contact them directly.
+            scheduled by clients. When you cancel an appointment, the client will
+            automatically receive a notification about the cancellation. You can view 
+            upcoming appointments in your calendar. If you need to discuss an appointment 
+            with a client before cancelling, please use the chat feature to contact them directly.
           </Text>
         </View>
       </ScrollView>
