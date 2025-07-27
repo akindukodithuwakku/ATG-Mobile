@@ -66,13 +66,27 @@ const CNCarePlansScreen = ({ navigation }) => {
           const carePlanIdentifier = `${item.client_username}_${item.date_created}`;
           
           // Map client usernames to their actual care plan IDs based on the database
+          // Based on the actual care_plans table:
+          // testuser_01 -> ID: 1
+          // Kavindya_02 -> ID: 2  
+          // rakeeb_03 -> ID: 3
+          // indumini_05 -> ID: 6
           const carePlanIdMap = {
+            'testuser_01': 1,
             'Kavindya_02': 2,
-            'testuser_01': 3,
-            'rakeeb_03': 5
+            'rakeeb_03': 3,
+            'indumini_05': 6
           };
           
           const actualCarePlanId = carePlanIdMap[item.client_username];
+          
+          console.log("=== CARE PLAN NAVIGATION DEBUG ===");
+          console.log("Client username:", item.client_username);
+          console.log("Mapped care plan ID:", actualCarePlanId);
+          console.log("Is in mapping:", !!carePlanIdMap[item.client_username]);
+          console.log("Available mappings:", Object.keys(carePlanIdMap));
+          console.log("Current mapping object:", carePlanIdMap);
+          console.log("=== END CARE PLAN NAVIGATION DEBUG ===");
           
           const params = {
             carePlanId: carePlanIdentifier,  // Keep the identifier for task filtering

@@ -47,14 +47,14 @@ const ClientCarePlansScreen = ({ route, navigation }) => {
       <TouchableOpacity
         style={styles.planCard}
         onPress={() =>
-          navigation.navigate('CarePlanMgtClient', {
-            carePlanId: item.id,
-            clientUsername: clientUsername,
-            carePlanName: item.care_plan_name,
-            dateCreated: item.date_created,
-            status: item.status,
-          })
-        }
+  navigation.navigate('CarePlanMgtClient', {
+    carePlanId: item.care_plan_id, // ✅ This is likely the correct field
+    clientUsername: clientUsername,
+    carePlanName: item.care_plan_name,
+    dateCreated: item.date_created,
+    status: item.status,
+  })
+}
       >
         <Text style={styles.planTitle}>{item.care_plan_name || 'Unnamed Plan'}</Text>
         <Text style={styles.planDesc}>Status: {item.status || 'N/A'}</Text>

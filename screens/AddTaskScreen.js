@@ -17,6 +17,13 @@ import SideNavigationCN from "../Components/SideNavigationCN";
 
 const AddTask = ({ navigation, route }) => {
   const { care_plan_id, updated_by } = route.params;
+  
+  console.log("=== ADD TASK SCREEN DEBUG ===");
+  console.log("Route params:", route.params);
+  console.log("care_plan_id received:", care_plan_id);
+  console.log("updated_by received:", updated_by);
+  console.log("care_plan_id type:", typeof care_plan_id);
+  console.log("=== END ADD TASK SCREEN DEBUG ===");
 
 
   const [title, setTitle] = useState("");
