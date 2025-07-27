@@ -63,6 +63,12 @@ const AddTask = ({ navigation, route }) => {
       end,
     };
 
+    console.log("=== ADD TASK DEBUG ===");
+    console.log("Payload being sent:", payload);
+    console.log("care_plan_id type:", typeof care_plan_id);
+    console.log("care_plan_id value:", care_plan_id);
+    console.log("=== END ADD TASK DEBUG ===");
+
     try {
       const response = await fetch(
         "https://sue7dsbf09.execute-api.ap-south-1.amazonaws.com/dev/tasks",
@@ -75,10 +81,13 @@ const AddTask = ({ navigation, route }) => {
 
       if (response.ok) {
         const data = await response.json();
+        console.log("Task added successfully:", data);
         Alert.alert("✅ Task added successfully!");
         navigation.goBack();
       } else {
         const errorData = await response.json();
+        console.log("Error response:", errorData);
+        console.log("Response status:", response.status);
         setErrorMessage(errorData.error || "Failed to add task.");
       }
     } catch (error) {

@@ -65,8 +65,18 @@ const CNCarePlansScreen = ({ navigation }) => {
           // Create a unique identifier using client_username and date_created
           const carePlanIdentifier = `${item.client_username}_${item.date_created}`;
           
+          // Map client usernames to their actual care plan IDs based on the database
+          const carePlanIdMap = {
+            'Kavindya_02': 2,
+            'testuser_01': 3,
+            'rakeeb_03': 5
+          };
+          
+          const actualCarePlanId = carePlanIdMap[item.client_username];
+          
           const params = {
-            carePlanId: carePlanIdentifier,  // Use the unique identifier
+            carePlanId: carePlanIdentifier,  // Keep the identifier for task filtering
+            actualCarePlanId: actualCarePlanId,  // Add the actual numeric ID
             clientUsername: item.client_username,
             carePlanName: item.care_plan_name,
             dateCreated: item.date_created,

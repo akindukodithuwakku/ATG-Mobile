@@ -42,6 +42,7 @@ const CarePlanOverview = ({ navigation, carePlanId }) => {
     const result = await response.json();
 
     // Filter tasks by client username using the updated_by field
+    // This ensures we only show tasks for this specific client
     const filteredTasks = (result || []).filter(task => {
       return task.updated_by === clientUsername;
     });
@@ -185,7 +186,7 @@ const CarePlanScreen = ({ route, navigation }) => {
   const [isSideNavVisible, setIsSideNavVisible] = useState(false);
 
   // Get dynamic care plan ID and client username
-  const { carePlanId, clientUsername } = route.params;
+  const { carePlanId, actualCarePlanId, clientUsername } = route.params;
 
   const closeSideNav = () => setIsSideNavVisible(false);
 
@@ -220,12 +221,16 @@ const CarePlanScreen = ({ route, navigation }) => {
 
       <TouchableOpacity
   style={styles.fab}
-  onPress={() =>
+  onPress={() => {
+    if (!actualCarePlanId) {
+      alert("Unable to determine care plan ID. Please try again.");
+      return;
+    }
     navigation.navigate('AddTaskScreen', {
-      care_plan_id: carePlanId,              // Pass care plan ID
-      updated_by: 'cn_alecbenjamin',         // Hardcoded CN username for now
-    })
-  }
+      care_plan_id: actualCarePlanId,        // Pass the actual numeric care plan ID
+      updated_by: clientUsername,            // Use the client username so the task shows up in their list
+    });
+  }}
 >
   <Ionicons name="add" size={24} color="white" />
 </TouchableOpacity>
