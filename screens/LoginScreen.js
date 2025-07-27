@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import {
   View,
   Text,
@@ -17,12 +17,8 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useResetTimerOnLogin } from "./AutoLogout";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-import WebInput from "../Components/WebInput";
-
 const API_ENDPOINT =
-  Platform.OS === "web"
-    ? "https://atg-mobile.vercel.app/api/proxy"
-    : "https://uqzl6jyqvg.execute-api.ap-south-1.amazonaws.com/dev";
+  "https://uqzl6jyqvg.execute-api.ap-south-1.amazonaws.com/dev";
 
 const LoginScreen = ({ navigation }) => {
   const [username, setUsername] = useState("");
@@ -32,15 +28,6 @@ const LoginScreen = ({ navigation }) => {
   const [isLoading, setIsLoading] = useState(false);
 
   useResetTimerOnLogin();
-
-  // Web-specific input focus handling
-  const handleInputFocus = () => {
-    // Ensure input is focused on web
-    if (Platform.OS === "web") {
-      // Small delay to ensure proper focus
-      setTimeout(() => {}, 100);
-    }
-  };
 
   // Form validation
   const validateForm = () => {
@@ -73,11 +60,7 @@ const LoginScreen = ({ navigation }) => {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            Accept: "application/json",
-            ...(Platform.OS === "web" && { Origin: window.location.origin }),
           },
-          mode: Platform.OS === "web" ? "cors" : "no-cors",
-          credentials: "omit",
           body: JSON.stringify({
             username: username.trim(),
             password: password,
@@ -174,13 +157,7 @@ const LoginScreen = ({ navigation }) => {
               method: "POST",
               headers: {
                 "Content-Type": "application/json",
-                Accept: "application/json",
-                ...(Platform.OS === "web" && {
-                  Origin: window.location.origin,
-                }),
               },
-              mode: Platform.OS === "web" ? "cors" : "no-cors",
-              credentials: "omit",
               body: JSON.stringify({
                 action: "get_user_status",
                 data: {
@@ -208,10 +185,10 @@ const LoginScreen = ({ navigation }) => {
 
               if (status === 1) {
                 Alert.alert("Please fill the care intake form to proceed.");
-                // Navigate to care intake flow
+                // Navigate to careIntake
                 navigation.reset({
                   index: 0,
-                  routes: [{ name: "ReadinessQuestionnaire" }],
+                  routes: [{ name: "Personalinfo" }],
                 });
               } else if (status === 2) {
                 try {
@@ -221,13 +198,7 @@ const LoginScreen = ({ navigation }) => {
                       method: "POST",
                       headers: {
                         "Content-Type": "application/json",
-                        Accept: "application/json",
-                        ...(Platform.OS === "web" && {
-                          Origin: window.location.origin,
-                        }),
                       },
-                      mode: Platform.OS === "web" ? "cors" : "no-cors",
-                      credentials: "omit",
                       body: JSON.stringify({
                         action: "get_user_role",
                         data: {
@@ -323,46 +294,47 @@ const LoginScreen = ({ navigation }) => {
   };
 
   return (
-    <View style={styles.container}>
-      <StatusBar
-        barStyle="light-content"
-        backgroundColor="transparent"
-        translucent
-      />
+    <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+      <View style={styles.container}>
+        <StatusBar
+          barStyle="light-content"
+          backgroundColor="transparent"
+          translucent
+        />
 
-      <LinearGradient
-        colors={["#09D1C7", "#35AFEA"]}
-        style={styles.headerGradient}
-      >
-        <View style={styles.header}>
-          <TouchableOpacity
-            onPress={() => navigation.goBack()}
-            style={styles.backButton}
-          >
-            <Ionicons name="chevron-back" size={28} color="#FFFFFF" />
-          </TouchableOpacity>
-          <Text style={styles.headerText}>Log In</Text>
-        </View>
-      </LinearGradient>
-
-      <ScrollView
-        style={styles.formScrollView}
-        contentContainerStyle={styles.formContentContainer}
-        showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled"
-      >
-        <View style={styles.form}>
-          <View style={styles.welcomeContainer}>
-            <Text style={styles.welcomeTitle}>Welcome Back!</Text>
-            <Text style={styles.welcomeSubtitle}>
-              Log in to access your dashboard
-            </Text>
+        <LinearGradient
+          colors={["#09D1C7", "#35AFEA"]}
+          style={styles.headerGradient}
+        >
+          <View style={styles.header}>
+            <TouchableOpacity
+              onPress={() => navigation.goBack()}
+              style={styles.backButton}
+            >
+              <Ionicons name="chevron-back" size={28} color="#FFFFFF" />
+            </TouchableOpacity>
+            <Text style={styles.headerText}>Log In</Text>
           </View>
+        </LinearGradient>
 
-          {/* Username Field */}
-          <Text style={styles.inputLabel}>Username</Text>
-          <View style={styles.inputContainer}>
-            <WebInput
+        <ScrollView
+          style={styles.formScrollView}
+          contentContainerStyle={styles.formContentContainer}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+        >
+          <View style={styles.form}>
+            <View style={styles.welcomeContainer}>
+              <Text style={styles.welcomeTitle}>Welcome Back!</Text>
+              <Text style={styles.welcomeSubtitle}>
+                Log in to access your dashboard
+              </Text>
+            </View>
+
+            {/* Username Field */}
+            <Text style={styles.inputLabel}>Username</Text>
+            <TextInput
+              style={styles.input}
               placeholder="Username"
               value={username}
               onChangeText={(text) => {
@@ -372,86 +344,75 @@ const LoginScreen = ({ navigation }) => {
                 }
               }}
               autoCapitalize="none"
-              autoComplete="username"
-              autoCorrect={false}
-              spellCheck={false}
-              data-testid="username-input"
-              aria-label="Username input field"
             />
-          </View>
-          {errors.username && (
-            <Text style={styles.errorText}>{errors.username}</Text>
-          )}
+            {errors.username && (
+              <Text style={styles.errorText}>{errors.username}</Text>
+            )}
 
-          {/* Password Field */}
-          <Text style={styles.inputLabel}>Password</Text>
-          <View style={styles.passwordContainer}>
-            <WebInput
-              placeholder="Password"
-              value={password}
-              onChangeText={(text) => {
-                setPassword(text);
-                if (errors.password) {
-                  setErrors({ ...errors, password: null });
-                }
-              }}
-              secureTextEntry={!passwordVisible}
-              autoComplete="current-password"
-              autoCorrect={false}
-              spellCheck={false}
-              data-testid="password-input"
-              aria-label="Password input field"
-            />
-            <TouchableOpacity
-              style={styles.eyeIcon}
-              onPress={() => setPasswordVisible(!passwordVisible)}
-              data-testid="eye-icon"
-            >
-              <Ionicons
-                name={passwordVisible ? "eye-off" : "eye"}
-                size={24}
-                color="#777"
+            {/* Password Field */}
+            <Text style={styles.inputLabel}>Password</Text>
+            <View style={styles.passwordContainer}>
+              <TextInput
+                style={styles.passwordInput}
+                placeholder="Password"
+                value={password}
+                onChangeText={(text) => {
+                  setPassword(text);
+                  if (errors.password) {
+                    setErrors({ ...errors, password: null });
+                  }
+                }}
+                secureTextEntry={!passwordVisible}
               />
-            </TouchableOpacity>
-          </View>
-          {errors.password && (
-            <Text style={styles.errorText}>{errors.password}</Text>
-          )}
+              <TouchableOpacity
+                style={styles.eyeIcon}
+                onPress={() => setPasswordVisible(!passwordVisible)}
+              >
+                <Ionicons
+                  name={passwordVisible ? "eye-off" : "eye"}
+                  size={24}
+                  color="#777"
+                />
+              </TouchableOpacity>
+            </View>
+            {errors.password && (
+              <Text style={styles.errorText}>{errors.password}</Text>
+            )}
 
-          {/* Forgot Password Link */}
-          <TouchableOpacity
-            style={styles.forgotPasswordContainer}
-            onPress={() => navigation.navigate("ForgotPassword")}
-          >
-            <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={styles.loginButton}
-            onPress={handleLogin}
-            disabled={isLoading}
-            data-testid="login-button"
-          >
-            <LinearGradient
-              colors={["#09D1C7", "#35AFEA"]}
-              style={styles.gradientButton}
+            {/* Forgot Password Link */}
+            <TouchableOpacity
+              style={styles.forgotPasswordContainer}
+              onPress={() => navigation.navigate("ForgotPWD")}
             >
-              <Text style={styles.loginButtonText}>
-                {isLoading ? "Logging In..." : "Log In"}
-              </Text>
-            </LinearGradient>
-          </TouchableOpacity>
-
-          {/* Sign Up Link */}
-          <View style={styles.signUpLinkContainer}>
-            <Text style={styles.signUpText}>Don't have an account? </Text>
-            <TouchableOpacity onPress={() => navigation.navigate("Signup")}>
-              <Text style={styles.signUpLink}>Sign Up</Text>
+              <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
             </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.loginButton}
+              onPress={handleLogin}
+              disabled={isLoading}
+            >
+              <LinearGradient
+                colors={["#09D1C7", "#35AFEA"]}
+                style={styles.gradientButton}
+              >
+                <Text style={styles.loginButtonText}>
+                  {isLoading ? "Logging In..." : "Log In"}
+                </Text>
+              </LinearGradient>
+            </TouchableOpacity>
+
+            {/* Sign Up Link */}
+            <View style={styles.signUpLinkContainer}>
+              <Text style={styles.signUpText}>Don't have an account? </Text>
+              <TouchableOpacity onPress={() => navigation.navigate("Signup")}>
+                <Text style={styles.signUpLink}>Sign Up</Text>
+              </TouchableOpacity>
+            </View>
           </View>
-        </View>
-      </ScrollView>
-    </View>
+        </ScrollView>
+      </View>
+    </TouchableWithoutFeedback>
   );
 };
 
@@ -510,15 +471,6 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     marginTop: 15,
   },
-  inputContainer: {
-    height: 50,
-    borderWidth: 1,
-    borderRadius: 10,
-    paddingHorizontal: 15,
-    backgroundColor: "#E9F6FE",
-    fontSize: 16,
-    justifyContent: "center",
-  },
   input: {
     height: 50,
     borderWidth: 1,
@@ -533,8 +485,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderRadius: 10,
     backgroundColor: "#E9F6FE",
-    height: 50,
-    paddingHorizontal: 15,
   },
   passwordInput: {
     flex: 1,
