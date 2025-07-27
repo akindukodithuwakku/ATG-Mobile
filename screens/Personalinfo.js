@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import {
   View,
   Text,
@@ -12,9 +12,8 @@ import {
   Platform,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import DateTimePicker from '@react-native-community/datetimepicker';
-import BottomNavigationClient from "../Components/BottomNavigationClient";
-import SideNavigationClient from "../Components/SideNavigationClient";
+import DateTimePicker from "@react-native-community/datetimepicker";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const ErrorIcon = () => (
   <View style={styles.errorIcon}>
@@ -23,20 +22,18 @@ const ErrorIcon = () => (
 );
 
 const PersonalInfo = ({ navigation }) => {
-  const [userName, setUserName] = useState("");
   const [fullName, setFullName] = useState("");
   const [dateOfBirth, setDateOfBirth] = useState("");
   const [contactNumber, setContactNumber] = useState("");
   const [homeAddress, setHomeAddress] = useState("");
   const [isMale, setIsMale] = useState(false);
   const [isFemale, setIsFemale] = useState(false);
-  const [isSideNavVisible, setIsSideNavVisible] = useState(false);
   const [errors, setErrors] = useState({});
   const [showDatePicker, setShowDatePicker] = useState(false);
   const scheme = useColorScheme();
 
   const handleDateChange = (event, selectedDate) => {
-    setShowDatePicker(Platform.OS === 'ios');
+    setShowDatePicker(Platform.OS === "ios");
     if (selectedDate) {
       const formattedDate = selectedDate.toLocaleDateString();
       setDateOfBirth(formattedDate);
@@ -55,16 +52,12 @@ const PersonalInfo = ({ navigation }) => {
     }
   };
 
-  const closeSideNav = () => {
-    setIsSideNavVisible(false);
-  };
-
   const validateForm = () => {
     const newErrors = {};
-    if (!userName) newErrors.userName = "Username cannot be empty";
     if (!fullName) newErrors.fullName = "Full Name cannot be empty";
     if (!dateOfBirth) newErrors.dateOfBirth = "Date of Birth cannot be empty";
-    if (!contactNumber) newErrors.contactNumber = "Contact Number cannot be empty";
+    if (!contactNumber)
+      newErrors.contactNumber = "Contact Number cannot be empty";
     if (!homeAddress) newErrors.homeAddress = "Home Address cannot be empty";
     if (!isMale && !isFemale) newErrors.gender = "Please select a gender";
 
@@ -72,10 +65,17 @@ const PersonalInfo = ({ navigation }) => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleContinue = () => {
+  const handleContinue = async () => {
+    const accessToken = await AsyncStorage.getItem("accessToken");
+    let username;
+    if (accessToken) {
+      username = await AsyncStorage.getItem("appUser");
+    } else {
+      username = await AsyncStorage.getItem("appUsername");
+    }
     if (validateForm()) {
       const personalInfoData = {
-        userName,
+        username,
         fullName,
         dateOfBirth,
         contactNumber,
@@ -109,37 +109,16 @@ const PersonalInfo = ({ navigation }) => {
       />
 
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => setIsSideNavVisible(!isSideNavVisible)}>
+        <TouchableOpacity
+          onPress={() => setIsSideNavVisible(!isSideNavVisible)}
+        >
           <Ionicons name="menu" size={28} color="white" />
         </TouchableOpacity>
         <Text style={styles.headerText}>Personal Information</Text>
       </View>
 
-      {isSideNavVisible && (
-        <SideNavigationClient navigation={navigation} onClose={closeSideNav} />
-      )}
-
       <ScrollView contentContainerStyle={styles.scrollContainer}>
         <View style={styles.formContainer}>
-          {/* Username */}
-          <Text style={styles.label}>Username</Text>
-          <View style={styles.inputContainer}>
-            <TextInput
-              style={styles.input}
-              placeholder="Enter your username"
-              placeholderTextColor="#B3E5FC"
-              value={userName}
-              onChangeText={handleInputChange(setUserName, "userName")}
-              onFocus={() => handleInputFocus("userName")}
-            />
-          </View>
-          {errors.userName && (
-            <View style={styles.errorContainer}>
-              <ErrorIcon />
-              <Text style={styles.error}>{errors.userName}</Text>
-            </View>
-          )}
-
           {/* Full Name */}
           <Text style={styles.label}>Full Name</Text>
           <View style={styles.inputContainer}>
@@ -161,7 +140,10 @@ const PersonalInfo = ({ navigation }) => {
 
           {/* Date of Birth */}
           <Text style={styles.label}>Date of Birth</Text>
-          <TouchableOpacity onPress={showDatepicker} style={[styles.inputContainer, styles.dateInput]}>
+          <TouchableOpacity
+            onPress={showDatepicker}
+            style={[styles.inputContainer, styles.dateInput]}
+          >
             <Text style={styles.dateText}>
               {dateOfBirth || "DD / MM / YYYY"}
             </Text>
@@ -191,7 +173,8 @@ const PersonalInfo = ({ navigation }) => {
                 onValueChange={() => {
                   setIsMale(true);
                   setIsFemale(false);
-                  if (errors.gender) setErrors((prev) => ({ ...prev, gender: "" }));
+                  if (errors.gender)
+                    setErrors((prev) => ({ ...prev, gender: "" }));
                 }}
               />
               <Text style={styles.genderText}>Male</Text>
@@ -203,7 +186,8 @@ const PersonalInfo = ({ navigation }) => {
                 onValueChange={() => {
                   setIsFemale(true);
                   setIsMale(false);
-                  if (errors.gender) setErrors((prev) => ({ ...prev, gender: "" }));
+                  if (errors.gender)
+                    setErrors((prev) => ({ ...prev, gender: "" }));
                 }}
               />
               <Text style={styles.genderText}>Female</Text>
@@ -225,7 +209,10 @@ const PersonalInfo = ({ navigation }) => {
               placeholderTextColor="#B3E5FC"
               keyboardType="phone-pad"
               value={contactNumber}
-              onChangeText={handleInputChange(setContactNumber, "contactNumber")}
+              onChangeText={handleInputChange(
+                setContactNumber,
+                "contactNumber"
+              )}
               onFocus={() => handleInputFocus("contactNumber")}
             />
           </View>
@@ -264,9 +251,6 @@ const PersonalInfo = ({ navigation }) => {
       <TouchableOpacity style={styles.continueButton} onPress={handleContinue}>
         <Text style={styles.continueText}>Continue</Text>
       </TouchableOpacity>
-
-      {/* Bottom Navigation */}
-      <BottomNavigationClient navigation={navigation} />
     </View>
   );
 };
@@ -365,26 +349,26 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
   },
   error: {
-    color: 'red',
+    color: "red",
     marginTop: 5,
   },
   errorContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     marginTop: 5,
   },
   errorIcon: {
     width: 24,
     height: 24,
     borderRadius: 12,
-    backgroundColor: 'red',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: "red",
+    justifyContent: "center",
+    alignItems: "center",
     marginRight: 5,
   },
   errorIconText: {
     fontSize: 16,
-    color: 'white',
+    color: "white",
   },
 });
 
