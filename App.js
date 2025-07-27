@@ -82,8 +82,7 @@ import MessagingCN from "./screens/MessagingCN";
 // Auto Logout
 import { LogoutProvider, AutomaticLogoutScreen } from "./screens/AutoLogout";
 
-// Context Providers
-import { LogoutProvider as LogoutContextProvider } from "./context/LogoutContext";
+
 
 const Stack = createStackNavigator();
 

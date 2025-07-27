@@ -14,10 +14,12 @@ import {
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Ionicons } from "@expo/vector-icons";
 import * as DocumentPicker from "expo-document-picker";
+import { useNavigation } from "@react-navigation/native";
 import SideNavigationClient from "../Components/SideNavigationClient";
 import BottomNavigationClient from "../Components/BottomNavigationClient";
 
-const DocumentUpload = ({ navigation }) => {
+const DocumentUpload = () => {
+  const navigation = useNavigation();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [uploadingFiles, setUploadingFiles] = useState({});
   const [confirmedFiles, setConfirmedFiles] = useState([]);

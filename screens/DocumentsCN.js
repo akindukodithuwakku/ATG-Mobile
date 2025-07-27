@@ -16,6 +16,7 @@ import { Picker } from "@react-native-picker/picker";
 import { Ionicons } from "@expo/vector-icons";
 import * as FileSystem from "expo-file-system";
 import * as Sharing from "expo-sharing";
+import { useNavigation } from "@react-navigation/native";
 import SideNavigationCN from "../Components/SideNavigationCN";
 import BottomNavigationCN from "../Components/BottomNavigationCN";
 
@@ -24,7 +25,8 @@ const API_URL =
 const SIGNED_URL_API =
   "https://pbhcgeu119.execute-api.ap-south-1.amazonaws.com/dev/DocumentDownloadHandler";
 
-const DocumentsCN = ({ navigation }) => {
+const DocumentsCN = () => {
+  const navigation = useNavigation();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [documentsData, setDocumentsData] = useState([]);
   const [search, setSearch] = useState("");
