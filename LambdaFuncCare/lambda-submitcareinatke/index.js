@@ -26,7 +26,7 @@ exports.handler = async (event) => {
       current_medical_conditions_morning,
       current_medical_conditions_evening,
       special_assistance_mobility,
-      special_assistance_hypertension,
+      special_assistance_language_preferences,
       special_assistance_medication_management,
       special_assistance_hygiene,
       additional_notes,
@@ -67,7 +67,7 @@ exports.handler = async (event) => {
       primary_reason_for_care, current_medical_conditions_weekdays,
       current_medical_conditions_weekends, current_medical_conditions_morning,
       current_medical_conditions_evening, special_assistance_mobility,
-      special_assistance_hypertension, special_assistance_medication_management,
+      special_assistance_language_preferences, special_assistance_medication_management,
       special_assistance_hygiene, additional_notes, emergency_contact_name,
       emergency_contact_number, relationship_to_emergency_contact
     ];

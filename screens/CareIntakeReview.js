@@ -59,6 +59,7 @@ const CareIntakeReview = ({ navigation, route }) => {
     const specialAssistance = formData.specialAssistance || {};
 
     return {
+      client_username: formData.username || null,
       care_navigator_username: formData.careNavigatorUsername || null,
       full_name: formData.fullName || null,
       date_of_birth: formatDate(formData.dateOfBirth) || null,
