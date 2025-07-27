@@ -70,6 +70,12 @@ const CarePlanOverview = ({ navigation, carePlanId }) => {
         actualCarePlanId = carePlanIdMap[clientUsername] || carePlanId;
       }
 
+      // If we still don't have a valid numeric ID, try to use the carePlanId directly
+      if (isNaN(actualCarePlanId)) {
+        console.warn("Invalid care plan ID, using fallback");
+        actualCarePlanId = carePlanId;
+      }
+
       // Fetch tasks for the specific care plan ID
       const apiUrl = `https://sue7dsbf09.execute-api.ap-south-1.amazonaws.com/dev/tasks?care_plan_id=${actualCarePlanId}`;
       console.log("Fetching tasks for care plan ID:", actualCarePlanId);

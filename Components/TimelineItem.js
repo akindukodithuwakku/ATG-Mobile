@@ -53,6 +53,11 @@ const TimelineItem = ({
   }
 
   const handleDelete = () => {
+    if (!id) {
+      Alert.alert("Error", "Cannot delete task: No task ID provided");
+      return;
+    }
+
     Alert.alert(
       "Delete Task",
       `Are you sure you want to delete "${title}"?`,
@@ -78,7 +83,16 @@ const TimelineItem = ({
               if (!response.ok) {
                 const errorText = await response.text();
                 console.log(`Delete error response: ${errorText}`);
-                throw new Error(`HTTP error! status: ${response.status}`);
+
+                if (response.status === 404) {
+                  Alert.alert(
+                    "Error",
+                    "Task not found. It may have already been deleted."
+                  );
+                } else {
+                  throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return;
               }
 
               const result = await response.json();

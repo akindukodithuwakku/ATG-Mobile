@@ -71,17 +71,19 @@ const CNCarePlansScreen = ({ navigation }) => {
           const carePlanIdMap = {
             testuser_01: 1,
             Kavindya_02: 2,
+            kavindya_02: 2,
             rakeeb_03: 3,
             indumini_05: 6,
           };
 
-          const actualCarePlanId = carePlanIdMap[item.client_username];
+          const actualCarePlanId =
+            carePlanIdMap[item.client_username] || item.id;
 
           const params = {
             carePlanId: carePlanIdentifier, // Keep the identifier for task filtering
             actualCarePlanId: actualCarePlanId, // Add the actual numeric ID
             clientUsername: item.client_username,
-            carePlanName: item.care_plan_name,
+            carePlanName: item.careplan_name,
             dateCreated: item.date_created,
             status: item.status,
           };
@@ -90,7 +92,7 @@ const CNCarePlansScreen = ({ navigation }) => {
         }}
       >
         <Text style={styles.planTitle}>
-          {item.care_plan_name || "Unnamed Plan"}
+          {item.careplan_name || "Unnamed Plan"}
         </Text>
         <Text style={styles.planClient}>
           Client: {item.client_username || "N/A"}

@@ -26,7 +26,7 @@ exports.handler = async (event) => {
 
     // SQL query to get care plans with id, careplan_name, client_username, status, and date_created
     const query = `
-      SELECT cp.id, cp.care_plan_name, cp.client_username, cp.status, cp.date_created
+      SELECT cp.id, cp.careplan_name, cp.client_username, cp.status, cp.date_created
       FROM care_plans cp
       INNER JOIN client_details cd ON cp.client_username = cd.client_username
       WHERE cd.care_navigator_username = ?
