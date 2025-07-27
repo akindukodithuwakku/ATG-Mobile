@@ -24,9 +24,9 @@ exports.handler = async (event) => {
       };
     }
 
-    // Query care plans for the client (select only required columns)
+    // Query care plans for the client (include id field)
     const query = `
-      SELECT care_plan_name, date_created, status
+      SELECT id, care_plan_name, date_created, status
       FROM care_plans
       WHERE client_username = ?
       ORDER BY date_created DESC
@@ -49,4 +49,4 @@ exports.handler = async (event) => {
   } finally {
     if (connection) await connection.end();
   }
-};
+}; 

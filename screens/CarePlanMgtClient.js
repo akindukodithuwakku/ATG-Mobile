@@ -39,20 +39,40 @@ const CarePlanClientScreen = ({ route, navigation }) => {
   const [searchText, setSearchText] = useState("");
   const [isSideNavVisible, setIsSideNavVisible] = useState(false);
 
-  // Get carePlanId from route params, fallback to 2 if not passed
-  const carePlanId = route?.params?.carePlanId || 2;
+  // Get carePlanId and clientUsername from route params
+  const carePlanId = route?.params?.carePlanId;
+  const clientUsername = route?.params?.clientUsername;
   const isFocused = useIsFocused();
 
   const fetchTasks = async () => {
     setLoading(true);
     try {
-      const response = await fetch(
-        `https://sue7dsbf09.execute-api.ap-south-1.amazonaws.com/dev/tasks?care_plan_id=${carePlanId}`
-      );
+      console.log("=== CLIENT TASK FETCH DEBUG ===");
+      console.log("carePlanId:", carePlanId);
+      console.log("clientUsername:", clientUsername);
+      console.log("Type of carePlanId:", typeof carePlanId);
+      
+      if (!carePlanId) {
+        console.error("No care plan ID provided");
+        setTasks([]);
+        return;
+      }
+
+      // Fetch tasks for the specific care plan ID
+      const apiUrl = `https://sue7dsbf09.execute-api.ap-south-1.amazonaws.com/dev/tasks?care_plan_id=${carePlanId}`;
+      console.log("API URL:", apiUrl);
+      
+      const response = await fetch(apiUrl);
+      console.log("Response status:", response.status);
+      
       const result = await response.json();
-      const sortedTasks = (result.data || []).sort(
-        (a, b) => new Date(a.start) - new Date(b.start)
-      );
+      console.log("API Response:", result);
+      console.log("Number of tasks received:", result ? result.length : 0);
+      
+      const sortedTasks = (result || []).sort((a, b) => new Date(a.start || 0) - new Date(b.start || 0));
+      console.log("Sorted tasks:", sortedTasks);
+      console.log("=== END CLIENT TASK FETCH DEBUG ===");
+      
       setTasks(sortedTasks);
     } catch (error) {
       console.error("Error fetching tasks:", error);
@@ -77,15 +97,26 @@ const CarePlanClientScreen = ({ route, navigation }) => {
     },
   ];
 
-  const filteredTasks = tasks.filter((task) => {
-    if (!task.start) return false;
-    const taskDate = new Date(task.start.replace(" ", "T"));
+  const filteredTasks = tasks.filter(task => {
+    // If no start date, show the task in current month by default
+    if (!task.start) {
+      const shouldShow = selectedMonth === new Date().getMonth();
+      if (searchText.trim() === '') {
+        return shouldShow; // Show in current month
+      }
+      return false; // Hide tasks without start dates when searching
+    }
+    
+    const taskDate = new Date(task.start.replace(' ', 'T'));
     const matchesMonth = taskDate.getMonth() === selectedMonth;
-    const taskDateString = task.start.split(" ")[0];
-    return (
-      matchesMonth &&
-      (searchText.trim() === "" || taskDateString.includes(searchText.trim()))
-    );
+
+    if (searchText.trim() === '') {
+      return matchesMonth;
+    }
+
+    // Check if searchText matches the date part of the task (YYYY-MM-DD)
+    const taskDateString = task.start.split(' ')[0];
+    return matchesMonth && taskDateString.includes(searchText.trim());
   });
 
   const renderTaskItem = ({ item, index }) => (
