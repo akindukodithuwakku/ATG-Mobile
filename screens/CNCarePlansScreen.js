@@ -76,14 +76,15 @@ const CNCarePlansScreen = ({ navigation }) => {
             indumini_05: 6,
           };
 
+          // Use the mapped ID if available, otherwise fall back to item.id or a default
           const actualCarePlanId =
-            carePlanIdMap[item.client_username] || item.id;
+            carePlanIdMap[item.client_username] || item.id || 2;
 
           const params = {
             carePlanId: carePlanIdentifier, // Keep the identifier for task filtering
             actualCarePlanId: actualCarePlanId, // Add the actual numeric ID
             clientUsername: item.client_username,
-            carePlanName: item.careplan_name,
+            carePlanName: item.care_plan_name,
             dateCreated: item.date_created,
             status: item.status,
           };
@@ -92,7 +93,7 @@ const CNCarePlansScreen = ({ navigation }) => {
         }}
       >
         <Text style={styles.planTitle}>
-          {item.careplan_name || "Unnamed Plan"}
+          {item.care_plan_name || "Unnamed Plan"}
         </Text>
         <Text style={styles.planClient}>
           Client: {item.client_username || "N/A"}
