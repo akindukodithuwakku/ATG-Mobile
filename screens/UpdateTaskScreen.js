@@ -14,6 +14,7 @@ import { Ionicons } from '@expo/vector-icons';
 import DateTimePicker from "@react-native-community/datetimepicker";
 import BottomNavigationCN from '../Components/BottomNavigationCN';
 import SideNavigationCN from '../Components/SideNavigationCN';
+import { sendTaskUpdateNotification } from '../utils/NotificationHandler';
 
 const STATUS_OPTIONS = ["pending", "completed", "overdue"];
 
@@ -43,6 +44,45 @@ const UpdateTaskScreen = ({ navigation, route }) => {
     const month = String(dateObj.getMonth() + 1).padStart(2, "0");
     const day = String(dateObj.getDate()).padStart(2, "0");
     return `${year}-${month}-${day} ${timeStr}:00`;
+  };
+
+  const getClientUsernameFromCarePlan = async (carePlanId) => {
+    try {
+      console.log("Fetching client username for care plan ID:", carePlanId);
+      
+      const response = await fetch(
+        "https://sue7dsbf09.execute-api.ap-south-1.amazonaws.com/dev/dbHandling",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "get_care_plan_details",
+            data: {
+              care_plan_id: carePlanId,
+            },
+          }),
+        }
+      );
+
+      if (response.ok) {
+        const result = await response.json();
+        console.log("Care plan details API response:", result);
+        
+        if (result.statusCode === 200 && result.body) {
+          const clientUsername = result.body.client_username;
+          console.log("Found client username:", clientUsername);
+          return clientUsername;
+        } else {
+          console.log("API response not successful:", result);
+        }
+      } else {
+        console.log("API request failed with status:", response.status);
+      }
+      return null;
+    } catch (error) {
+      console.error("Error fetching care plan details:", error);
+      return null;
+    }
   };
 
   const handleUpdateTask = async () => {
@@ -75,10 +115,28 @@ const UpdateTaskScreen = ({ navigation, route }) => {
       );
 
       if (response.ok) {
-        // === INSERT NOTIFICATION CODE HERE ===
-        // Example:
-        // await sendNotificationToClient(task.client_username, "Task updated", "A task in your care plan was updated.");
-        // === END NOTIFICATION CODE ===
+        // Send notification to client about task update
+        try {
+          console.log("=== TASK UPDATE NOTIFICATION DEBUG ===");
+          console.log("Task object:", task);
+          
+          // Get the care plan ID from the task
+          const carePlanId = task.care_plan_id;
+          console.log("Care plan ID:", carePlanId);
+          
+          if (carePlanId) {
+            // Use the new centralized function
+            const notificationResult = await sendTaskUpdateNotification(carePlanId, title, status);
+            console.log("Task update notification result:", notificationResult);
+          } else {
+            console.log("No care plan ID found in task");
+          }
+          console.log("=== END TASK UPDATE NOTIFICATION DEBUG ===");
+        } catch (notificationError) {
+          console.error("Error sending task update notification:", notificationError);
+          console.error("Error details:", notificationError.message);
+          // Don't fail the task update if notification fails
+        }
 
         Alert.alert("✅ Task updated successfully!");
         navigation.goBack();
