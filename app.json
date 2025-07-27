@@ -37,11 +37,8 @@
     "packagerOpts": {
       "sourceExts": ["js", "jsx", "ts", "tsx", "env"]
     },
-    "extra": {
-      "eas": {
-        "projectId": "your-project-id"
-      }
-    },
+    
+    
     "owner": "your-expo-username"
   }
 }
