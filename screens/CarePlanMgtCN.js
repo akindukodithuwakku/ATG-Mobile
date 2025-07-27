@@ -8,9 +8,8 @@ import {
   StyleSheet,
   TouchableOpacity,
   StatusBar,
-  useColorScheme,
-  ScrollView,
   ActivityIndicator,
+  useColorScheme,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import BottomNavigationCN from "../Components/BottomNavigationCN";
@@ -42,44 +41,54 @@ const CarePlanOverview = ({ navigation, carePlanId }) => {
   const [searchText, setSearchText] = useState("");
   const isFocused = useIsFocused();
 
-  
   const fetchTasks = async () => {
-  try {
-    if (!carePlanId) {
-      console.error("No care plan ID provided");
-      setTasks([]);
+    try {
+      if (!carePlanId) {
+        console.error("No care plan ID provided");
+        setTasks([]);
+        setLoading(false);
+        return;
+      }
+
+      // Use the actual care plan ID if available, otherwise extract from identifier
+      let actualCarePlanId = carePlanId;
+      let clientUsername = "";
+
+      // If carePlanId is a string identifier (format: "client_username_date_created")
+      if (typeof carePlanId === "string" && carePlanId.includes("_")) {
+        const parts = carePlanId.split("_");
+        clientUsername = parts.slice(0, -1).join("_"); // Join all parts except the last one (date)
+
+        // Map client usernames to their actual care plan IDs
+        const carePlanIdMap = {
+          testuser_01: 1,
+          Kavindya_02: 2,
+          kavindya_02: 2,
+          rakeeb_03: 3,
+          indumini_05: 6,
+        };
+        actualCarePlanId = carePlanIdMap[clientUsername] || carePlanId;
+      }
+
+      // Fetch tasks for the specific care plan ID
+      const apiUrl = `https://sue7dsbf09.execute-api.ap-south-1.amazonaws.com/dev/tasks?care_plan_id=${actualCarePlanId}`;
+      console.log("Fetching tasks for care plan ID:", actualCarePlanId);
+      console.log("API URL:", apiUrl);
+
+      const response = await fetch(apiUrl);
+      const result = await response.json();
+
+      const sortedTasks = (result || []).sort((a, b) => {
+        return new Date(a.start || 0) - new Date(b.start || 0);
+      });
+
+      setTasks(sortedTasks);
+    } catch (error) {
+      console.error("Error fetching tasks:", error);
+    } finally {
       setLoading(false);
-      return;
     }
-    
-    // Extract client username from the care plan identifier
-    // The format is "client_username_date_created", so we need to get everything before the last underscore
-    const parts = carePlanId.split('_');
-    const clientUsername = parts.slice(0, -1).join('_'); // Join all parts except the last one (date)
-    
-    // Fetch all tasks and filter by client username
-    const apiUrl = `https://sue7dsbf09.execute-api.ap-south-1.amazonaws.com/dev/tasks`;
-    const response = await fetch(apiUrl);
-    const result = await response.json();
-
-    // Filter tasks by client username using the updated_by field
-    // This ensures we only show tasks for this specific client
-    const filteredTasks = (result || []).filter(task => {
-      return task.updated_by === clientUsername;
-    });
-
-    const sortedTasks = filteredTasks.sort((a, b) => {
-      return new Date(a.start || 0) - new Date(b.start || 0);
-    });
-
-    setTasks(sortedTasks);
-  } catch (error) {
-    console.error("Error fetching tasks:", error);
-  } finally {
-    setLoading(false);
-  }
-};
-
+  };
 
   useEffect(() => {
     if (isFocused) {
@@ -96,27 +105,18 @@ const CarePlanOverview = ({ navigation, carePlanId }) => {
     },
   ];
 
-  const renderArticleItem = ({ item }) => (
-    <ArticleCard
-      title={item.title}
-      duration={item.duration}
-      type={item.type}
-      onPress={() => navigation.navigate("Details", { item })}
-    />
-  );
-
   // Filter tasks by selected month and search text (date)
-  const filteredTasks = tasks.filter(task => {
+  const filteredTasks = tasks.filter((task) => {
     // If no start date, show the task in current month by default
     if (!task.start) {
       const shouldShow = selectedMonth === new Date().getMonth();
-      if (searchText.trim() === '') {
+      if (searchText.trim() === "") {
         return shouldShow; // Show in current month
       }
       return false; // Hide tasks without start dates when searching
     }
-    
-    const taskDate = new Date(task.start.replace(' ', 'T'));
+
+    const taskDate = new Date(task.start.replace(" ", "T"));
     const matchesMonth = taskDate.getMonth() === selectedMonth;
 
     if (searchText.trim() === "") {
@@ -144,13 +144,26 @@ const CarePlanOverview = ({ navigation, carePlanId }) => {
     />
   );
 
-  return (
-    <View style={{ flex: 1 }}>
+  const renderHeader = () => (
+    <View>
+      {/* Articles Section */}
       <FlatList
         data={articleData}
-        renderItem={renderArticleItem}
+        horizontal
+        showsHorizontalScrollIndicator={false}
         keyExtractor={(item) => item.id}
-        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingHorizontal: 10 }}
+        renderItem={({ item }) => (
+          <View style={{ minHeight: 180, justifyContent: "center" }}>
+            <ArticleCard
+              title={item.title}
+              duration={item.duration}
+              type={item.type}
+              onPress={() => navigation.navigate("Details", { item })}
+            />
+          </View>
+        )}
+        scrollEnabled={false}
       />
 
       <Text style={styles.taskHeader}>Tasks for {MONTHS[selectedMonth]}</Text>
@@ -193,25 +206,33 @@ const CarePlanOverview = ({ navigation, carePlanId }) => {
           onChangeText={setSearchText}
         />
       </View>
-
-      {loading ? (
-        <ActivityIndicator size="large" color="#00BCD4" />
-      ) : (
-        <FlatList
-          data={filteredTasks}
-          renderItem={renderTaskItem}
-          keyExtractor={(item) =>
-            item.id ? item.id.toString() : Math.random().toString()
-          }
-          showsVerticalScrollIndicator={false}
-          ListEmptyComponent={
-            <Text style={{ textAlign: "center", marginTop: 20, color: "#888" }}>
-              No tasks for this month.
-            </Text>
-          }
-        />
-      )}
     </View>
+  );
+
+  const renderEmptyComponent = () => (
+    <Text style={{ textAlign: "center", marginTop: 20, color: "#888" }}>
+      No tasks for this month.
+    </Text>
+  );
+
+  if (loading) {
+    return (
+      <ActivityIndicator size="large" color="#00BCD4" style={{ flex: 1 }} />
+    );
+  }
+
+  return (
+    <FlatList
+      data={filteredTasks}
+      renderItem={renderTaskItem}
+      keyExtractor={(item) =>
+        item.id ? item.id.toString() : Math.random().toString()
+      }
+      ListHeaderComponent={renderHeader}
+      ListEmptyComponent={renderEmptyComponent}
+      showsVerticalScrollIndicator={false}
+      contentContainerStyle={{ paddingBottom: 120 }}
+    />
   );
 };
 
@@ -248,27 +269,25 @@ const CarePlanScreen = ({ route, navigation }) => {
         <SideNavigationCN navigation={navigation} onClose={closeSideNav} />
       )}
 
-      <ScrollView contentContainerStyle={styles.scrollContainer}>
-        <CarePlanOverview navigation={navigation} carePlanId={carePlanId} />
-      </ScrollView>
+      <CarePlanOverview navigation={navigation} carePlanId={carePlanId} />
 
       <BottomNavigationCN navigation={navigation} />
 
       <TouchableOpacity
-  style={styles.fab}
-  onPress={() => {
-    if (!actualCarePlanId) {
-      alert("Unable to determine care plan ID. Please try again.");
-      return;
-    }
-    navigation.navigate('AddTaskScreen', {
-      care_plan_id: actualCarePlanId,        // Pass the actual numeric care plan ID
-      updated_by: clientUsername,            // Use the client username so the task shows up in their list
-    });
-  }}
->
-  <Ionicons name="add" size={24} color="white" />
-</TouchableOpacity>
+        style={styles.fab}
+        onPress={() => {
+          if (!actualCarePlanId) {
+            alert("Unable to determine care plan ID. Please try again.");
+            return;
+          }
+          navigation.navigate("AddTaskScreen", {
+            care_plan_id: actualCarePlanId, // Pass the actual numeric care plan ID
+            updated_by: clientUsername, // Use the client username so the task shows up in their list
+          });
+        }}
+      >
+        <Ionicons name="add" size={24} color="white" />
+      </TouchableOpacity>
     </View>
   );
 };
@@ -321,7 +340,6 @@ const styles = StyleSheet.create({
     backgroundColor: "#E0F7FA",
   },
   searchIcon: { marginRight: 10 },
-  scrollContainer: { flexGrow: 1, paddingBottom: 150 },
   fab: {
     position: "absolute",
     bottom: 90,

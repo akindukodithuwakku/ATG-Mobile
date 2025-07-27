@@ -34,6 +34,7 @@ const ClientDashboard = ({ navigation }) => {
   const [hasAppointment, setHasAppointment] = useState(false);
   const [appointmentTime, setAppointmentTime] = useState(null);
   const [username, setUsername] = useState("");
+  const [carePlanId, setCarePlanId] = useState(null);
   const [countdown, setCountdown] = useState({
     days: 0,
     hours: 0,
@@ -53,20 +54,67 @@ const ClientDashboard = ({ navigation }) => {
     resetTimer();
   }, [resetTimer]);
 
-  // Fetch username on component mount
+  // Fetch username and care plan ID on component mount
   useEffect(() => {
-    const fetchUsername = async () => {
+    const fetchUserData = async () => {
       try {
         const storedUsername = await AsyncStorage.getItem("appUser");
         if (storedUsername) {
           setUsername(storedUsername);
+
+          // Fetch care plan ID for the user
+          try {
+            const response = await fetch(`${API_ENDPOINT}/dbHandling`, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                action: "get_client_care_plan",
+                data: {
+                  client_username: storedUsername,
+                },
+              }),
+            });
+
+            const result = await response.json();
+            const parsedBody =
+              typeof result.body === "string"
+                ? JSON.parse(result.body)
+                : result.body;
+
+            if (result.statusCode === 200 && parsedBody.care_plan_id) {
+              setCarePlanId(parsedBody.care_plan_id);
+            } else {
+              // Fallback to hardcoded mapping if API fails
+              const carePlanIdMap = {
+                testuser_01: 1,
+                Kavindya_02: 2,
+                kavindya_02: 2,
+                rakeeb_03: 3,
+                indumini_05: 6,
+              };
+              setCarePlanId(carePlanIdMap[storedUsername] || 2);
+            }
+          } catch (error) {
+            console.error("Error fetching care plan ID:", error);
+            // Fallback to hardcoded mapping
+            const carePlanIdMap = {
+              testuser_01: 1,
+              Kavindya_02: 2,
+              kavindya_02: 2,
+              rakeeb_03: 3,
+              indumini_05: 6,
+            };
+            setCarePlanId(carePlanIdMap[storedUsername] || 2);
+          }
         }
       } catch (error) {
         console.error("Error fetching username:", error);
       }
     };
 
-    fetchUsername();
+    fetchUserData();
   }, []);
 
   // Check for existing appointment on component mount
@@ -357,7 +405,12 @@ const ClientDashboard = ({ navigation }) => {
         <View style={styles.cardContainer}>
           <TouchableOpacity
             style={styles.card}
-            onPress={() => navigateToScreen("CarePlanC")}
+            onPress={() =>
+              navigateToScreen("CarePlanC", {
+                carePlanId: carePlanId || 2, // Use carePlanId if available, otherwise default
+                clientUsername: username || "kavindya_02",
+              })
+            }
           >
             <LinearGradient
               colors={["#6a3093", "#a044ff"]}

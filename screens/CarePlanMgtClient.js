@@ -8,7 +8,6 @@ import {
   TouchableOpacity,
   StatusBar,
   ActivityIndicator,
-  ScrollView,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useIsFocused } from "@react-navigation/native";
@@ -51,7 +50,7 @@ const CarePlanClientScreen = ({ route, navigation }) => {
       console.log("carePlanId:", carePlanId);
       console.log("clientUsername:", clientUsername);
       console.log("Type of carePlanId:", typeof carePlanId);
-      
+
       if (!carePlanId) {
         console.error("No care plan ID provided");
         setTasks([]);
@@ -61,18 +60,20 @@ const CarePlanClientScreen = ({ route, navigation }) => {
       // Fetch tasks for the specific care plan ID
       const apiUrl = `https://sue7dsbf09.execute-api.ap-south-1.amazonaws.com/dev/tasks?care_plan_id=${carePlanId}`;
       console.log("API URL:", apiUrl);
-      
+
       const response = await fetch(apiUrl);
       console.log("Response status:", response.status);
-      
+
       const result = await response.json();
       console.log("API Response:", result);
       console.log("Number of tasks received:", result ? result.length : 0);
-      
-      const sortedTasks = (result || []).sort((a, b) => new Date(a.start || 0) - new Date(b.start || 0));
+
+      const sortedTasks = (result || []).sort(
+        (a, b) => new Date(a.start || 0) - new Date(b.start || 0)
+      );
       console.log("Sorted tasks:", sortedTasks);
       console.log("=== END CLIENT TASK FETCH DEBUG ===");
-      
+
       setTasks(sortedTasks);
     } catch (error) {
       console.error("Error fetching tasks:", error);
@@ -97,51 +98,103 @@ const CarePlanClientScreen = ({ route, navigation }) => {
     },
   ];
 
-  const filteredTasks = tasks.filter(task => {
-    // If no start date, show the task in current month by default
-    if (!task.start) {
-      const shouldShow = selectedMonth === new Date().getMonth();
-      if (searchText.trim() === '') {
-        return shouldShow; // Show in current month
-      }
-      return false; // Hide tasks without start dates when searching
-    }
-    
-    const taskDate = new Date(task.start.replace(' ', 'T'));
-    const matchesMonth = taskDate.getMonth() === selectedMonth;
+  // Filter tasks by selected month and search text
+  const filteredTasks = tasks.filter((task) => {
+    const taskDate = new Date(task.start);
+    const taskMonth = taskDate.getMonth();
+    const matchesMonth = taskMonth === selectedMonth;
 
-    if (searchText.trim() === '') {
-      return matchesMonth;
-    }
+    const matchesSearch =
+      !searchText ||
+      task.title?.toLowerCase().includes(searchText.toLowerCase()) ||
+      task.start?.includes(searchText);
 
-    // Check if searchText matches the date part of the task (YYYY-MM-DD)
-    const taskDateString = task.start.split(' ')[0];
-    return matchesMonth && taskDateString.includes(searchText.trim());
+    return matchesMonth && matchesSearch;
   });
 
   const renderTaskItem = ({ item, index }) => (
     <TimelineItemClient
-      id={item.id}
-      title={item.title}
-      description={item.description}
-      start={item.start}
-      end={item.end}
-      status={item.status}
-      isLast={index === filteredTasks.length - 1}
-      onEdit={null} // Clients cannot edit
-      onDelete={null} // Clients cannot delete
-      onMarkComplete={() => {
-        navigation.navigate("TaskScreen", {
+      key={item.id || index}
+      task={item}
+      onPress={() => {
+        navigation.navigate("Task", {
           taskId: item.id,
-          taskTitle: item.title,
-          taskDescription: item.description,
-          taskStart: item.start,
-          taskEnd: item.end,
-          carePlanId, // pass carePlanId here!
+          task: item,
         });
       }}
-      isClientView={true}
     />
+  );
+
+  const renderHeader = () => (
+    <View>
+      {/* Articles Section */}
+      <View style={{ marginVertical: 5 }}>
+        <FlatList
+          data={articleData}
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          keyExtractor={(item) => item.id}
+          contentContainerStyle={{ paddingHorizontal: 10 }}
+          renderItem={({ item }) => (
+            <View style={{ minHeight: 180, justifyContent: "center" }}>
+              <ArticleCard
+                title={item.title}
+                duration={item.duration}
+                type={item.type}
+                content={item.content}
+              />
+            </View>
+          )}
+          scrollEnabled={false}
+        />
+      </View>
+
+      {/* Tasks Section */}
+      <Text style={styles.taskHeader}>Tasks for {MONTHS[selectedMonth]}</Text>
+
+      <View style={styles.monthRow}>
+        {MONTHS.map((m, idx) => (
+          <TouchableOpacity
+            key={m}
+            style={[
+              styles.monthButton,
+              selectedMonth === idx && styles.monthButtonSelected,
+            ]}
+            onPress={() => setSelectedMonth(idx)}
+          >
+            <Text
+              style={[
+                styles.monthButtonText,
+                selectedMonth === idx && styles.monthButtonTextSelected,
+              ]}
+            >
+              {m}
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+
+      <View style={styles.searchContainer}>
+        <Ionicons
+          name="search"
+          size={20}
+          color="#B3E5FC"
+          style={styles.searchIcon}
+        />
+        <TextInput
+          style={styles.searchInput}
+          placeholder="Search by date (YYYY-MM-DD)..."
+          value={searchText}
+          onChangeText={setSearchText}
+        />
+      </View>
+    </View>
+  );
+
+  const renderEmptyComponent = () => (
+    <Text style={{ textAlign: "center", marginTop: 20, color: "#888" }}>
+      No tasks found for this month.
+    </Text>
   );
 
   return (
@@ -168,88 +221,20 @@ const CarePlanClientScreen = ({ route, navigation }) => {
         />
       )}
 
-      <ScrollView contentContainerStyle={{ paddingBottom: 120 }}>
-        {/* Articles Section */}
-        <View style={{ marginVertical: 5 }}>
-          <FlatList
-            data={articleData}
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            keyExtractor={(item) => item.id}
-            contentContainerStyle={{ paddingHorizontal: 10 }}
-            renderItem={({ item }) => (
-              <View style={{ minHeight: 180, justifyContent: "center" }}>
-                <ArticleCard
-                  title={item.title}
-                  duration={item.duration}
-                  type={item.type}
-                  content={item.content}
-                />
-              </View>
-            )}
-          />
-        </View>
-
-        {/* Tasks Section */}
-        <Text style={styles.taskHeader}>Tasks for {MONTHS[selectedMonth]}</Text>
-
-        <View style={styles.monthRow}>
-          {MONTHS.map((m, idx) => (
-            <TouchableOpacity
-              key={m}
-              style={[
-                styles.monthButton,
-                selectedMonth === idx && styles.monthButtonSelected,
-              ]}
-              onPress={() => setSelectedMonth(idx)}
-            >
-              <Text
-                style={[
-                  styles.monthButtonText,
-                  selectedMonth === idx && styles.monthButtonTextSelected,
-                ]}
-              >
-                {m}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-
-        <View style={styles.searchContainer}>
-          <Ionicons
-            name="search"
-            size={20}
-            color="#B3E5FC"
-            style={styles.searchIcon}
-          />
-          <TextInput
-            style={styles.searchInput}
-            placeholder="Search by date (YYYY-MM-DD)..."
-            value={searchText}
-            onChangeText={setSearchText}
-          />
-        </View>
-
-        {loading ? (
-          <ActivityIndicator size="large" color="#00BCD4" />
-        ) : (
-          <FlatList
-            data={filteredTasks}
-            renderItem={renderTaskItem}
-            keyExtractor={(item) =>
-              item.id ? item.id.toString() : Math.random().toString()
-            }
-            ListEmptyComponent={
-              <Text
-                style={{ textAlign: "center", marginTop: 20, color: "#888" }}
-              >
-                No tasks found for this month.
-              </Text>
-            }
-            scrollEnabled={false} // disable scrolling inside FlatList because inside ScrollView
-          />
-        )}
-      </ScrollView>
+      {loading ? (
+        <ActivityIndicator size="large" color="#00BCD4" style={{ flex: 1 }} />
+      ) : (
+        <FlatList
+          data={filteredTasks}
+          renderItem={renderTaskItem}
+          keyExtractor={(item) =>
+            item.id ? item.id.toString() : Math.random().toString()
+          }
+          ListHeaderComponent={renderHeader}
+          ListEmptyComponent={renderEmptyComponent}
+          contentContainerStyle={{ paddingBottom: 120 }}
+        />
+      )}
 
       {/* Bottom Navigation */}
       <BottomNavigationClient navigation={navigation} />
