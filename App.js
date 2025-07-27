@@ -1,11 +1,15 @@
 import { NavigationContainer } from "@react-navigation/native";
 import { createStackNavigator } from "@react-navigation/stack";
+import React from "react";
 
 import { Amplify } from "aws-amplify";
 import awsConfig from "./aws-config";
 
 // Initialize AWS Amplify
 Amplify.configure(awsConfig);
+
+// Import notification service
+import { startMedicationMonitoring } from "./utils/MedicationNotificationService";
 
 // Import screens
 import WelcomeScreen from "./screens/WelcomeScreen";
@@ -73,12 +77,13 @@ import NotificationsCN from "./screens/NotificationsCN";
 import ChatScreen from "./screens/Messaging";
 import Documents from "./screens/Documents";
 import DocumentsCN from "./screens/DocumentsCN";
+import MessagingCN from "./screens/MessagingCN";
 
 // Auto Logout
-import { AutomaticLogoutScreen } from "./screens/AutoLogout";
+import { LogoutProvider, AutomaticLogoutScreen } from "./screens/AutoLogout";
 
 // Context Providers
-import { LogoutProvider } from "./context/LogoutContext";
+import { LogoutProvider as LogoutContextProvider } from "./context/LogoutContext";
 
 const Stack = createStackNavigator();
 
@@ -202,6 +207,7 @@ const AppNavigator = () => {
       <Stack.Screen name="Chat" component={ChatScreen} />
       <Stack.Screen name="Documents" component={Documents} />
       <Stack.Screen name="DocumentsCN" component={DocumentsCN} />
+      <Stack.Screen name="MessagingCN" component={MessagingCN} />
 
       {/* Details Screen - For article details */}
       <Stack.Screen name="Details" component={Task} />
@@ -213,6 +219,13 @@ const AppNavigator = () => {
 };
 
 export default function App() {
+  React.useEffect(() => {
+    // Start medication monitoring service when app loads
+    const cleanup = startMedicationMonitoring();
+
+    return cleanup; // Cleanup when app unmounts
+  }, []);
+
   return (
     <NavigationContainer>
       <LogoutProvider>

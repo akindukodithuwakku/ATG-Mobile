@@ -193,7 +193,7 @@ const CNDashboard = ({ navigation }) => {
           {/* Navigate to Messaging screen when chat icon is pressed */}
           <TouchableOpacity
             style={styles.chatButton}
-            onPress={() => navigateToScreen("Messaging", { userId: "cn_user" })}
+            onPress={() => navigateToScreen("MessagingCN")}
           >
             <View style={styles.chatIconContainer}>
               <Feather

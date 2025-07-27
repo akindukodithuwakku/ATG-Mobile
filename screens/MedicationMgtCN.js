@@ -10,6 +10,7 @@ import {
   FlatList,
   ActivityIndicator,
 } from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import SideNavigationCN from "../Components/SideNavigationCN";
 import BottomNavigationCN from "../Components/BottomNavigationCN";
 import { Ionicons } from "@expo/vector-icons";
@@ -19,19 +20,37 @@ const MedicationMgtCN = ({ navigation }) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [medications, setMedications] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [careNavigatorUsername, setCareNavigatorUsername] = useState(null);
   const scheme = useColorScheme();
 
-  const care_navigator_username = "cn_alecbenjamin"; // 🔒 Hardcoded ID
+  // Get care navigator username on component mount
+  useEffect(() => {
+    const getCareNavigatorUsername = async () => {
+      try {
+        const username = await AsyncStorage.getItem("appUser");
+        setCareNavigatorUsername(username);
+      } catch (error) {
+        console.error("Error getting care navigator username:", error);
+      }
+    };
+    getCareNavigatorUsername();
+  }, []);
 
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
   };
 
   const fetchMedications = async () => {
+    if (!careNavigatorUsername) {
+      console.log("Care navigator username not available yet");
+      setLoading(false);
+      return;
+    }
+
     try {
       setLoading(true);
       const response = await fetch(
-        `https://rsxn7kxzr6.execute-api.ap-south-1.amazonaws.com/dev/viewMedications?care_navigator_id=${care_navigator_username}`
+        `https://rsxn7kxzr6.execute-api.ap-south-1.amazonaws.com/dev/viewMedications?care_navigator_id=${careNavigatorUsername}`
       );
       const result = await response.json();
       const sortedData = (result.medications || []).sort((a, b) =>
@@ -46,8 +65,10 @@ const MedicationMgtCN = ({ navigation }) => {
   };
 
   useEffect(() => {
-    fetchMedications();
-  }, []);
+    if (careNavigatorUsername) {
+      fetchMedications();
+    }
+  }, [careNavigatorUsername]);
 
   const filteredMedications = medications.filter(
     (med) =>

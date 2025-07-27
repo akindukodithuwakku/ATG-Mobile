@@ -18,3 +18,8 @@ expo-linear-gradient@~14.0.2
 @react-native-async-storage/async-storage@1.23.1
 react-native-webview@13.12.5
 expo-image-picker@~16.0.6
+firebase@latest
+@aws-amplify/react-native@latest
+@aws-amplify/datastore@latest
+react-native-get-random-values@latest
+react-native-dotenv@latest

@@ -13,186 +13,176 @@ import {
   StatusBar,
   useColorScheme,
   Alert,
+  ActivityIndicator,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { SafeAreaView } from "react-native-safe-area-context";
-import SideNavigationClient from "../Components/SideNavigationClient";
 import SideNavigationCN from "../Components/SideNavigationCN";
-import BottomNavigationClient from "../Components/BottomNavigationClient";
 import BottomNavigationCN from "../Components/BottomNavigationCN";
-import { database } from "../firebaseConfig.js"; // 👈 Adjust this path if firebaseConfig.js is elsewhere
-import { ref, onValue, push } from "firebase/database";
+import { database } from "../firebaseConfig.js";
+import { ref, onValue, push, remove, ref as dbRef } from "firebase/database";
+
+const API_ENDPOINT = "https://uqzl6jyqvg.execute-api.ap-south-1.amazonaws.com/dev";
 
 const ChatScreen = ({ navigation, route }) => {
-  const { userId } = route.params; // <-- Receive userId from LoginScreen
+  const [currentUser, setCurrentUser] = useState(null);
+  const [receiverId, setReceiverId] = useState(null);
+  const [loadingReceiver, setLoadingReceiver] = useState(true);
+  const [receiverError, setReceiverError] = useState(null);
 
-  const [currentUser, setCurrentUser] = useState({
-    id: userId,
-    name: "User",
-    avatar: "https://i.pravatar.cc/150?img=1",
-  });
+  // Detect user type and fetch care navigator if client
+  useEffect(() => {
+    const loadUser = async () => {
+      const storedId = await AsyncStorage.getItem("appUser");
+      const userId = storedId || "defaultUser";
+      const isCareNavigator = userId.startsWith("cn_");
+      setCurrentUser({
+        id: userId,
+        name: "You",
+        avatar: "https://i.pravatar.cc/150?img=2",
+        isCareNavigator,
+      });
 
+      if (!isCareNavigator) {
+        // Fetch care navigator for this client
+        setLoadingReceiver(true);
+        setReceiverError(null);
+        try {
+          const response = await fetch(`${API_ENDPOINT}/dbHandling`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              action: "get_client_care_navigator",
+              data: { client_username: userId },
+            }),
+          });
+          const result = await response.json();
+          const parsedBody = typeof result.body === 'string' ? JSON.parse(result.body) : result.body;
+          if (result.statusCode === 200 && parsedBody.care_navigator_username) {
+            setReceiverId(parsedBody.care_navigator_username);
+          } else {
+            setReceiverError(parsedBody.error || "Care navigator not found");
+          }
+        } catch (err) {
+          setReceiverError("Failed to fetch care navigator");
+        } finally {
+          setLoadingReceiver(false);
+        }
+      } else {
+        // For care navigator, receiverId will be set via props (when opening a chat with a client)
+        setLoadingReceiver(false);
+      }
+    };
+    loadUser();
+  }, []);
+
+  // If care navigator, get clientId from route params
+  useEffect(() => {
+    if (currentUser && currentUser.isCareNavigator && route?.params?.clientId) {
+      setReceiverId(route.params.clientId);
+    }
+  }, [currentUser, route]);
+
+  // Compose chat path (sorted)
+  const chatPath = currentUser && receiverId
+    ? [currentUser.id, receiverId].sort().join('_')
+    : null;
+
+  // Chat logic
   const [messages, setMessages] = useState([]);
   const [inputText, setInputText] = useState("");
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [userType, setUserType] = useState("client");
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState(null);
   const scheme = useColorScheme();
   const scrollViewRef = useRef(null);
 
-  // Define receiver ID based on user type
-  const RECEIVER_ID = userType === "cn" ? "client_user" : "cn_user";
-
-  // Detect user type and set current user info on component mount
-  useEffect(() => {
-    const detectUserType = async () => {
-      try {
-        const username = await AsyncStorage.getItem("appUser");
-        if (username) {
-          // Check if username contains 'cn_' prefix for care navigators
-          if (username.startsWith("cn_")) {
-            setUserType("cn");
-            setCurrentUser({
-              id: userId,
-              name: username.replace("cn_", "").replace(/_/g, " "),
-              avatar: "https://i.pravatar.cc/150?img=2",
-            });
-          } else {
-            setUserType("client");
-            setCurrentUser({
-              id: userId,
-              name: username.replace(/_/g, " "),
-              avatar: "https://i.pravatar.cc/150?img=3",
-            });
-          }
-        }
-      } catch (error) {
-        console.error("Error detecting user type:", error);
-        setUserType("client"); // Default to client
-      }
-    };
-
-    detectUserType();
-  }, [userId]);
-
-  // Toggle side menu
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
   };
 
-  // Load initial messages
+  // Load messages for this chat
   useEffect(() => {
-    const messagesRef = ref(database, "messages");
-
-    const unsubscribe = onValue(
-      messagesRef,
-      (snapshot) => {
-        try {
-          const data = snapshot.val();
-          if (data) {
-            const parsedMessages = Object.keys(data).map((key) => ({
-              id: key,
-              ...data[key],
-            }));
-
-            // Filter messages for current conversation
-            const filteredMessages = parsedMessages.filter(
-              (message) =>
-                (message.senderId === currentUser.id &&
-                  message.receiverId === RECEIVER_ID) ||
-                (message.senderId === RECEIVER_ID &&
-                  message.receiverId === currentUser.id)
-            );
-
-            // Sort messages by timestamp
-            const sortedMessages = filteredMessages.sort(
-              (a, b) => a.timestamp - b.timestamp
-            );
-            setMessages(sortedMessages);
-          }
-          setIsLoading(false);
-          setError(null);
-        } catch (err) {
-          console.error("Error loading messages:", err);
-          setError("Failed to load messages");
-          setIsLoading(false);
-        }
-      },
-      (error) => {
-        console.error("Firebase error:", error);
-        setError("Connection error");
-        setIsLoading(false);
+    if (!chatPath) return;
+    const messagesRef = ref(database, `messages/${chatPath}`);
+    const unsubscribe = onValue(messagesRef, (snapshot) => {
+      const data = snapshot.val();
+      if (data) {
+        const parsedMessages = Object.keys(data).map((key) => ({
+          id: key,
+          ...data[key],
+        }));
+        setMessages(parsedMessages);
+      } else {
+        setMessages([]);
       }
-    );
-
+    });
     return () => unsubscribe();
-  }, [currentUser.id, RECEIVER_ID]);
+  }, [chatPath]);
 
   // Handle sending new messages
-  const handleSend = async () => {
-    if (inputText.trim() === "") return;
-
+  const handleSend = () => {
+    if (inputText.trim() === "" || !currentUser || !receiverId) return;
     const newMessage = {
       text: inputText,
       senderId: currentUser.id,
       senderName: currentUser.name,
-      receiverId: RECEIVER_ID,
+      receiverId: receiverId,
       avatar: currentUser.avatar,
-      isUser: true,
-      timestamp: Date.now(), // optional, for sorting later
+      isUser: !currentUser.isCareNavigator,
+      timestamp: Date.now(),
     };
-
-    try {
-      const messagesRef = ref(database, "messages");
-      await push(messagesRef, newMessage);
-      setInputText(""); // Clear the input field
-    } catch (error) {
-      console.error("Error sending message:", error);
-      Alert.alert("Error", "Failed to send message. Please try again.");
-    }
+    const messagesRef = ref(database, `messages/${chatPath}`);
+    push(messagesRef, newMessage);
+    setInputText("");
   };
 
-  // Handle long press on messages
   const handleLongPress = (message) => {
+    if (message.senderId !== currentUser.id) return;
     Alert.alert(
-      "Message Options",
-      "What would you like to do with this message?",
+      "Delete Message",
+      "Are you sure you want to delete this message?",
       [
+        { text: "Cancel", style: "cancel" },
         {
-          text: "Copy",
-          onPress: () => {
-            // Copy message text to clipboard
-            console.log("Copy message:", message.text);
-          },
-        },
-        {
-          text: "Cancel",
-          style: "cancel",
+          text: "Delete",
+          style: "destructive",
+          onPress: () => deleteMessage(message.id),
         },
       ]
     );
   };
 
-  // Render side navigation based on user type
-  const renderSideNavigation = () => {
-    if (userType === "cn") {
-      return <SideNavigationCN navigation={navigation} onClose={toggleMenu} />;
-    } else {
-      return (
-        <SideNavigationClient navigation={navigation} onClose={toggleMenu} />
-      );
+  const deleteMessage = async (messageId) => {
+    const messageRef = dbRef(database, `messages/${chatPath}/${messageId}`);
+    try {
+      await remove(messageRef);
+    } catch (error) {
+      console.error("Failed to delete message:", error);
     }
   };
 
-  // Render bottom navigation based on user type
-  const renderBottomNavigation = () => {
-    if (userType === "cn") {
-      return <BottomNavigationCN navigation={navigation} />;
-    } else {
-      return <BottomNavigationClient navigation={navigation} />;
-    }
-  };
+  // Loading and error states
+  if (!currentUser || loadingReceiver) {
+    return (
+      <View style={styles.container}>
+        <ActivityIndicator size="large" color="#007AFF" />
+        <Text>Loading chat...</Text>
+      </View>
+    );
+  }
+  if (!currentUser.isCareNavigator && receiverError) {
+    return (
+      <View style={styles.container}>
+        <Text style={{ color: 'red', textAlign: 'center', marginTop: 40 }}>{receiverError}</Text>
+      </View>
+    );
+  }
+  if (!receiverId) {
+    return (
+      <View style={styles.container}>
+        <Text style={{ color: 'gray', textAlign: 'center', marginTop: 40 }}>Waiting for chat partner...</Text>
+      </View>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.safeAreaContainer}>
@@ -222,7 +212,7 @@ const ChatScreen = ({ navigation, route }) => {
         {/* Overlay for Side Navigation */}
         {isMenuOpen && (
           <View style={styles.overlay}>
-            {renderSideNavigation()}
+            <SideNavigationCN navigation={navigation} onClose={toggleMenu} />
             <TouchableOpacity
               style={styles.overlayBackground}
               onPress={toggleMenu}
@@ -238,84 +228,26 @@ const ChatScreen = ({ navigation, route }) => {
             scrollViewRef.current?.scrollToEnd({ animated: true })
           }
         >
-          {isLoading && (
-            <View style={styles.centerContainer}>
-              <Text style={styles.loadingText}>Loading messages...</Text>
-            </View>
-          )}
-
-          {error && (
-            <View style={styles.centerContainer}>
-              <Text style={styles.errorText}>{error}</Text>
-              <TouchableOpacity
-                style={styles.retryButton}
-                onPress={() => window.location.reload()}
+          {messages.map((message) => (
+            <TouchableOpacity
+              key={message.id}
+              onLongPress={() => handleLongPress(message)}
+              delayLongPress={500}
+            >
+              <View
+                style={[
+                  styles.messageContainer,
+                  message.senderId === currentUser.id ? styles.userMessage : styles.otherMessage,
+                ]}
               >
-                <Text style={styles.retryButtonText}>Retry</Text>
-              </TouchableOpacity>
-            </View>
-          )}
-
-          {!isLoading && !error && messages.length === 0 && (
-            <View style={styles.centerContainer}>
-              <Text style={styles.emptyText}>
-                No messages yet. Start a conversation!
-              </Text>
-            </View>
-          )}
-
-          {!isLoading &&
-            !error &&
-            messages.map((message) => (
-              <TouchableOpacity
-                key={message.id}
-                onLongPress={() => handleLongPress(message)}
-                delayLongPress={500}
-              >
-                <View
-                  style={[
-                    styles.messageContainer,
-                    message.senderId === currentUser.id
-                      ? styles.userMessage
-                      : styles.otherMessage,
-                  ]}
-                >
-                  {/* Profile Photo
-                <Image source={{ uri: message.avatar }} style={styles.avatar} /> */}
-
-                  {/* Message Bubble */}
-                  <View
-                    style={[
-                      styles.messageBubble,
-                      message.senderId === currentUser.id
-                        ? styles.userMessageBubble
-                        : styles.otherMessageBubble,
-                    ]}
-                  >
-                    <Text
-                      style={[
-                        styles.senderName,
-                        message.senderId === currentUser.id
-                          ? styles.userSenderName
-                          : styles.otherSenderName,
-                      ]}
-                    >
-                      {message.senderName}
-                    </Text>
-                    <Text
-                      style={[
-                        styles.messageText,
-                        message.senderId === currentUser.id
-                          ? styles.userMessageText
-                          : styles.otherMessageText,
-                      ]}
-                    >
-                      {message.text}
-                    </Text>
-                  </View>
+                {/* Message Bubble */}
+                <View style={styles.messageBubble}>
+                  <Text style={styles.senderName}>{message.senderName}</Text>
+                  <Text style={styles.messageText}>{message.text}</Text>
                 </View>
-              </TouchableOpacity>
-            ))}
+              </View>
+            </TouchableOpacity>
+          ))}
         </ScrollView>
 
         {/* Input Field and Send Button */}
@@ -325,16 +257,13 @@ const ChatScreen = ({ navigation, route }) => {
             onChangeText={setInputText}
             placeholder="Type a message..."
             style={styles.inputField}
-            multiline={false} // Prevents multi-line input
+            multiline={false}
           />
           <TouchableOpacity onPress={handleSend} style={styles.sendButton}>
             <Ionicons name="send" size={24} color="#007AFF" />
           </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
-
-      {/* Bottom Navigation */}
-      {renderBottomNavigation()}
     </SafeAreaView>
   );
 };
@@ -389,44 +318,18 @@ const styles = StyleSheet.create({
   otherMessage: {
     alignSelf: "flex-start",
   },
-  // avatar: {
-  //   width: 40,
-  //   height: 40,
-  //   borderRadius: 20,
-  //   marginRight: 10,
-  // },
   messageBubble: {
     padding: 10,
     borderRadius: 10,
     maxWidth: "80%",
-  },
-  userMessageBubble: {
-    backgroundColor: "#007AFF",
-    borderBottomRightRadius: 2,
-  },
-  otherMessageBubble: {
     backgroundColor: "#E5E5EA",
-    borderBottomLeftRadius: 2,
   },
   senderName: {
     fontWeight: "bold",
     marginBottom: 5,
-    fontSize: 12,
-  },
-  userSenderName: {
-    color: "#fff",
-  },
-  otherSenderName: {
-    color: "#333",
   },
   messageText: {
     fontSize: 16,
-  },
-  userMessageText: {
-    color: "#fff",
-  },
-  otherMessageText: {
-    color: "#333",
   },
   inputContainer: {
     flexDirection: "row",
@@ -450,38 +353,6 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     padding: 10,
-  },
-  centerContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    padding: 20,
-  },
-  loadingText: {
-    fontSize: 16,
-    color: "#666",
-  },
-  errorText: {
-    fontSize: 16,
-    color: "#ff0000",
-    textAlign: "center",
-    marginBottom: 10,
-  },
-  retryButton: {
-    backgroundColor: "#007AFF",
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    borderRadius: 5,
-  },
-  retryButtonText: {
-    color: "#fff",
-    fontSize: 16,
-    fontWeight: "bold",
-  },
-  emptyText: {
-    fontSize: 16,
-    color: "#666",
-    textAlign: "center",
   },
 });
 

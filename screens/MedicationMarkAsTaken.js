@@ -13,17 +13,31 @@ import {
   ActivityIndicator,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import SideNavigationClient from "../Components/SideNavigationClient";
 import BottomNavigationClient from "../Components/BottomNavigationClient";
+import { markMedicationAsTaken } from "../utils/MedicationNotificationService";
 
 const MarkMedicationTakenScreen = ({ navigation }) => {
   const [medications, setMedications] = useState([]);
   const [loading, setLoading] = useState(true);
   const scheme = useColorScheme();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [clientUsername, setClientUsername] = useState(null);
   const menuAnimation = useRef(new Animated.Value(0)).current;
 
-  const client_username = "testuser_01"; // Ideally from auth context
+  // Get client username on component mount
+  useEffect(() => {
+    const getClientUsername = async () => {
+      try {
+        const username = await AsyncStorage.getItem("appUser");
+        setClientUsername(username);
+      } catch (error) {
+        console.error("Error getting client username:", error);
+      }
+    };
+    getClientUsername();
+  }, []);
 
   const toggleMenu = () => {
     Animated.timing(menuAnimation, {
@@ -35,10 +49,16 @@ const MarkMedicationTakenScreen = ({ navigation }) => {
   };
 
   const fetchMedications = async () => {
+    if (!clientUsername) {
+      console.log("Client username not available yet");
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
     try {
       const url = `https://rsxn7kxzr6.execute-api.ap-south-1.amazonaws.com/prod/getMedicationLogs?client_username=${encodeURIComponent(
-        client_username
+        clientUsername
       )}`;
 
       const response = await fetch(url, {
@@ -64,6 +84,29 @@ const MarkMedicationTakenScreen = ({ navigation }) => {
     }
   };
 
+  // Helper function to determine schedule type from schedule_time
+  const determineScheduleType = (schedule) => {
+    if (!schedule) return "Morning"; // Default fallback
+
+    // If it's a time string like "Morning", "Evening", "Night"
+    const scheduleStr = schedule.toString().toLowerCase();
+    if (scheduleStr.includes("morning")) return "Morning";
+    if (scheduleStr.includes("evening")) return "Evening";
+    if (scheduleStr.includes("night")) return "Night";
+
+    // If it's a timestamp, determine by hour
+    const parsedTime = Date.parse(schedule);
+    if (!isNaN(parsedTime)) {
+      const hour = new Date(parsedTime).getHours();
+      if (hour >= 6 && hour < 12) return "Morning";
+      if (hour >= 12 && hour < 20) return "Evening";
+      return "Night";
+    }
+
+    // Default fallback
+    return "Morning";
+  };
+
   const handleMarkTaken = async (medication_id) => {
     const taken_time = new Date().toISOString();
 
@@ -73,7 +116,23 @@ const MarkMedicationTakenScreen = ({ navigation }) => {
       return;
     }
 
+    // Find the medication details
+    const medication = medications.find((med) => med.id === medication_id);
+    if (!medication) {
+      Alert.alert("Error", "Medication not found.");
+      return;
+    }
+
     try {
+      // First, mark as taken in the notification system to prevent future notifications
+      const scheduleType = determineScheduleType(medication.schedule_time);
+      await markMedicationAsTaken(
+        medication.name,
+        medication.dosage,
+        scheduleType
+      );
+
+      // Then, call the API to mark as taken in the backend
       const response = await fetch(
         "https://rsxn7kxzr6.execute-api.ap-south-1.amazonaws.com/prod/markTaken",
         {
@@ -95,7 +154,10 @@ const MarkMedicationTakenScreen = ({ navigation }) => {
               : item
           )
         );
-        Alert.alert("Success", "Medication marked as taken.");
+        Alert.alert(
+          "Success",
+          `${medication.name} marked as taken. Notifications for this medication have been stopped.`
+        );
       } else {
         throw new Error(data.error || "Failed to mark as taken");
       }
@@ -124,8 +186,10 @@ const MarkMedicationTakenScreen = ({ navigation }) => {
   };
 
   useEffect(() => {
-    fetchMedications();
-  }, []);
+    if (clientUsername) {
+      fetchMedications();
+    }
+  }, [clientUsername]);
 
   const renderMedItem = ({ item }) => (
     <View style={styles.card}>
