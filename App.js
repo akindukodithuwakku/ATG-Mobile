@@ -75,7 +75,7 @@ import Documents from "./screens/Documents";
 import DocumentsCN from "./screens/DocumentsCN";
 
 // Auto Logout
-import { AutomaticLogoutScreen } from "./screens/AutoLogout";
+import { LogoutProvider, AutomaticLogoutScreen } from "./screens/AutoLogout";
 
 // Context Providers
 import { LogoutProvider } from "./context/LogoutContext";
