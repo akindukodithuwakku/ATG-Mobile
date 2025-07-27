@@ -19,7 +19,6 @@ const CNCarePlansScreen = ({ navigation }) => {
   const [isSideNavVisible, setIsSideNavVisible] = useState(false);
   const scheme = useColorScheme();
 
-  // Hardcoded care navigator username
   const careNavigatorUsername = 'cn_alecbenjamin';
 
   const fetchCarePlans = async () => {
@@ -35,6 +34,10 @@ const CNCarePlansScreen = ({ navigation }) => {
       );
       const json = await response.json();
       console.log('API Response:', json);
+      console.log('Care plans data:', json.care_plans);
+      if (json.care_plans && json.care_plans.length > 0) {
+        console.log('First care plan structure:', json.care_plans[0]);
+      }
       setPlans(json.care_plans || []);
     } catch (error) {
       console.error('Fetch error:', error);
@@ -49,20 +52,29 @@ const CNCarePlansScreen = ({ navigation }) => {
   }, []);
 
   const renderPlan = ({ item }) => {
-    const key = item.id || `${item.client_username}_${item.date_created}`;
+    const key = `${item.client_username}_${item.date_created}`;
+    
+    console.log("Care plan item:", item);
+    console.log("Available fields:", Object.keys(item));
 
     return (
       <TouchableOpacity
         key={key}
         style={styles.planCard}
-        onPress={() =>
-          navigation.navigate('CarePlanMgtCN', {
-            carePlanId: item.id,
+        onPress={() => {
+          // Create a unique identifier using client_username and date_created
+          const carePlanIdentifier = `${item.client_username}_${item.date_created}`;
+          
+          const params = {
+            carePlanId: carePlanIdentifier,  // Use the unique identifier
             clientUsername: item.client_username,
             carePlanName: item.care_plan_name,
             dateCreated: item.date_created,
-          })
-        }
+            status: item.status,
+          };
+          
+          navigation.navigate('CarePlanMgtCN', params);
+        }}
       >
         <Text style={styles.planTitle}>{item.care_plan_name || 'Unnamed Plan'}</Text>
         <Text style={styles.planClient}>Client: {item.client_username || 'N/A'}</Text>
@@ -82,7 +94,7 @@ const CNCarePlansScreen = ({ navigation }) => {
         backgroundColor={scheme === 'dark' ? 'black' : 'transparent'}
       />
 
-      {/* Header with Side Nav Toggle */}
+      {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => setIsSideNavVisible(!isSideNavVisible)}>
           <Ionicons name="menu" size={28} color="white" />
@@ -103,7 +115,7 @@ const CNCarePlansScreen = ({ navigation }) => {
           <FlatList
             data={plans}
             keyExtractor={(item, index) =>
-              item.id ? item.id.toString() : `${item.client_username}_${item.date_created}_${index}`
+              `${item.client_username}_${item.date_created}_${index}`
             }
             renderItem={renderPlan}
             contentContainerStyle={styles.listContent}

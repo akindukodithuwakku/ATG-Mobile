@@ -21,30 +21,49 @@ const CarePlanOverview = ({ navigation, carePlanId }) => {
   const [searchText, setSearchText] = useState('');
   const isFocused = useIsFocused();
 
+  
   const fetchTasks = async () => {
-    try {
-      const response = await fetch(
-        `https://sue7dsbf09.execute-api.ap-south-1.amazonaws.com/dev/tasks?care_plan_id=${carePlanId}`
-      );
-      const result = await response.json();
-
-      const sortedTasks = (result.data || []).sort((a, b) => {
-        return new Date(a.start) - new Date(b.start);
-      });
-
-      setTasks(sortedTasks);
-    } catch (error) {
-      console.error("Error fetching tasks:", error);
-    } finally {
+  try {
+    if (!carePlanId) {
+      console.error("No care plan ID provided");
+      setTasks([]);
       setLoading(false);
+      return;
     }
-  };
+    
+    // Extract client username from the care plan identifier
+    // The format is "client_username_date_created", so we need to get everything before the last underscore
+    const parts = carePlanId.split('_');
+    const clientUsername = parts.slice(0, -1).join('_'); // Join all parts except the last one (date)
+    
+    // Fetch all tasks and filter by client username
+    const apiUrl = `https://sue7dsbf09.execute-api.ap-south-1.amazonaws.com/dev/tasks`;
+    const response = await fetch(apiUrl);
+    const result = await response.json();
+
+    // Filter tasks by client username using the updated_by field
+    const filteredTasks = (result || []).filter(task => {
+      return task.updated_by === clientUsername;
+    });
+
+    const sortedTasks = filteredTasks.sort((a, b) => {
+      return new Date(a.start || 0) - new Date(b.start || 0);
+    });
+
+    setTasks(sortedTasks);
+  } catch (error) {
+    console.error("Error fetching tasks:", error);
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   useEffect(() => {
     if (isFocused) {
       fetchTasks();
     }
-  }, [isFocused]);
+  }, [isFocused, carePlanId]);
 
   const articleData = [
     { id: '1', type: 'Article', duration: '5 min', title: 'What is a care plan?' },
@@ -61,7 +80,15 @@ const CarePlanOverview = ({ navigation, carePlanId }) => {
 
   // Filter tasks by selected month and search text (date)
   const filteredTasks = tasks.filter(task => {
-    if (!task.start) return false;
+    // If no start date, show the task in current month by default
+    if (!task.start) {
+      const shouldShow = selectedMonth === new Date().getMonth();
+      if (searchText.trim() === '') {
+        return shouldShow; // Show in current month
+      }
+      return false; // Hide tasks without start dates when searching
+    }
+    
     const taskDate = new Date(task.start.replace(' ', 'T'));
     const matchesMonth = taskDate.getMonth() === selectedMonth;
 
@@ -157,7 +184,7 @@ const CarePlanScreen = ({ route, navigation }) => {
   const scheme = useColorScheme();
   const [isSideNavVisible, setIsSideNavVisible] = useState(false);
 
-  // ✅ Get dynamic care plan ID and client username
+  // Get dynamic care plan ID and client username
   const { carePlanId, clientUsername } = route.params;
 
   const closeSideNav = () => setIsSideNavVisible(false);
