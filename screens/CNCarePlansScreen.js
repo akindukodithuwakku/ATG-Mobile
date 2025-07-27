@@ -54,9 +54,6 @@ const CNCarePlansScreen = ({ navigation }) => {
   const renderPlan = ({ item }) => {
     const key = `${item.client_username}_${item.date_created}`;
 
-    console.log("Care plan item:", item);
-    console.log("Available fields:", Object.keys(item));
-
     return (
       <TouchableOpacity
         key={key}
@@ -79,14 +76,6 @@ const CNCarePlansScreen = ({ navigation }) => {
           };
 
           const actualCarePlanId = carePlanIdMap[item.client_username];
-
-          console.log("=== CARE PLAN NAVIGATION DEBUG ===");
-          console.log("Client username:", item.client_username);
-          console.log("Mapped care plan ID:", actualCarePlanId);
-          console.log("Is in mapping:", !!carePlanIdMap[item.client_username]);
-          console.log("Available mappings:", Object.keys(carePlanIdMap));
-          console.log("Current mapping object:", carePlanIdMap);
-          console.log("=== END CARE PLAN NAVIGATION DEBUG ===");
 
           const params = {
             carePlanId: carePlanIdentifier, // Keep the identifier for task filtering

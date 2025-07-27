@@ -62,6 +62,7 @@ const TimelineItem = ({
           text: "OK",
           onPress: async () => {
             try {
+              console.log(`Attempting to delete task with ID: ${id}`);
               const response = await fetch(
                 `https://sue7dsbf09.execute-api.ap-south-1.amazonaws.com/dev/tasks?id=${id}`,
                 {
@@ -72,9 +73,16 @@ const TimelineItem = ({
                 }
               );
 
+              console.log(`Delete response status: ${response.status}`);
+
               if (!response.ok) {
+                const errorText = await response.text();
+                console.log(`Delete error response: ${errorText}`);
                 throw new Error(`HTTP error! status: ${response.status}`);
               }
+
+              const result = await response.json();
+              console.log(`Task deleted successfully: ${result.message}`);
 
               // ======== Place notification code here ========
               // e.g. await sendNotificationToClient(id);
@@ -82,8 +90,8 @@ const TimelineItem = ({
 
               if (onDelete) onDelete(id);
             } catch (error) {
-              Alert.alert("Error", "Failed to delete task.");
               console.error("Delete error:", error);
+              Alert.alert("Error", `Failed to delete task: ${error.message}`);
             }
           },
         },

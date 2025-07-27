@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -17,14 +17,16 @@ import SideNavigationCN from "../Components/SideNavigationCN";
 
 const AddTask = ({ navigation, route }) => {
   const { care_plan_id, updated_by } = route.params;
-  
-  console.log("=== ADD TASK SCREEN DEBUG ===");
-  console.log("Route params:", route.params);
-  console.log("care_plan_id received:", care_plan_id);
-  console.log("updated_by received:", updated_by);
-  console.log("care_plan_id type:", typeof care_plan_id);
-  console.log("=== END ADD TASK SCREEN DEBUG ===");
 
+  // Debug logs only once when component mounts
+  useEffect(() => {
+    console.log("=== ADD TASK SCREEN DEBUG ===");
+    console.log("Route params:", route.params);
+    console.log("care_plan_id received:", care_plan_id);
+    console.log("updated_by received:", updated_by);
+    console.log("care_plan_id type:", typeof care_plan_id);
+    console.log("=== END ADD TASK SCREEN DEBUG ===");
+  }, []);
 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -69,12 +71,6 @@ const AddTask = ({ navigation, route }) => {
       start,
       end,
     };
-
-    console.log("=== ADD TASK DEBUG ===");
-    console.log("Payload being sent:", payload);
-    console.log("care_plan_id type:", typeof care_plan_id);
-    console.log("care_plan_id value:", care_plan_id);
-    console.log("=== END ADD TASK DEBUG ===");
 
     try {
       const response = await fetch(
