@@ -120,7 +120,7 @@ const CNDashboard = ({ navigation }) => {
         <View style={styles.cardContainer}>
           <TouchableOpacity
             style={styles.card}
-            onPress={() => navigateToScreen("CarePlanCN")}
+            onPress={() => navigateToScreen("CNCarePlansScreen")}
           >
             <LinearGradient
               colors={["#6a3093", "#a044ff"]}
