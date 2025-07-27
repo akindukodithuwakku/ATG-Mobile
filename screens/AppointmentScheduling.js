@@ -15,6 +15,7 @@ import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useFocusEffect } from "@react-navigation/native";
 import { useAutomaticLogout } from "../screens/AutoLogout";
+import { sendNotificationToUser } from "../utils/NotificationHandler";
 
 const API_ENDPOINT =
   "https://uqzl6jyqvg.execute-api.ap-south-1.amazonaws.com/dev";
@@ -271,6 +272,29 @@ const AppointmentScheduling = ({ navigation }) => {
 
       if (result.statusCode === 200) {
         console.log("Appointment saved to database successfully:", result);
+
+        // Send notification to client about successful appointment scheduling
+        try {
+          const currentUsername = await AsyncStorage.getItem("appUser");
+          if (currentUsername) {
+            await sendNotificationToUser(
+              currentUsername,
+              "Your appointment has been successfully scheduled!",
+              "success",
+              {
+                appointmentId: result.body?.appointment_id || "unknown",
+                timestamp: new Date().toISOString(),
+                type: "appointment_scheduled"
+              }
+            );
+            console.log("Appointment scheduling notification sent to client");
+          } else {
+            console.log("Could not send notification: username not found in AsyncStorage");
+          }
+        } catch (notificationError) {
+          console.error("Error sending appointment notification:", notificationError);
+          // Don't fail the appointment creation if notification fails
+        }
 
         // Clear the pending questionnaire data after successful save
         if (questionnaireData) {
