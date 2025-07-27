@@ -405,12 +405,7 @@ const ClientDashboard = ({ navigation }) => {
         <View style={styles.cardContainer}>
           <TouchableOpacity
             style={styles.card}
-            onPress={() =>
-              navigateToScreen("CarePlanC", {
-                carePlanId: carePlanId || 2, // Use carePlanId if available, otherwise default
-                clientUsername: username || "kavindya_02",
-              })
-            }
+            onPress={() => navigateToScreen("ClientCarePlansScreen")}
           >
             <LinearGradient
               colors={["#6a3093", "#a044ff"]}

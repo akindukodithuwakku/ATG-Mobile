@@ -13,9 +13,7 @@ import {
   useColorScheme,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import BottomNavigationClient from "../Components/BottomNavigationClient";
-import SideNavigationClient from "../Components/SideNavigationClient";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const ErrorIcon = () => (
   <View style={styles.errorIcon}>
@@ -29,16 +27,17 @@ const EmergencyContact = ({ navigation, route }) => {
   const [emergencyContactNumber, setemergencyContactNumber] = useState("");
   const [relationship, setRelationship] = useState("");
   const [contactNameError, setContactNameError] = useState("");
-  const [emergencyContactNumberError, setemergencyContactNumberError] = useState("");
+  const [emergencyContactNumberError, setemergencyContactNumberError] =
+    useState("");
   const [relationshipError, setRelationshipError] = useState("");
   const scheme = useColorScheme();
-  const [isSideNavVisible, setIsSideNavVisible] = useState(false);
 
   useEffect(() => {
     const loadData = async () => {
-      const savedData = await AsyncStorage.getItem('emergencyContact');
+      const savedData = await AsyncStorage.getItem("emergencyContact");
       if (savedData) {
-        const { contactName, emergencyContactNumber, relationship } = JSON.parse(savedData);
+        const { contactName, emergencyContactNumber, relationship } =
+          JSON.parse(savedData);
         setContactName(contactName);
         setemergencyContactNumber(emergencyContactNumber);
         setRelationship(relationship);
@@ -49,7 +48,7 @@ const EmergencyContact = ({ navigation, route }) => {
 
   const saveData = async () => {
     const data = { contactName, emergencyContactNumber, relationship };
-    await AsyncStorage.setItem('emergencyContact', JSON.stringify(data));
+    await AsyncStorage.setItem("emergencyContact", JSON.stringify(data));
   };
 
   const validateForm = () => {
@@ -94,25 +93,21 @@ const EmergencyContact = ({ navigation, route }) => {
   };
 
   return (
-    <KeyboardAvoidingView 
-      behavior={Platform.OS === "ios" ? "padding" : "height"} 
+    <KeyboardAvoidingView
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
       style={{ flex: 1 }}
     >
       <View style={styles.container}>
-        <StatusBar barStyle={scheme === "dark" ? "light-content" : "dark-content"} translucent backgroundColor="transparent" />
+        <StatusBar
+          barStyle={scheme === "dark" ? "light-content" : "dark-content"}
+          translucent
+          backgroundColor="transparent"
+        />
 
         {/* Header */}
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => setIsSideNavVisible(!isSideNavVisible)}>
-            <Ionicons name="menu" size={28} color="white" />
-          </TouchableOpacity>
           <Text style={styles.headerText}>Emergency Contact Information</Text>
         </View>
-
-        {/* Side Navigation */}
-        {isSideNavVisible && (
-          <SideNavigationClient navigation={navigation} onClose={() => setIsSideNavVisible(false)} />
-        )}
 
         <ScrollView contentContainerStyle={styles.scrollContainer}>
           {/* Form Fields */}
@@ -129,11 +124,11 @@ const EmergencyContact = ({ navigation, route }) => {
                   setContactNameError(""); // Clear error when user types
                 }
               }}
-                onFocus={() =>{
-                  if (contactNameError) {
-                    setContactNameError(""); // Clear error when user focuses
-                  }
-                }}
+              onFocus={() => {
+                if (contactNameError) {
+                  setContactNameError(""); // Clear error when user focuses
+                }
+              }}
             />
             {contactNameError && (
               <View style={styles.errorContainer}>
@@ -155,11 +150,11 @@ const EmergencyContact = ({ navigation, route }) => {
                   setemergencyContactNumberError(""); // Clear error when user types
                 }
               }}
-              onFocus={() =>{
-                  if (emergencyContactNumberError) {
-                    setemergencyContactNumberError(""); // Clear error when user focuses
-                  }
-                }}
+              onFocus={() => {
+                if (emergencyContactNumberError) {
+                  setemergencyContactNumberError(""); // Clear error when user focuses
+                }
+              }}
             />
             {emergencyContactNumberError && (
               <View style={styles.errorContainer}>
@@ -180,11 +175,11 @@ const EmergencyContact = ({ navigation, route }) => {
                   setRelationshipError(""); // Clear error when user types
                 }
               }}
-              onFocus={() =>{
-                  if (relationshipError) {
-                    setRelationshipError(""); // Clear error when user focuses
-                  }
-                }}
+              onFocus={() => {
+                if (relationshipError) {
+                  setRelationshipError(""); // Clear error when user focuses
+                }
+              }}
             />
             {relationshipError && (
               <View style={styles.errorContainer}>
@@ -197,10 +192,13 @@ const EmergencyContact = ({ navigation, route }) => {
 
         {/* Buttons */}
         <View style={styles.buttonContainer}>
-          <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => navigation.goBack()}
+          >
             <Text style={styles.backText}>Back</Text>
           </TouchableOpacity>
-          
+
           <TouchableOpacity
             style={styles.continueButton}
             onPress={handleContinue} // Use the correct handler here!
@@ -208,9 +206,6 @@ const EmergencyContact = ({ navigation, route }) => {
             <Text style={styles.continueText}>Continue</Text>
           </TouchableOpacity>
         </View>
-
-        {/* Bottom Navigation */}
-        <BottomNavigationClient navigation={navigation} />
       </View>
     </KeyboardAvoidingView>
   );
@@ -218,72 +213,87 @@ const EmergencyContact = ({ navigation, route }) => {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#F8FDFF" },
-  header: { 
-    flexDirection: "row", 
-    alignItems: "center", 
-    padding: 15, 
-    backgroundColor: "#00BCD4", 
-    paddingTop: 40 
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: 15,
+    backgroundColor: "#00BCD4",
+    paddingTop: 40,
   },
-  headerText: { fontSize: 19, fontWeight: "bold", color: "white", marginLeft: 20 },
+  headerText: {
+    fontSize: 19,
+    fontWeight: "bold",
+    color: "white",
+    marginLeft: 20,
+  },
   scrollContainer: { flexGrow: 1, paddingBottom: 20 },
   formContainer: { padding: 20 },
   label: { fontSize: 16, fontWeight: "bold", marginTop: 20, color: "#333" },
-  input: { 
-    backgroundColor: "#E0F7FA", 
-    borderRadius: 10, 
-    padding: 12, 
-    fontSize: 16, 
-    marginTop: 20 
+  input: {
+    backgroundColor: "#E0F7FA",
+    borderRadius: 10,
+    padding: 12,
+    fontSize: 16,
+    marginTop: 20,
   },
-  buttonContainer: { 
-    flexDirection: "row", 
-    justifyContent: "space-between", 
-    paddingHorizontal: 20, 
-    paddingVertical: 70, 
+  buttonContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    paddingHorizontal: 20,
+    paddingVertical: 70,
     backgroundColor: "#F8FDFF",
   },
-  backButton: { 
-    backgroundColor: "#FFFFFF", 
-    paddingVertical: 15, 
-    paddingHorizontal: 30, 
-    borderRadius: 30, 
-    borderWidth: 1, 
+  backButton: {
+    backgroundColor: "#FFFFFF",
+    paddingVertical: 15,
+    paddingHorizontal: 30,
+    borderRadius: 30,
+    borderWidth: 1,
     borderColor: "#00BCD4",
-    flex: 1, 
-    marginRight: 10 
+    flex: 1,
+    marginRight: 10,
   },
-  continueButton: { 
-    backgroundColor: "#00BCD4", 
-    paddingVertical: 15, 
-    paddingHorizontal: 30, 
-    borderRadius: 30, 
-    flex: 1, 
-    marginLeft: 10 
+  continueButton: {
+    backgroundColor: "#00BCD4",
+    paddingVertical: 15,
+    paddingHorizontal: 30,
+    borderRadius: 30,
+    flex: 1,
+    marginLeft: 10,
   },
-  backText: { fontSize: 16, fontWeight: "bold", color: "#00BCD4", textAlign: "center" },
-  continueText: { fontSize: 16, fontWeight: "bold", color: "white", textAlign: "center" },
+  backText: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: "#00BCD4",
+    textAlign: "center",
+  },
+  continueText: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: "white",
+    textAlign: "center",
+  },
   error: {
-    color: 'red',
+    color: "red",
     marginTop: 5,
   },
   errorContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     marginTop: 5,
   },
   errorIcon: {
     width: 24,
     height: 24,
     borderRadius: 12,
-    backgroundColor: 'red',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: "red",
+    justifyContent: "center",
+    alignItems: "center",
     marginRight: 5,
   },
   errorIconText: {
-    color: 'white',
-    fontWeight: 'bold',
+    color: "white",
+    fontWeight: "bold",
     fontSize: 16,
   },
 });

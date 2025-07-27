@@ -558,7 +558,7 @@ export const VerificationSentScreen = ({ route, navigation }) => {
 
       navigation.reset({
         index: 0,
-        routes: [{ name: "Welcome" }],
+        routes: [{ name: "Personalinfo" }],
       });
     } catch (error) {
       setIsVerifying(false);
@@ -617,7 +617,7 @@ export const VerificationSentScreen = ({ route, navigation }) => {
 
   const verificationCompletion = async () => {
     handleVerifyEmail();
-    await AsyncStorage.setItem("appUser", username.trim().toLowerCase());
+    await AsyncStorage.setItem("appUsername", username.trim().toLowerCase());
   };
 
   return (
