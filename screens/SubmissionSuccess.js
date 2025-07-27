@@ -1,16 +1,32 @@
-import React from 'react';
-import { View, Text, TouchableOpacity, Image, StyleSheet } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import React from "react";
+import { View, Text, TouchableOpacity, Image, StyleSheet } from "react-native";
+import { useNavigation } from "@react-navigation/native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const SubmissionSuccess = () => {
   const navigation = useNavigation();
 
+  const navigateToScreen = async () => {
+    const accessToken = await AsyncStorage.getItem("accessToken");
+    if (accessToken) {
+      navigation.reset({
+        index: 0,
+        routes: [{ name: "ClientDashboard" }],
+      });
+    } else {
+      navigation.reset({
+        index: 0,
+        routes: [{ name: "Welcome" }],
+      });
+    }
+  };
+
   return (
     <View style={styles.container}>
-      <Image source={require('../assets/checkmark.png')} style={styles.image} />
+      <Image source={require("../assets/checkmark.png")} style={styles.image} />
       <Text style={styles.title}>Your Form is successfully Submitted</Text>
       <Text style={styles.subtitle}>Thank you for getting in touch!</Text>
-      <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('Welcome')}>
+      <TouchableOpacity style={styles.button} onPress={navigateToScreen}>
         <Text style={styles.buttonText}>Close</Text>
       </TouchableOpacity>
     </View>
@@ -18,11 +34,21 @@ const SubmissionSuccess = () => {
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: '#fff' },
+  container: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#fff",
+  },
   image: { width: 180, height: 150, marginBottom: 20 },
-  title: { fontSize: 22, fontWeight: 'bold', textAlign: 'center' },
-  subtitle: { fontSize: 19, textAlign: 'center', color: '#555', marginBottom: 25 },
-  button: { 
+  title: { fontSize: 22, fontWeight: "bold", textAlign: "center" },
+  subtitle: {
+    fontSize: 19,
+    textAlign: "center",
+    color: "#555",
+    marginBottom: 25,
+  },
+  button: {
     backgroundColor: "#00BCD4",
     paddingVertical: 20,
     borderRadius: 30,
@@ -32,7 +58,7 @@ const styles = StyleSheet.create({
     position: "absolute",
     bottom: 70,
   },
-  buttonText: { color: '#fff', fontWeight: 'bold', fontSize: 20 },
+  buttonText: { color: "#fff", fontWeight: "bold", fontSize: 20 },
 });
 
 export default SubmissionSuccess;
